@@ -1,0 +1,197 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  
+  --color-primary: #0A5CFF;
+  --color-brand-blue: #3B82F6;
+  --color-brand-dark: #1E40AF;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0A5CFF;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3B82F6;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Text selection styling - Droppr Blue for entire project */
+::selection {
+  background-color: #0A5CFF !important;
+  color: #ffffff !important;
+}
+
+::-moz-selection {
+  background-color: #0A5CFF !important;
+  color: #ffffff !important;
+}
+
+/* Ensure text selection works on all elements */
+*::selection {
+  background-color: #0A5CFF !important;
+  color: #ffffff !important;
+}
+
+*::-moz-selection {
+  background-color: #0A5CFF !important;
+  color: #ffffff !important;
+}
+
+/* Gradient animation */
+@keyframes gradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  animation: gradient 3s ease infinite;
+  background-size: 200% 200%;
+}
+
+/* Marquee animation */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+/* Google OAuth Button Styling - Match other OAuth buttons EXACTLY */
+div[id^="gsi"] {
+  min-height: 42px !important;
+  height: 42px !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+div[id^="gsi"] > div {
+  min-height: 42px !important;
+  height: 42px !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+div[id^="gsi"] button {
+  min-height: 42px !important;
+  height: 42px !important;
+  font-size: 0.875rem !important; /* text-sm - match OAuthButton */
+  font-weight: 500 !important;
+  padding: 0.625rem 1rem !important; /* px-4 py-2.5 - match OAuthButton */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important; /* gap-2 - match OAuthButton */
+  width: 100% !important;
+  border: 1px solid #d1d5db !important; /* border-gray-300 - match OAuthButton */
+  border-radius: 0.5rem !important; /* rounded-lg - match OAuthButton */
+  background-color: white !important; /* bg-white - match OAuthButton */
+  color: #374151 !important; /* text-gray-700 - match OAuthButton */
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important; /* shadow-sm - match OAuthButton */
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  font-family: inherit !important;
+  line-height: 1.25rem !important;
+}
+
+div[id^="gsi"] button:hover {
+  background-color: #f9fafb !important; /* hover:bg-gray-50 - match OAuthButton */
+}
+
+div[id^="gsi"] button:active {
+  transform: scale(0.98) !important; /* active:scale-[0.98] - match OAuthButton */
+}
+
+div[id^="gsi"] button:focus {
+  outline: none !important;
+  ring: 2px !important;
+  ring-color: #9ca3af !important;
+  ring-offset: 2px !important;
+}
+
+/* Google button - icon and text both centered */
+div[id^="gsi"] button > div {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important; /* gap-2 - match OAuthButton */
+  width: 100% !important;
+}
+
+div[id^="gsi"] button svg,
+div[id^="gsi"] button img {
+  width: 20px !important;
+  height: 20px !important;
+  flex-shrink: 0 !important;
+}
+
+div[id^="gsi"] button span {
+  font-size: 0.875rem !important; /* text-sm - match OAuthButton */
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  color: #374151 !important; /* text-gray-700 - match OAuthButton */
+}
+
+/* Global cursor pointer for buttons and links */
+button:not(:disabled),
+a,
+[role="button"],
+input[type="submit"],
+input[type="button"],
+select {
+  cursor: pointer !important;
+}
+
+button:disabled,
+input[type="submit"]:disabled,
+input[type="button"]:disabled {
+  cursor: not-allowed !important;
+}
