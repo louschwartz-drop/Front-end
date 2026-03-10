@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "DropPR.ai - AI-Powered Media & PR Distribution Platform",
+  title: "Drop PR - AI-Powered Media & PR Distribution Platform",
   description:
-    "Build instant exposure with DropPR.ai. Convert your videos into AI-written articles and distribute them to top media outlets.",
+    "Build instant exposure with Drop PR. Convert your videos into AI-written articles and distribute them to top media outlets.",
   keywords: "AI article generation, press release distribution, media outlets, PR distribution, video to article, content publishing",
   icons: {
     icon: "/drop-logo.png",
@@ -26,14 +26,14 @@ export const metadata = {
     shortcut: "/drop-logo.png",
   },
   openGraph: {
-    title: "DropPR.ai - AI-Powered Media & PR Distribution Platform",
-    description: "Build instant exposure with DropPR.ai. Convert your videos into AI-written articles and distribute them to top media outlets.",
+    title: "Drop PR - AI-Powered Media & PR Distribution Platform",
+    description: "Build instant exposure with Drop PR. Convert your videos into AI-written articles and distribute them to top media outlets.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "DropPR.ai - AI-Powered Media & PR Distribution Platform",
-    description: "Build instant exposure with DropPR.ai. Convert your videos into AI-written articles and distribute them to top media outlets.",
+    title: "Drop PR - AI-Powered Media & PR Distribution Platform",
+    description: "Build instant exposure with Drop PR. Convert your videos into AI-written articles and distribute them to top media outlets.",
   },
 };
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -11,9 +12,12 @@ import {
   LogOut,
   X,
   Smartphone,
+  CreditCard,
+  LifeBuoy,
 } from "lucide-react";
 import adminAuthStore from "@/store/adminAuthStore";
 import Image from "next/image";
+import ConfirmationModal from "../ui/ConfirmationModal";
 
 export const ADMIN_MENU_ITEMS = [
   {
@@ -27,6 +31,16 @@ export const ADMIN_MENU_ITEMS = [
     icon: BarChart3,
   },
   {
+    href: "/admin/press-releases",
+    label: "Press Releases",
+    icon: FileText,
+  },
+  {
+    href: "/admin/pricing",
+    label: "Pricing Plans",
+    icon: CreditCard,
+  },
+  {
     href: "/admin/users",
     label: "Users",
     icon: User,
@@ -35,6 +49,11 @@ export const ADMIN_MENU_ITEMS = [
     href: "/admin/profile",
     label: "Profile",
     icon: User,
+  },
+  {
+    href: "/admin/support",
+    label: "Support",
+    icon: LifeBuoy,
   },
   // {
   //   href: "/admin/activity-logs",
@@ -47,11 +66,32 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
   const router = useRouter();
   const pathname = usePathname();
   const { logout } = adminAuthStore();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    router.push("/admin/login");
-  };
+  const handleLogoutClick = useCallback(() => {
+    setIsModalOpen(true);
+    if (window.innerWidth < 1024) {
+      setMobileMenuOpen(false);
+    }
+  }, [setMobileMenuOpen]);
+
+  const handleConfirmLogout = useCallback(async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      router.push("/admin/login");
+    } catch (err) {
+      console.error("Logout failed", err);
+    } finally {
+      setIsLoggingOut(false);
+      setIsModalOpen(false);
+    }
+  }, [logout, router]);
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
 
   const isActive = (href) => {
     return pathname === href || pathname.startsWith(href + "/");
@@ -80,7 +120,7 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
         `}
       >
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-800 flex-shrink-0">
+        <div className="flex items-center justify-between p-4 border-b border-gray-800 shrink-0">
           <Link
             href="/admin/dashboard"
             className="flex flex-col gap-1 cursor-pointer"
@@ -89,13 +129,13 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
             <div className="flex items-center gap-1">
               <Image
                 src="/drop-logo.png"
-                alt="DropPR.ai"
+                alt="Drop PR"
                 width={26}
                 height={26}
                 className=""
               />
 
-              <span className="font-bold text-xl">DropPR.ai</span>
+              <span className="font-bold text-xl">Drop PR</span>
             </div>
             <span className="text-xs text-gray-400 ml-9">Admin Panel</span>
           </Link>
@@ -128,7 +168,7 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
                       }
                     `}
                   >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    <Icon className="w-5 h-5 shrink-0" />
                     <span className="text-sm font-medium">{item.label}</span>
                   </Link>
                 </li>
@@ -138,24 +178,36 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-gray-800 space-y-2 flex-shrink-0">
+        <div className="p-4 border-t border-gray-800 space-y-2 shrink-0">
           <Link
             href="/"
             onClick={() => setMobileMenuOpen(false)}
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200 cursor-pointer"
           >
-            <Home className="w-5 h-5 flex-shrink-0" />
+            <Home className="w-5 h-5 shrink-0" />
             <span className="text-sm font-medium">Go to Website</span>
           </Link>
           <button
-            onClick={handleLogout}
+            onClick={handleLogoutClick}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200 cursor-pointer"
           >
-            <LogOut className="w-5 h-5 flex-shrink-0" />
+            <LogOut className="w-5 h-5 shrink-0" />
             <span className="text-sm font-medium">Logout</span>
           </button>
         </div>
       </aside>
+
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmLogout}
+        title="Admin Logout"
+        message="Are you sure you want to log out of the admin panel?"
+        confirmText="Logout"
+        cancelText="Cancel"
+        confirmColor="bg-red-600 hover:bg-red-700"
+        isLoading={isLoggingOut}
+      />
     </>
   );
 }

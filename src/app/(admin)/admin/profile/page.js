@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import adminAuthStore from "@/store/adminAuthStore";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
+import { isValidPhoneNumber } from "libphonenumber-js";
 import { uploadFileToS3 } from "@/utils/awsService";
 import ImageCropper from "@/components/ui/ImageCropper";
 import { adminProfileService } from "@/lib/api/admin/profile";
@@ -133,6 +134,13 @@ function AdminProfilePageContent() {
     try {
       setLoading(true);
       setErrors({});
+
+      // Phone validation using standard libphonenumber-js
+      if (formData.phone && !isValidPhoneNumber("+" + formData.phone.replace(/\D/g, ""))) {
+        toast.error("Please Enter a Valid Number");
+        setLoading(false);
+        return;
+      }
 
       let avatarUrl = user.avatar;
 
@@ -343,8 +351,8 @@ function AdminProfilePageContent() {
                   value={formData.name}
                   onChange={(e) => handleFieldChange("name", e.target.value)}
                   className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-gray-900 ${errors.name
-                      ? "border-red-500 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-[#0A5CFF] focus:border-transparent"
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:ring-primary focus:border-transparent"
                     }`}
                   placeholder="Enter your full name"
                   required

@@ -37,7 +37,7 @@ export default function Layout({ children }) {
         {/* Main Content Area - Scrollable */}
         <main className="flex-1 overflow-y-auto">
           <div className=" min-h-full bg-white ">
-            <div className="bg-white p-6 ">{children}</div>
+            <div className="bg-white p-3 sm:p-6 ">{children}</div>
           </div>
         </main>
       </div>

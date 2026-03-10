@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { authService } from "@/lib/api/user/auth"; // Use @ alias
+import { authService } from "@/lib/api/user/auth";
+import { profileService } from "@/lib/api/user/profile";
 
 const userAuthStore = create(
   persist(
@@ -75,6 +76,22 @@ const userAuthStore = create(
         set((state) => ({
           user: { ...state.user, ...userData }
         }));
+      },
+
+      // Refresh user from backend
+      refreshUser: async () => {
+        const userId = get().user?._id || get().user?.id;
+
+        if (!userId) return;
+
+        try {
+          const response = await profileService.getProfile(userId);
+          if (response.success) {
+            set({ user: response.data });
+          }
+        } catch (error) {
+          console.error("Failed to refresh user profile:", error, error.response?.data);
+        }
       },
     }),
     {

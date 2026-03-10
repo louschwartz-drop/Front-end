@@ -39,7 +39,7 @@ export default function Header({ setMobileMenuOpen }) {
   return (
     <>
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 h-20 flex items-center justify-between px-6 lg:px-8">
+      <header className="bg-white shadow-sm border-b border-gray-200 py-3 md:h-20  flex items-center justify-between p-1 lg:px-8">
         {/* Mobile Menu Button */}
         <button
           onClick={() => setMobileMenuOpen(true)}
@@ -65,7 +65,7 @@ export default function Header({ setMobileMenuOpen }) {
           <Link href={"/"}>
             <Image
               src="/logo.png"
-              alt="DropPR.ai"
+              alt="Drop PR"
               width={130}
               height={40}
               className="h-10 md:h-14 w-auto object-contain"
@@ -79,10 +79,10 @@ export default function Header({ setMobileMenuOpen }) {
           <Link href={"/"}>
             <Image
               src="/logo.png"
-              alt="DropPR.ai"
+              alt="Drop PR"
               width={130}
               height={40}
-              className="h-10 w-auto object-contain"
+              className="h-14 w-auto object-contain"
               priority
             />
           </Link>
@@ -92,10 +92,10 @@ export default function Header({ setMobileMenuOpen }) {
         <div className="flex items-center space-x-4">
           <button
             onClick={handleLogoutClick}
-            className="flex items-center space-x-2 bg-[#0A5CFF] hover:bg-[#3B82F6] text-white px-4 py-2.5 rounded-lg transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg active:scale-95"
+            className="flex items-center justify-center sm:space-x-2 bg-[#0A5CFF] hover:bg-[#3B82F6] text-white p-2.5 sm:px-4 sm:py-2.5 rounded-lg transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg active:scale-95"
           >
             <svg
-              className="w-4 h-4"
+              className="w-5 h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

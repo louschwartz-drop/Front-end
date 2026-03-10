@@ -77,7 +77,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="bg-white border-b border-neutral-border sticky top-0 z-50 shadow-sm">
+      <header className="bg-white border-b border-neutral-border fixed top-0 inset-x-0 z-[100] shadow-sm !transform-none !transition-none">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo */}
@@ -87,7 +87,7 @@ export default function Header() {
             >
               <Image
                 src="/logo.png"
-                alt="DropPR.ai"
+                alt="Drop PR"
                 width={160}
                 height={60}
                 className="h-10 md:h-14 w-auto object-contain"
@@ -99,11 +99,10 @@ export default function Header() {
             <nav className="hidden md:flex items-center gap-8">
               <Link
                 href="/"
-                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm relative ${
-                  isActive("/")
-                    ? "text-brand-blue"
-                    : "text-gray-700 hover:text-brand-blue"
-                }`}
+                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm relative ${isActive("/")
+                  ? "text-brand-blue"
+                  : "text-gray-700 hover:text-brand-blue"
+                  }`}
               >
                 Home
                 {isActive("/") && (
@@ -112,11 +111,10 @@ export default function Header() {
               </Link>
               <Link
                 href="/contact"
-                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm relative ${
-                  isActive("/contact")
-                    ? "text-brand-blue"
-                    : "text-gray-700 hover:text-brand-blue"
-                }`}
+                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm relative ${isActive("/contact")
+                  ? "text-brand-blue"
+                  : "text-gray-700 hover:text-brand-blue"
+                  }`}
               >
                 Contact Us
                 {isActive("/contact") && (
@@ -125,11 +123,10 @@ export default function Header() {
               </Link>
               <Link
                 href="/faq"
-                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm relative ${
-                  isActive("/faq")
-                    ? "text-brand-blue"
-                    : "text-gray-700 hover:text-brand-blue"
-                }`}
+                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm relative ${isActive("/faq")
+                  ? "text-brand-blue"
+                  : "text-gray-700 hover:text-brand-blue"
+                  }`}
               >
                 FAQs
                 {isActive("/faq") && (
@@ -138,11 +135,10 @@ export default function Header() {
               </Link>
               <Link
                 href="/terms"
-                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm relative ${
-                  isActive("/terms")
-                    ? "text-brand-blue"
-                    : "text-gray-700 hover:text-brand-blue"
-                }`}
+                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm relative ${isActive("/terms")
+                  ? "text-brand-blue"
+                  : "text-gray-700 hover:text-brand-blue"
+                  }`}
               >
                 Terms of Service
                 {isActive("/terms") && (
@@ -151,11 +147,10 @@ export default function Header() {
               </Link>
               <Link
                 href="/privacy"
-                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm relative ${
-                  isActive("/privacy")
-                    ? "text-brand-blue"
-                    : "text-gray-700 hover:text-brand-blue"
-                }`}
+                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm relative ${isActive("/privacy")
+                  ? "text-brand-blue"
+                  : "text-gray-700 hover:text-brand-blue"
+                  }`}
               >
                 Privacy Policy
                 {isActive("/privacy") && (
@@ -242,7 +237,7 @@ export default function Header() {
                             className="w-10 h-10 rounded-full object-cover border-2 border-brand-blue"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-blue to-blue-700 flex items-center justify-center text-white font-semibold border-2 border-brand-blue">
+                          <div className="w-10 h-10 rounded-full bg-linear-to-br from-brand-blue to-blue-700 flex items-center justify-center text-white font-semibold border-2 border-brand-blue">
                             {getInitials(user?.name)}
                           </div>
                         )}
@@ -464,7 +459,7 @@ export default function Header() {
                           className="w-10 h-10 rounded-full object-cover border-2 border-brand-blue"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-blue to-blue-700 flex items-center justify-center text-white font-semibold border-2 border-brand-blue">
+                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-brand-blue to-blue-700 flex items-center justify-center text-white font-semibold border-2 border-brand-blue">
                           {getInitials(user?.name)}
                         </div>
                       )}

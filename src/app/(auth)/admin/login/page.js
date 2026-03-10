@@ -87,14 +87,14 @@ function LoginForm({ redirectPath }) {
             >
               <Image
                 src="/drop-logo.png"
-                alt="Droppr.ai"
+                alt="Drop PR"
                 width={50}
                 height={50}
                 className=""
               />
 
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">DroPPr.ai</h1>
+                <h1 className="text-3xl font-bold text-gray-900">Drop PR</h1>
                 <p className="text-sm text-gray-600">Admin Portal</p>
               </div>
             </Link>
@@ -114,7 +114,7 @@ function LoginForm({ redirectPath }) {
             {/* Feature List */}
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-brand-blue/10 flex items-center justify-center flex-shrink-0 mt-1">
+                <div className="w-6 h-6 rounded-full bg-brand-blue/10 flex items-center justify-center shrink-0 mt-1">
                   <svg
                     className="w-4 h-4 text-brand-blue"
                     fill="currentColor"
@@ -138,7 +138,7 @@ function LoginForm({ redirectPath }) {
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-brand-blue/10 flex items-center justify-center flex-shrink-0 mt-1">
+                <div className="w-6 h-6 rounded-full bg-brand-blue/10 flex items-center justify-center shrink-0 mt-1">
                   <svg
                     className="w-4 h-4 text-brand-blue"
                     fill="currentColor"
@@ -162,7 +162,7 @@ function LoginForm({ redirectPath }) {
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-brand-blue/10 flex items-center justify-center flex-shrink-0 mt-1">
+                <div className="w-6 h-6 rounded-full bg-brand-blue/10 flex items-center justify-center shrink-0 mt-1">
                   <svg
                     className="w-4 h-4 text-brand-blue"
                     fill="currentColor"
@@ -186,27 +186,27 @@ function LoginForm({ redirectPath }) {
           </div>
 
           {/* Right Side - Login Form */}
-          <div className="w-full">
+          <div className="w-full flex flex-col items-center justify-center">
             {/* Mobile Logo */}
             <div className="lg:hidden mb-8 text-center">
               <Link href="/" className="inline-flex items-center gap-3 group">
                 <Image
-                  src="/logo.png"
-                  alt="DropPR.ai"
-                  width={56}
-                  height={56}
-                  className="rounded-xl shadow-lg"
+                  src="/drop-logo.png"
+                  alt="Drop PR"
+                  width={36}
+                  height={36}
+                  className=""
                 />
                 <div className="text-left">
                   <h1 className="text-2xl font-bold text-gray-900">
-                    DropPR.ai
+                    Drop PR
                   </h1>
                   <p className="text-xs text-gray-600">Admin Portal</p>
                 </div>
               </Link>
             </div>
 
-            <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10 border border-gray-100">
+            <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-10 border border-gray-100 w-full max-w-[400px] lg:max-w-none">
               <div className="mb-8">
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">
                   Welcome Back
@@ -243,7 +243,7 @@ function LoginForm({ redirectPath }) {
                 {submitError && (
                   <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-start gap-3">
                     <svg
-                      className="w-5 h-5 flex-shrink-0 mt-0.5"
+                      className="w-5 h-5 shrink-0 mt-0.5"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
+import { motion } from "framer-motion";
 import Link from "next/link";
 
 import {
@@ -88,10 +88,11 @@ function AdminDashboardContent() {
     <div className="">
       {loading ? (
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0A5CFF] mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading...</p>
-          </div>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-12 h-12 border-4 border-[#0A5CFF] border-t-transparent rounded-full"
+          />
         </div>
       ) : (
         <>
@@ -100,11 +101,11 @@ function AdminDashboardContent() {
               Admin Dashboard
             </h1>
             <p className="text-gray-600 mt-1">
-              Welcome to DropPR.ai Admin Panel
+              Welcome to Drop PR Admin Panel
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8 w-full">
             <div className="bg-gradient-to-br from-[#0A5CFF] to-[#3B82F6] rounded-lg shadow-lg p-6 text-white">
               <div className="flex items-center justify-between">
                 <div>
@@ -141,13 +142,13 @@ function AdminDashboardContent() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 sm:mb-8">
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
                 Generated Articles (Last 7 Days)
               </h2>
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats?.salesData || []}>
+                  <BarChart data={stats?.salesData || []} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="date" axisLine={false} tickLine={false} />
                     <YAxis axisLine={false} tickLine={false} allowDecimals={false} />

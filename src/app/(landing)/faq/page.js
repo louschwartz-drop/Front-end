@@ -9,8 +9,8 @@ export default function FAQPage() {
 
   const faqs = [
     {
-      question: 'What is DropPR.ai and how does it work?',
-      answer: 'DropPR.ai is an AI-powered platform that transforms your videos into published press releases and articles. Simply upload your video, and our advanced AI transcribes, analyzes, and generates a professional article optimized for media distribution. The article is then published to 1500+ top-tier media outlets including TechCrunch, Forbes, and Business Insider.',
+      question: 'What is Drop PR and how does it work?',
+      answer: 'Drop PR is an AI powered platform that turns your videos into published articles and press releases. Upload a video and our system transcribes it, extracts the key facts, and drafts a clean editorial article ready for distribution. The finished piece is then published across a network of more than 1,500 national and local media outlets, generating authoritative backlinks, search visibility, and permanent media coverage for your content.',
     },
     {
       question: 'How accurate is the AI transcription and article generation?',
@@ -18,7 +18,7 @@ export default function FAQPage() {
     },
     {
       question: 'Which media outlets will my article be published to?',
-      answer: 'Your articles are distributed to 1500+ licensed media outlets including major publications like TechCrunch, Forbes, Business Insider, and many more. Articles are published on publisher-hosted sites (not blogs), ensuring SEO indexing, backlink longevity, and visibility in both traditional news results and AI-powered search.',
+      answer: 'Your articles are distributed across a network of more than 1,500 U.S. focused regional news sites. This includes stations and digital properties across ABC, FOX, NBC, and CBS affiliated networks, along with major national media networks such as USA Today and its partner sites. Content is published on real publisher hosted news platforms, not blogs. That structure improves Google indexation, creates durable backlinks, and increases visibility across both traditional search and leading AI platforms including ChatGPT, Gemini, Grok, Claude, and Perplexity.',
     },
     {
       question: 'Can I edit my article before publishing?',
@@ -34,10 +34,10 @@ export default function FAQPage() {
     },
     {
       question: 'Is my content secure and private?',
-      answer: 'Yes, we take security seriously. DropPR.ai is GDPR, CCPA, and SOC 2 compliant with enterprise-grade security and end-to-end encryption. Your content is protected throughout the entire process.',
+      answer: 'Yes, we take security seriously. Drop PR is GDPR, CCPA, and SOC 2 compliant with enterprise-grade security and end-to-end encryption. Your content is protected throughout the entire process.',
     },
     {
-      question: 'Do I need to sign in with Google to use DropPR.ai?',
+      question: 'Do I need to sign in with Google to use Drop PR?',
       answer: 'Yes, you need to sign in with Google to publish and generate your articles. This ensures secure authentication and allows you to manage your campaigns and track your published articles.',
     },
   ];
@@ -48,7 +48,7 @@ export default function FAQPage() {
         <div className="max-w-3xl mx-auto">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Frequently Asked Questions</h1>
           <p className="text-gray-600 mb-8">
-            Find answers to common questions about DropPR.ai
+            Find answers to common questions about Drop PR
           </p>
 
           <div className="space-y-4">
@@ -85,7 +85,7 @@ export default function FAQPage() {
             </p>
             <a
               href="/contact"
-              className="inline-block bg-[#0A5CFF] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#3B82F6] transition-colors"
+              className="inline-block bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-blue transition-colors"
             >
               Contact Us
             </a>

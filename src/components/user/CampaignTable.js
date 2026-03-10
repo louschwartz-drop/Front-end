@@ -12,6 +12,7 @@ export default function CampaignTable({ campaigns }) {
             awaiting_payment: "bg-indigo-100 text-indigo-700",
             paid: "bg-green-100 text-green-700",
             distributed: "bg-green-100 text-green-700",
+            submitted_successfully: "bg-green-100 text-green-700",
             failed: "bg-red-100 text-red-700",
         };
         return statusColors[status] || "bg-gray-100 text-gray-700";
@@ -26,7 +27,9 @@ export default function CampaignTable({ campaigns }) {
             awaiting_approval: "Awaiting Approval",
             awaiting_payment: "Awaiting Payment",
             paid: "Paid",
+            finished: "Ready for Publish",
             distributed: "Distributed",
+            submitted_successfully: "Submitted Successfully",
             failed: "Failed",
         };
         return labels[status] || status;

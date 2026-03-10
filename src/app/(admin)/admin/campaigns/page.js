@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { adminCampaignService } from "@/lib/api/admin/campaigns";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
@@ -14,7 +15,8 @@ export default function AdminCampaignsPage() {
   const [filters, setFilters] = useState({
     page: 1,
     limit: 20,
-    status: "",
+    page: 1,
+    limit: 20,
     search: "",
   });
   const [pagination, setPagination] = useState({});
@@ -56,7 +58,7 @@ export default function AdminCampaignsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Search
+              Search by Name or Email
             </label>
             <input
               type="text"
@@ -64,37 +66,14 @@ export default function AdminCampaignsPage() {
               onChange={(e) =>
                 setFilters({ ...filters, search: e.target.value, page: 1 })
               }
-              placeholder="Campaign ID..."
+              placeholder="Search by Name or Email..."
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0A5CFF]"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <select
-              value={filters.status}
-              onChange={(e) =>
-                setFilters({ ...filters, status: e.target.value, page: 1 })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0A5CFF]"
-            >
-              <option value="">All Statuses</option>
-              <option value="draft">Draft</option>
-              <option value="uploading">Uploading</option>
-              <option value="transcribing">Transcribing</option>
-              <option value="generating_article">Generating Article</option>
-              <option value="awaiting_approval">Awaiting Approval</option>
-              <option value="awaiting_payment">Awaiting Payment</option>
-              <option value="paid">Paid</option>
-              <option value="distributed">Distributed</option>
-              <option value="failed">Failed</option>
-            </select>
           </div>
           <div className="flex items-end">
             <Button
               onClick={() =>
-                setFilters({ page: 1, limit: 20, status: "", search: "" })
+                setFilters({ page: 1, limit: 20, search: "" })
               }
               variant="outline"
               className="w-full"
@@ -107,10 +86,11 @@ export default function AdminCampaignsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0A5CFF] mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading campaigns...</p>
-          </div>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-12 h-12 border-4 border-[#0A5CFF] border-t-transparent rounded-full"
+          />
         </div>
       ) : (
         <>

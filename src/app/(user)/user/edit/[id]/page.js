@@ -5,6 +5,9 @@ import { useRouter, useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import debounce from "lodash/debounce";
+import PreviewPublishModal from "@/components/user/PreviewPublishModal";
+import FullArticlePreview from "@/components/user/FullArticlePreview";
+import userAuthStore from "@/store/userAuthStore";
 
 export default function EditPage() {
   const router = useRouter();
@@ -15,8 +18,15 @@ export default function EditPage() {
   const [lastSaved, setLastSaved] = useState(null);
   const [regenerating, setRegenerating] = useState(false);
   const [regeneratingAction, setRegeneratingAction] = useState(null);
+  const [headlineRegenerated, setHeadlineRegenerated] = useState(false);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [initialData, setInitialData] = useState(null);
+
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
+  const [isValidated, setIsValidated] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [xprStoryPayload, setXprStoryPayload] = useState(null);
 
   const [editData, setEditData] = useState({
     headline: "",
@@ -31,13 +41,15 @@ export default function EditPage() {
     ctaText: "",
     conclusion: "",
     creatorQuote: "",
+    summary: "",
+    categories: "",
   });
 
   const [productCard, setProductCard] = useState({
     productName: "",
     thumbnail: "",
     affiliateLink: "",
-    creatorAttribution: "",
+    authorName: "",
     sourceVideoLink: "",
   });
 
@@ -47,9 +59,26 @@ export default function EditPage() {
     publisherTier: "Standard",
   });
 
+  const [sourceLinkError, setSourceLinkError] = useState("");
+  const [thumbnailUrlError, setThumbnailUrlError] = useState("");
+  const [affiliateLinkError, setAffiliateLinkError] = useState("");
+
+  const isValidUrl = (str) => {
+    if (!str || typeof str !== "string") return false;
+    try {
+      const u = new URL(str);
+      return u.protocol === "http:" || u.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
   const [showPreview, setShowPreview] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
   const [versions, setVersions] = useState([]);
+
+  const { user } = userAuthStore();
 
   const isLimitReached = versions.length >= 10;
 
@@ -112,6 +141,8 @@ export default function EditPage() {
                 ctaText: campaign.article.ctaText || "",
                 conclusion: campaign.article.conclusion || "",
                 creatorQuote: campaign.article.creatorQuote || "",
+                summary: campaign.article.summary || "",
+                categories: campaign.article.categories || "",
               });
             }
             if (campaign.productCard) {
@@ -119,7 +150,7 @@ export default function EditPage() {
                 productName: campaign.productCard.productName || "",
                 thumbnail: campaign.productCard.thumbnail || "",
                 affiliateLink: campaign.productCard.affiliateLink || "",
-                creatorAttribution: campaign.productCard.creatorAttribution || "",
+                authorName: campaign.productCard.authorName || campaign.productCard.creatorAttribution || user?.name || user?.firstName || "",
                 sourceVideoLink: campaign.productCard.sourceVideoLink || "",
               });
             }
@@ -164,8 +195,22 @@ export default function EditPage() {
       const response = await campaignService.performAiEdit(campaignId, actionId);
 
       if (response.success) {
-        setEditData(response.data.article);
+        setEditData(prev => ({
+          ...prev,
+          headline: response.data.article.headline || "",
+          locationDate: response.data.article.locationDate || "",
+          introduction: response.data.article.introduction || "",
+          body: response.data.article.body || "",
+          productSummary: response.data.article.productSummary || prev.productSummary,
+          ctaText: response.data.article.ctaText || "",
+          conclusion: response.data.article.conclusion || "",
+          creatorQuote: response.data.article.creatorQuote || "",
+          summary: response.data.article.summary || "",
+        }));
         setVersions(response.data.versions);
+        if (actionId === "OPTIMIZE_HEADLINE") {
+          setHeadlineRegenerated(true);
+        }
         toast.success("AI Content Updated with Context!", {
           position: "top-right",
           autoClose: 2000,
@@ -183,7 +228,18 @@ export default function EditPage() {
   };
 
   const handleRestore = (version) => {
-    setEditData(version.article);
+    setEditData(prev => ({
+      ...prev,
+      headline: version.article.headline || "",
+      locationDate: version.article.locationDate || "",
+      introduction: version.article.introduction || "",
+      body: version.article.body || "",
+      productSummary: version.article.productSummary || prev.productSummary,
+      ctaText: version.article.ctaText || "",
+      conclusion: version.article.conclusion || "",
+      creatorQuote: version.article.creatorQuote || "",
+      summary: version.article.summary || "",
+    }));
     setShowVersions(false);
     toast.success("Version restored!");
   };
@@ -213,7 +269,149 @@ export default function EditPage() {
     }
   };
 
-  const isPublishDisabled = !productCard.productName || !productCard.affiliateLink || !editData.ctaText;
+  const handlePublishClick = async () => {
+    // 1. Run Validation First
+    setValidating(true);
+    setValidationErrors([]);
+    try {
+      await userAuthStore.getState().refreshUser();
+      const currentUser = userAuthStore.getState().user;
+
+      const storyId = campaignId || Date.now().toString();
+      const headline = editData.headline || "Untitled Article";
+
+      // Constructing HTML Content (excluding title and summary which are sent explicitly)
+      let htmlContent = "";
+      if (editData.introduction) htmlContent += `<p>${editData.introduction}</p>`;
+      if (editData.body) htmlContent += `<p>${editData.body.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`;
+      if (editData.creatorQuote) {
+        htmlContent += `<blockquote><p>"${editData.creatorQuote}"</p>`;
+        if (productCard.authorName) {
+          htmlContent += `<footer>— ${productCard.authorName}</footer>`;
+        }
+        htmlContent += `</blockquote>`;
+      }
+      if (productCard.productName) {
+        htmlContent += `<h3>Featured Product: ${productCard.productName}</h3>`;
+        if (productCard.thumbnail) {
+          htmlContent += `<img src="${productCard.thumbnail}" alt="${productCard.productName}" />`;
+        }
+        if (productCard.affiliateLink) {
+          htmlContent += `<p>Product Page: <a href="${productCard.affiliateLink}">${productCard.affiliateLink}</a></p>`;
+        }
+        if (productCard.sourceVideoLink) {
+          htmlContent += `<p>Original Source: <a href="${productCard.sourceVideoLink}">${productCard.sourceVideoLink}</a></p>`;
+        }
+      }
+      if (editData.conclusion) htmlContent += `<p>${editData.conclusion}</p>`;
+
+      const summary = editData.summary || editData.introduction || "";
+      const image = productCard.thumbnail || "";
+      const author = productCard.authorName || currentUser?.name || currentUser?.firstName || "Press Services";
+      const categoriesArray = editData.categories
+        ? editData.categories.split(",").map(c => c.trim()).filter(c => c)
+        : [];
+
+      const xprStoryPayload = {
+        title: headline,
+        summary: summary,
+        content: htmlContent ? `<div>${htmlContent}</div>` : "<div>No Content</div>",
+        link: `https://droppr.ai/article/${storyId}`, // Adjust once actual links are live
+        imageUrl: image,
+        author: author,
+        publishedAt: new Date().toISOString(),
+        guid: storyId,
+      };
+
+      if (categoriesArray.length > 0) {
+        xprStoryPayload.categories = categoriesArray;
+      }
+
+      console.log("XPR Media Payload:", JSON.stringify(xprStoryPayload, null, 2));
+      setXprStoryPayload(xprStoryPayload);
+
+      const xprArticleRelease = (await import("@/lib/api/user/xprArticleRelease")).default;
+      const response = await xprArticleRelease.precheck(xprStoryPayload, campaignId);
+
+      // response format from backend: { success: true, data: { success: false, failedFilters: [], aiAnalysis: {} } }
+      const isBackendSuccess = response?.success;
+      const isXprSuccess = response?.data?.success;
+
+      if (!isBackendSuccess || !isXprSuccess) {
+        const errMsgs = [];
+        const xprData = response?.data;
+
+        if (response?.message && !xprData) {
+          errMsgs.push(response.message);
+        } else if (xprData) {
+          if (xprData.error) errMsgs.push(xprData.error);
+          if (xprData.failedFilters?.length) errMsgs.push(...xprData.failedFilters.map(f => `Filter Failed: ${f}`));
+          if (xprData.aiAnalysis?.summary) errMsgs.push(`AI Feedback: ${xprData.aiAnalysis.summary}`);
+        }
+
+        setValidationErrors(errMsgs.length ? errMsgs : ["Unknown validation error from XPR Media."]);
+        setShowValidationModal(true);
+        setValidating(false);
+        return; // Stop publish flow if invalid
+      }
+
+      // Validation passed, proceed to publish checks
+      const hasCredits = (currentUser?.planCredits || []).some(pc => pc.remainingArticles > 0);
+
+      if (hasCredits) {
+        setShowPublishModal(true);
+      } else {
+        toast.info("No releases available. Redirecting to pricing...");
+        router.push(`/user/pricing/${campaignId}`);
+      }
+    } catch (error) {
+      console.error("Validation failed:", error);
+      toast.error("Failed to validate article.");
+      setValidationErrors([error.message || "Failed to contact validation server."]);
+      setShowValidationModal(true);
+    } finally {
+      setValidating(false);
+    }
+  };
+
+
+
+  const handleConfirmPublish = async (planId = null) => {
+    try {
+      const { pressReleaseService } = await import("@/lib/api/user/press-releases");
+      const response = await pressReleaseService.publish(campaignId, planId, xprStoryPayload);
+
+      if (response.success) {
+        toast.success(response.message || "Published successfully!");
+        await userAuthStore.getState().refreshUser();
+        setShowPublishModal(false);
+        router.push("/user/dashboard/press-releases");
+      } else {
+        toast.error(response.message || "Failed to publish");
+      }
+    } catch (error) {
+      console.error("Publish error:", error);
+      toast.error("Failed to publish campaign");
+      throw error;
+    }
+  };
+
+  const isPublishDisabled =
+    !editData.headline?.trim() ||
+    !editData.introduction?.trim() ||
+    !editData.summary?.trim() ||
+    !editData.creatorQuote?.trim() ||
+    !editData.body?.trim() ||
+    !editData.conclusion?.trim() ||
+    !editData.ctaText?.trim() ||
+    !productCard.productName?.trim() ||
+    !productCard.thumbnail?.trim() ||
+    !productCard.affiliateLink?.trim() ||
+    !productCard.authorName?.trim() ||
+    !productCard.sourceVideoLink?.trim() ||
+    !isValidUrl(productCard.thumbnail) ||
+    !isValidUrl(productCard.affiliateLink) ||
+    !isValidUrl(productCard.sourceVideoLink);
 
   if (loading) {
     return (
@@ -221,7 +419,7 @@ export default function EditPage() {
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
+          className="w-12 h-12 border-4 border-[#0A5CFF] border-t-transparent rounded-full"
         />
       </div>
     );
@@ -230,46 +428,47 @@ export default function EditPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Top Navigation Bar */}
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 px-2 sm:px-4 py-3 flex items-center justify-between shadow-sm flex-wrap gap-2">
-        <div className="flex items-center gap-4">
-          <button onClick={() => router.back()} className="text-gray-500 hover:text-gray-700">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 px-0 sm:px-3 md:px-4 py-3 flex items-center justify-around sm:justify-between shadow-sm">
+        <div className="flex items-center sm:gap-2 md:gap-4">
+          <button onClick={() => router.back()} className="text-gray-500 hover:text-gray-700 p-1 md:p-0">
+            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-xl font-bold text-gray-900 hidden sm:block">Editor</h1>
-          <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
-          <div className="text-[10px] sm:text-xs text-gray-500">
-            {lastSaved ? `Saved ${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : "Ready"}
+          <h1 className="text-lg md:text-xl font-bold text-gray-900 hidden sm:block">Editor</h1>
+          <div className="h-6 w-[1px] bg-gray-200 hidden sm:block"></div>
+          <div className="text-[10px] md:text-xs text-gray-500 max-w-[120px] sm:max-w-none truncate">
+            {lastSaved ? `Auto-saved at ${lastSaved.toLocaleTimeString()}` : "Ready to edit"}
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-3">
+        <div className="flex items-center sm:gap-2 md:gap-3">
           <button
             onClick={() => setShowVersions(true)}
-            className="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-1 sm:gap-2"
+            className="p-1 sm:p-2 md:px-4 md:py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-2"
+            title="History"
           >
-            <span className="hidden xs:inline">Versions</span> ({versions.length})
+            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="hidden sm:inline">Versions ({versions.length})</span>
+            <span className="sm:hidden text-xs font-bold text-gray-500">({versions.length})</span>
           </button>
           <button
             onClick={() => setShowPreview(true)}
-            className="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-primary hover:bg-blue-50 rounded-lg"
+            className="p-1 sm:p-2 md:px-4 md:py-2 text-sm font-medium text-[#0A5CFF] hover:bg-blue-50 rounded-lg flex items-center gap-2"
+            title="Preview"
           >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
             <span className="hidden sm:inline">Preview Look</span>
-            <span className="sm:hidden">Preview</span>
-          </button>
-          <button
-            disabled={isPublishDisabled}
-            onClick={() => router.push(`/user/pricing/${campaignId}`)}
-            className={`px-3 sm:px-5 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${isPublishDisabled ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-primary text-white hover:bg-blue-600 shadow-lg shadow-blue-200"
-              }`}
-          >
-            Publish
           </button>
         </div>
       </nav>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-2 sm:px-4 py-8">
         {/* Limit Warning Banner */}
         {isLimitReached && (
           <motion.div
@@ -305,7 +504,7 @@ export default function EditPage() {
                       value={value}
                       onChange={(e) => setContext({ ...context, [key]: e.target.value })}
                       className="text-xs font-semibold text-blue-600 bg-transparent border-none focus:ring-0 p-0 pr-6 appearance-none cursor-pointer"
-                      disabled={isLimitReached}
+                      disabled={isLimitReached || regenerating}
                     >
                       {contextOptions[key].map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
@@ -332,6 +531,7 @@ export default function EditPage() {
                 disabled={isLimitReached}
                 onAiAction={() => handleRegenerate("OPTIMIZE_HEADLINE")}
                 aiLabel={regenerating && regeneratingAction === "OPTIMIZE_HEADLINE" ? "Optimizing..." : "Optimize Headline"}
+                aiDisabled={regenerating}
               >
                 <input
                   value={editData.headline}
@@ -342,16 +542,7 @@ export default function EditPage() {
                 />
               </SectionCard>
 
-              {/* Location/Date Section */}
-              <SectionCard label="Location | Date" disabled={isLimitReached}>
-                <input
-                  value={editData.locationDate}
-                  disabled={isLimitReached}
-                  onChange={(e) => setEditData({ ...editData, locationDate: e.target.value })}
-                  className="w-full text-sm font-semibold text-gray-500 border-none focus:ring-0 p-0 disabled:text-gray-300"
-                  placeholder="Austin, TX | January 28, 2026"
-                />
-              </SectionCard>
+
 
               {/* Lede Section */}
               <SectionCard
@@ -359,6 +550,7 @@ export default function EditPage() {
                 disabled={isLimitReached}
                 onAiAction={() => handleRegenerate("EXPAND_LEDE")}
                 aiLabel={regenerating && regeneratingAction === "EXPAND_LEDE" ? "Expanding..." : "Expand Lede"}
+                aiDisabled={regenerating}
               >
                 <textarea
                   value={editData.introduction}
@@ -370,16 +562,47 @@ export default function EditPage() {
                 />
               </SectionCard>
 
-              {/* Creator Quote Section */}
-              <SectionCard label="Creator Quote" disabled={isLimitReached}>
+              {/* Summary Section (Required by XPR Media) */}
+              <SectionCard
+                label="Press Release Summary"
+                disabled={isLimitReached}
+              >
                 <textarea
-                  value={editData.creatorQuote}
+                  value={editData.summary}
                   disabled={isLimitReached}
-                  onChange={(e) => setEditData({ ...editData, creatorQuote: e.target.value })}
+                  onChange={(e) => setEditData({ ...editData, summary: e.target.value })}
                   rows={2}
-                  className="w-full text-gray-700 border-none focus:ring-0 p-0 resize-none italic font-serif disabled:text-gray-400"
-                  placeholder="An authentic quote from the video..."
+                  maxLength={250}
+                  className="w-full text-gray-700 leading-relaxed border-none focus:ring-0 p-0 resize-none disabled:text-gray-400"
+                  placeholder="A concise summary of the article (max 200-250 chars). Requires for XPR Media..."
                 />
+                <div className="flex justify-end mt-1">
+                  <span className={`text-[10px] ${editData.summary?.length > 200 ? 'text-amber-500' : 'text-gray-400'}`}>
+                    {editData.summary?.length || 0} / 250
+                  </span>
+                </div>
+              </SectionCard>
+
+              <SectionCard
+                label="Creator Quote"
+                disabled={isLimitReached}
+              >
+                <div className="space-y-3">
+                  <textarea
+                    value={editData.creatorQuote}
+                    disabled={isLimitReached}
+                    onChange={(e) => setEditData({ ...editData, creatorQuote: e.target.value })}
+                    rows={2}
+                    className="w-full text-gray-700 border-none focus:ring-0 p-0 resize-none italic font-serif disabled:text-gray-400"
+                    placeholder="An authentic quote from the video..."
+                  />
+                  {productCard.authorName && (
+                    <div className="flex items-center gap-2 pt-2 border-t border-gray-50">
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Attributed to:</span>
+                      <span className="text-[10px] font-bold text-[#0A5CFF]">{productCard.authorName}</span>
+                    </div>
+                  )}
+                </div>
               </SectionCard>
 
               {/* Body Content Section */}
@@ -388,8 +611,10 @@ export default function EditPage() {
                 disabled={isLimitReached}
                 onAiAction={() => handleRegenerate("IMPROVE_NARRATIVE_FLOW")}
                 aiLabel={regenerating && regeneratingAction === "IMPROVE_NARRATIVE_FLOW" ? "Improving..." : "Improve Narrative Flow"}
+                aiDisabled={regenerating}
                 secondaryAction={() => handleRegenerate("CONDENSE_BODY")}
                 secondaryLabel={regenerating && regeneratingAction === "CONDENSE_BODY" ? "Condensing..." : "Condense Body"}
+                secondaryDisabled={headlineRegenerated || regenerating}
               >
                 <textarea
                   value={editData.body}
@@ -419,16 +644,17 @@ export default function EditPage() {
                 disabled={isLimitReached}
                 onAiAction={() => handleRegenerate("OPTIMIZE_FOR_CONVERSION")}
                 aiLabel={regenerating && regeneratingAction === "OPTIMIZE_FOR_CONVERSION" ? "Optimizing..." : "Optimize for Conversion"}
+                aiDisabled={regenerating}
               >
                 <div className="flex flex-col gap-4">
                   <input
                     value={editData.ctaText}
                     disabled={isLimitReached}
                     onChange={(e) => setEditData({ ...editData, ctaText: e.target.value })}
-                    className="w-full font-bold text-[#0A5CFF] border border-blue-100 rounded-lg p-3 bg-blue-50/20 disabled:text-blue-300 disabled:border-gray-100 disabled:bg-gray-50"
+                    className="w-full text-[12px] sm:text-[15px] font-bold text-[#0A5CFF] border border-blue-100 rounded-lg p-2 sm:p-3 bg-blue-50/20 disabled:text-blue-300 disabled:border-gray-100 disabled:bg-gray-50"
                     placeholder="Buy [Product Name] Today..."
                   />
-                  <div className="p-4 rounded-xl border-2 border-dashed border-gray-100 bg-gray-50 flex items-center justify-center">
+                  <div className="p-2 sm:p-4 text-[15px] sm:text-normal rounded-xl border-2 border-dashed border-gray-100 bg-gray-50 flex items-center justify-center">
                     <button className="px-6 py-2 bg-[#0A5CFF] text-white font-bold rounded shadow-md pointer-events-none opacity-50">
                       {editData.ctaText || "CTA Button Preview"}
                     </button>
@@ -472,28 +698,81 @@ export default function EditPage() {
                   </div>
                   <input
                     value={productCard.thumbnail}
-                    onChange={(e) => setProductCard({ ...productCard, thumbnail: e.target.value })}
-                    className="w-full text-xs font-semibold text-gray-900 bg-gray-50/50 border border-gray-200 rounded-lg px-3 py-2.5 focus:bg-white focus:ring-1 focus:ring-blue-100 focus:border-blue-300 transition-all outline-none"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setProductCard({ ...productCard, thumbnail: val });
+                      setThumbnailUrlError(val && !isValidUrl(val) ? "Please enter a valid URL (e.g. https://...)" : "");
+                    }}
+                    onBlur={() => {
+                      const val = productCard.thumbnail;
+                      setThumbnailUrlError(val && !isValidUrl(val) ? "Please enter a valid URL (e.g. https://...)" : "");
+                    }}
+                    className={`w-full text-xs font-semibold text-gray-900 bg-gray-50/50 border rounded-lg px-3 py-2.5 focus:bg-white focus:ring-1 transition-all outline-none ${thumbnailUrlError ? "border-red-300 focus:border-red-500 focus:ring-red-200" : "border-gray-200 focus:border-blue-300 focus:ring-blue-100"}`}
                     placeholder="https://..."
                   />
-                  {productCard.thumbnail && (
+                  {thumbnailUrlError && <p className="text-[10px] text-red-500 font-medium mt-1">{thumbnailUrlError}</p>}
+                  {productCard.thumbnail && !thumbnailUrlError && (
                     <div className="mt-2 w-[100px] h-[100px] rounded-lg overflow-hidden border border-gray-100 bg-gray-50 flex-shrink-0">
                       <img src={productCard.thumbnail} alt="Preview" className="w-full h-full object-cover" />
                     </div>
                   )}
                 </div>
 
-                <SidebarField label="Affiliate Link" value={productCard.affiliateLink} onChange={(val) => setProductCard({ ...productCard, affiliateLink: val })} />
-                <SidebarField label="Creator Attribution" value={productCard.creatorAttribution} onChange={(val) => setProductCard({ ...productCard, creatorAttribution: val })} />
-                <SidebarField label="Source Video Link" value={productCard.sourceVideoLink} onChange={(val) => setProductCard({ ...productCard, sourceVideoLink: val })} />
+                <SidebarField
+                  label="Affiliate Link"
+                  value={productCard.affiliateLink}
+                  onChange={(val) => {
+                    setProductCard({ ...productCard, affiliateLink: val });
+                    setAffiliateLinkError(val && !isValidUrl(val) ? "Please enter a valid URL (e.g. https://...)" : "");
+                  }}
+                  error={affiliateLinkError}
+                  placeholder="https://..."
+                />
+                <SidebarField label="Author Name" value={productCard.authorName} onChange={(val) => setProductCard({ ...productCard, authorName: val })} />
 
-                <div className="pt-4 mt-4 border-t border-gray-100">
+                <SidebarField
+                  label="Source Video Link"
+                  value={productCard.sourceVideoLink}
+                  onChange={(val) => {
+                    setProductCard({ ...productCard, sourceVideoLink: val });
+                    setSourceLinkError(val && !isValidUrl(val) ? "Please enter a valid URL (e.g. https://...)" : "");
+                  }}
+                  error={sourceLinkError}
+                  placeholder="https://..."
+                />
+
+                <SidebarField
+                  label="Categories (comma separated)"
+                  value={editData.categories}
+                  onChange={(val) => setEditData({ ...editData, categories: val })}
+                  placeholder="e.g. Technology, Health, Startups"
+                />
+
+                <div className="pt-4 mt-4 border-t border-gray-100 flex flex-col gap-3">
                   <div className="bg-blue-50 rounded-lg p-3 flex items-start gap-3">
                     <div className="h-5 w-5 text-blue-500 mt-0.5">ℹ️</div>
                     <p className="text-[10px] text-blue-700 leading-normal">
-                      Publishing is disabled until Name, Affiliate Link, and CTA are complete. AI edits implicitly reference this card.
+                      Publishing is disabled until all required fields are complete and URLs are valid. Categories are optional. The article will be validated upon publishing.
                     </p>
                   </div>
+
+                  <button
+                    disabled={isPublishDisabled || validating}
+                    onClick={handlePublishClick}
+                    className={`w-full py-2.5 rounded-xl font-bold text-sm transition-all shadow-md flex justify-center items-center gap-2 ${isPublishDisabled || validating
+                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-600 to-[#0A5CFF] text-white hover:shadow-lg focus:ring-4 focus:ring-blue-100"
+                      }`}
+                  >
+                    {validating ? (
+                      <>
+                        <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                        Validating...
+                      </>
+                    ) : (
+                      "Publish Article"
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
@@ -501,84 +780,56 @@ export default function EditPage() {
         </div>
       </div>
 
-      {/* Preview Modal */}
+      {/* Validation Modal */}
       <AnimatePresence>
-        {showPreview && (
+        {showValidationModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setShowPreview(false)}
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+              onClick={() => setShowValidationModal(false)}
             />
             <motion.div
-              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-              className="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-12 article-preview"
+              initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
+              className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-100"
             >
-              <button onClick={() => setShowPreview(false)} className="absolute top-4 right-4 sm:top-6 sm:right-6 text-gray-400 hover:text-gray-600">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-
-              <div className="max-w-2xl mx-auto space-y-6 sm:space-y-8">
-                <h2 className="text-2xl sm:text-4xl font-extrabold text-gray-900 leading-tight">{editData.headline}</h2>
-                <p className="text-sm font-bold text-gray-500 border-b border-gray-100 pb-4">{editData.locationDate}</p>
-
-                <div className="text-base sm:text-lg text-gray-700 leading-relaxed font-medium">{editData.introduction}</div>
-
-                <div className="text-base sm:text-lg text-gray-700 leading-loose space-y-6 whitespace-pre-wrap">{editData.body}</div>
-
-                {/* Creator Quote Section */}
-                {editData.creatorQuote && (
-                  <div className="py-6 sm:py-8 border-y border-gray-100 italic text-lg sm:text-xl text-gray-800 text-center leading-relaxed font-serif">
-                    "{editData.creatorQuote}"
-                  </div>
-                )}
-
-                {/* Preview Product Block */}
-                <div className="bg-gray-50 rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-gray-100 my-6 sm:my-10">
-                  <span className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 block">Featured Product</span>
-                  <div className="flex flex-col sm:flex-row gap-8">
-                    {productCard.thumbnail && (
-                      <div className="w-24 h-24 rounded-2xl overflow-hidden bg-white shadow-sm shrink-0">
-                        <img src={productCard.thumbnail} alt="Product" className="w-full h-full object-cover" />
-                      </div>
-                    )}
-                    <div className="space-y-2 min-w-0 flex-1">
-                      <h4 className="text-xl font-bold text-gray-900 wrap-break-word">{productCard.productName}</h4>
-                      <p className="text-sm text-gray-600">Category: {editData.productSummary?.category}</p>
-                      <p className="text-sm text-gray-600">Use case: {editData.productSummary?.useCase}</p>
-                      <p className="text-sm text-gray-600">Positioning: {editData.productSummary?.positioning}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h4 className="text-xl sm:text-2xl font-bold text-gray-900">Purchase Information</h4>
-                  <p className="text-gray-600 italic wrap-break-word">If you've seen the video and wondered whether {productCard.productName} could fit into your own routine, product details, pricing, and availability are available through the official product page.</p>
-                  <div className="pt-4 space-y-2 overflow-hidden">
-                    <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">Product Page:</p>
-                    <a
-                      href={productCard.affiliateLink} target="_blank" rel="noopener noreferrer"
-                      className="text-primary underline break-all font-medium block"
-                    >
-                      {productCard.affiliateLink || "[Affiliate Link]"}
-                    </a>
-                  </div>
-                </div>
-
-                <div className="pt-8 border-t border-gray-100 text-sm text-gray-500 flex flex-col gap-4">
-                  <div className="space-y-2 overflow-hidden">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Original Source:</p>
-                    <a href={productCard.sourceVideoLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline break-all block">
-                      {productCard.sourceVideoLink || "Watch original creator video"}
-                    </a>
-                  </div>
-                  <p className="wrap-break-word">{productCard.creatorAttribution && `© ${new Date().getFullYear()} ${productCard.creatorAttribution}`}</p>
-                </div>
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3 bg-red-50/50">
+                <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold">!</div>
+                <h3 className="font-bold text-gray-900 text-lg">Validation Failed</h3>
+              </div>
+              <div className="p-6">
+                <p className="text-sm text-gray-600 mb-4">
+                  Please correct the following issues before publishing to XPR Media:
+                </p>
+                <ul className="space-y-2">
+                  {validationErrors.map((err, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm text-gray-800 bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                      <span className="text-red-500 mt-0.5">•</span>
+                      <span>{err}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <button
+                  onClick={() => setShowValidationModal(false)}
+                  className="px-5 py-2 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition-colors"
+                >
+                  Close & Fix
+                </button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
+
+      {/* Preview Modal */}
+      <FullArticlePreview
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        article={editData}
+        productCard={productCard}
+      />
 
       {/* Versions Modal */}
       <AnimatePresence>
@@ -611,7 +862,7 @@ export default function EditPage() {
                         <p className="text-sm font-bold text-gray-900">Version {versions.length - i}</p>
                         <p className="text-[10px] text-gray-500 uppercase font-semibold">{new Date(v.createdAt).toLocaleString()}</p>
                       </div>
-                      <span className="text-xs text-primary opacity-0 group-hover:opacity-100 font-bold transition-opacity">Restore</span>
+                      <span className="text-xs text-[#0A5CFF] opacity-0 group-hover:opacity-100 font-bold transition-opacity">Restore</span>
                     </button>
                   ))
                 )}
@@ -620,11 +871,21 @@ export default function EditPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Publish Preview Modal */}
+      <PreviewPublishModal
+        isOpen={showPublishModal}
+        onClose={() => setShowPublishModal(false)}
+        campaign={{ _id: campaignId, article: editData, context }}
+        article={editData}
+        onPublish={handleConfirmPublish}
+        storyPayload={xprStoryPayload}
+      />
     </div>
   );
 }
 
-function SectionCard({ label, children, onAiAction, aiLabel, secondaryAction, secondaryLabel, disabled }) {
+function SectionCard({ label, children, onAiAction, aiLabel, aiDisabled, secondaryAction, secondaryLabel, secondaryDisabled, disabled }) {
   return (
     <div className={`bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden group transition-opacity ${disabled ? "opacity-75" : ""}`}>
       <div className="bg-gray-50/50 px-4 py-3 flex items-center justify-between border-b border-gray-100">
@@ -633,8 +894,8 @@ function SectionCard({ label, children, onAiAction, aiLabel, secondaryAction, se
           {onAiAction && (
             <button
               onClick={onAiAction}
-              disabled={disabled}
-              className="bg-white border border-blue-200 text-[#0A5CFF] text-[10px] font-bold px-3 py-1 rounded-full hover:bg-blue-50 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={disabled || aiDisabled}
+              className="bg-white border border-blue-200 text-[#0A5CFF] text-[9px] sm:text-[10px] font-bold px-1 sm:px-3 py-1 rounded-full hover:bg-blue-50 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {aiLabel}
             </button>
@@ -642,8 +903,8 @@ function SectionCard({ label, children, onAiAction, aiLabel, secondaryAction, se
           {secondaryAction && (
             <button
               onClick={secondaryAction}
-              disabled={disabled}
-              className="bg-white border border-gray-200 text-gray-600 text-[10px] font-bold px-3 py-1 rounded-full hover:bg-gray-50 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={disabled || secondaryDisabled}
+              className="bg-white border border-gray-200 text-gray-600 text-[9px] sm:text-[10px] font-bold px-1 sm:px-3 py-1 rounded-full hover:bg-gray-50 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {secondaryLabel}
             </button>
@@ -655,15 +916,20 @@ function SectionCard({ label, children, onAiAction, aiLabel, secondaryAction, se
   );
 }
 
-function SidebarField({ label, value, onChange }) {
+function SidebarField({ label, value, onChange, error, placeholder }) {
   return (
     <div className="space-y-1">
       <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider">{label}</label>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full text-xs font-semibold text-gray-900 bg-gray-50/50 border border-gray-200 rounded-lg px-3 py-2.5 focus:bg-white focus:ring-1 focus:ring-blue-100 focus:border-blue-300 transition-all outline-none"
+        placeholder={placeholder}
+        className={`w-full text-xs font-semibold text-gray-900 bg-gray-50/50 border rounded-lg px-3 py-2.5 focus:bg-white focus:ring-1 transition-all outline-none ${error
+          ? "border-red-300 focus:border-red-500 focus:ring-red-200"
+          : "border-gray-200 focus:border-blue-300 focus:ring-blue-100"
+          }`}
       />
+      {error && <p className="text-[10px] text-red-500 font-medium">{error}</p>}
     </div>
   );
 }

@@ -48,8 +48,8 @@ export const campaignService = {
     },
 
     // Get all campaigns for a user
-    getUserCampaigns: async (userId) => {
-        const response = await api.get(`/user/campaigns?userId=${userId}`);
+    getUserCampaigns: async (params) => {
+        const response = await api.get(`/user/campaigns`, { params });
         return response.data;
     },
 
@@ -123,5 +123,22 @@ export const campaignService = {
     deleteCampaign: async (campaignId) => {
         const response = await api.delete(`/user/campaigns/${campaignId}`);
         return response.data;
+    },
+
+    // Publish campaign (consumes credit)
+    publishCampaign: async (campaignId, planId = null) => {
+        try {
+            const response = await api.post(`/user/campaigns/${campaignId}/publish`, { campaignId, planId });
+            return response.data;
+        } catch (error) {
+            if (error.response && error.response.status === 403) {
+                return {
+                    success: false,
+                    message: error.response.data.message,
+                    needsPayment: true
+                };
+            }
+            throw error;
+        }
     },
 };

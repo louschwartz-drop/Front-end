@@ -3,9 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import { supportService } from "@/lib/api/user/support";
+import userAuthStore from "@/store/userAuthStore";
 
 export default function ContactPage() {
   const router = useRouter();
+  const { user } = userAuthStore();
   const [formData, setFormData] = useState({
     firstName: "",
     email: "",
@@ -13,8 +16,6 @@ export default function ContactPage() {
     jobTitle: "",
     howFound: "",
     salesperson: "",
-    currentNewswire: [],
-    otherNewswire: "",
     pressReleaseVolume: "below 5",
     pressPer: "per month",
     lookingFor: "",
@@ -23,64 +24,44 @@ export default function ContactPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [showSalesperson, setShowSalesperson] = useState(false);
-  const [showOtherNewswire, setShowOtherNewswire] = useState(false);
-
-  const handleCheckboxChange = (value) => {
-    const currentValues = formData.currentNewswire;
-    if (currentValues.includes(value)) {
-      setFormData({
-        ...formData,
-        currentNewswire: currentValues.filter((item) => item !== value),
-      });
-    } else {
-      setFormData({
-        ...formData,
-        currentNewswire: [...currentValues, value],
-      });
-    }
-
-    if (value === "Others") {
-      setShowOtherNewswire(!showOtherNewswire);
-      if (showOtherNewswire) {
-        setFormData({ ...formData, otherNewswire: "" });
-      }
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
 
     try {
-      // Add your API call here
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const payload = {
+        ...formData,
+        userId: user?._id || user?.id || null,
+      };
 
-      toast.success(
-        "Thank you for your enquiry! Our sales team will contact you within 24 hours.",
-        {
-          position: "top-right",
-          autoClose: 4000,
-        },
-      );
+      const response = await supportService.addSupportTicket(payload);
 
-      // Reset form
-      setFormData({
-        firstName: "",
-        email: "",
-        company: "",
-        jobTitle: "",
-        howFound: "",
-        salesperson: "",
-        currentNewswire: [],
-        otherNewswire: "",
-        pressReleaseVolume: "below 5",
-        pressPer: "per month",
-        lookingFor: "",
-        measureSuccess: "",
-        otherComments: "",
-      });
-      setShowSalesperson(false);
-      setShowOtherNewswire(false);
+      if (response.success) {
+        toast.success(
+          "Thank you for your enquiry! Our sales team will contact you within 24 hours.",
+          {
+            position: "top-right",
+            autoClose: 4000,
+          },
+        );
+
+        // Reset form
+        setFormData({
+          firstName: "",
+          email: "",
+          company: "",
+          jobTitle: "",
+          howFound: "",
+          salesperson: "",
+          pressReleaseVolume: "below 5",
+          pressPer: "per month",
+          lookingFor: "",
+          measureSuccess: "",
+          otherComments: "",
+        });
+        setShowSalesperson(false);
+      }
     } catch (error) {
       console.error("Error submitting contact form:", error);
       toast.error(
@@ -97,7 +78,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-gray-50">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-5 gap-8 xl:gap-12">
@@ -115,8 +96,8 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                  Interested in our services? Chat with our sales representative
-                  and explore how DropPR.ai can work for you.
+                  Interested in our services? Chat with one of our sales
+                  representatives to explore how Drop PR can work for you.
                 </p>
               </div>
 
@@ -140,7 +121,7 @@ export default function ContactPage() {
                       </svg>
                     </div>
                     <p className="text-sm text-gray-700 leading-relaxed">
-                      Chat with our sales representatives to see how DropPR.ai
+                      Chat with our sales representatives to see how Drop PR
                       can enhance your brand and make sure you're getting the
                       most value
                     </p>
@@ -149,7 +130,7 @@ export default function ContactPage() {
 
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                   <div className="flex gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 bg-brand-blue/10 rounded-lg flex items-center justify-center">
+                    <div className="shrink-0 w-12 h-12 bg-brand-blue/10 rounded-lg flex items-center justify-center">
                       <svg
                         className="w-6 h-6 text-brand-blue"
                         fill="none"
@@ -173,7 +154,7 @@ export default function ContactPage() {
 
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                   <div className="flex gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 bg-brand-blue/10 rounded-lg flex items-center justify-center">
+                    <div className="shrink-0 w-12 h-12 bg-brand-blue/10 rounded-lg flex items-center justify-center">
                       <svg
                         className="w-6 h-6 text-brand-blue"
                         fill="none"
@@ -196,24 +177,6 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              {/* Trusted By Section - Hidden on mobile, visible on desktop */}
-              <div className="hidden lg:block">
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-                  Trusted by leading companies
-                </h3>
-                <div className="flex flex-wrap items-center gap-6 opacity-60">
-                  <div className="text-gray-400 font-bold text-lg">
-                    Business Insider
-                  </div>
-                  <div className="text-gray-400 font-bold text-lg">
-                    VentureBeat
-                  </div>
-                  <div className="text-gray-400 font-bold text-lg">
-                    Entrepreneur
-                  </div>
-                  <div className="text-gray-400 font-bold text-lg">Forbes</div>
-                </div>
-              </div>
             </div>
 
             {/* Right Section - Form */}
@@ -365,52 +328,6 @@ export default function ContactPage() {
                     </div>
                   </div>
 
-                  {/* Current Service Provider */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Are you currently using similar services?{" "}
-                      <span className="text-brand-blue">*</span>
-                    </label>
-                    <div className="space-y-3">
-                      {[
-                        "None",
-                        "Competitor A",
-                        "Competitor B",
-                        "Competitor C",
-                        "Others",
-                      ].map((option) => (
-                        <label
-                          key={option}
-                          className="flex items-center gap-3 cursor-pointer group"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.currentNewswire.includes(option)}
-                            onChange={() => handleCheckboxChange(option)}
-                            className="w-5 h-5 text-brand-blue border-gray-300 rounded focus:ring-2 focus:ring-brand-blue cursor-pointer"
-                          />
-                          <span className="text-gray-700 group-hover:text-brand-blue transition-colors">
-                            {option}
-                          </span>
-                        </label>
-                      ))}
-                      {showOtherNewswire && (
-                        <input
-                          type="text"
-                          value={formData.otherNewswire}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              otherNewswire: e.target.value,
-                            })
-                          }
-                          placeholder="Please state"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all ml-8"
-                        />
-                      )}
-                    </div>
-                  </div>
-
                   {/* Divider */}
                   <hr className="border-gray-200 my-8" />
 
@@ -443,7 +360,7 @@ export default function ContactPage() {
                           <option value="100">100</option>
                           <option value="200">200</option>
                           <option value="300">300</option>
-                          <option value="500+">500+</option>
+                          <option value="1500+">1500+</option>
                         </select>
                         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                           <svg

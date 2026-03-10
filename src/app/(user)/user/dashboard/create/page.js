@@ -159,7 +159,7 @@ export default function CreateCampaignPage() {
       if (!user) {
         toast.error("Please login to continue");
         setUploading(false);
-        router.push("/login");
+        router.push("/");
         return;
       }
 
@@ -259,13 +259,13 @@ export default function CreateCampaignPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={`p-4 border-2 rounded-lg transition-all ${uploadMethod === "upload"
-                ? "border-primary bg-blue-50"
+                ? "border-[#0A5CFF] bg-blue-50"
                 : "border-gray-300 hover:border-gray-400"
                 }`}
             >
               <div className="flex items-center gap-3">
                 <svg
-                  className="w-6 h-6 text-primary"
+                  className="w-6 h-6 text-[#0A5CFF]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -293,13 +293,13 @@ export default function CreateCampaignPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={`p-4 border-2 rounded-lg transition-all ${uploadMethod === "link"
-                ? "border-primary bg-blue-50"
+                ? "border-[#0A5CFF] bg-blue-50"
                 : "border-gray-300 hover:border-gray-400"
                 }`}
             >
               <div className="flex items-center gap-3">
                 <svg
-                  className="w-6 h-6 text-primary"
+                  className="w-6 h-6 text-[#0A5CFF]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -389,8 +389,7 @@ export default function CreateCampaignPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="text-gray-900 font-medium truncate max-w-full px-4"
-                        title={videoFile.name}
+                        className="text-gray-900 font-medium"
                       >
                         {videoFile.name}
                       </motion.p>
@@ -448,7 +447,7 @@ export default function CreateCampaignPage() {
                         onClick={() => fileInputRef.current?.click()}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="text-primary hover:text-brand-blue font-medium"
+                        className="text-[#0A5CFF] hover:text-[#3B82F6] font-medium"
                       >
                         browse files
                       </motion.button>
@@ -508,7 +507,7 @@ export default function CreateCampaignPage() {
                 value={videoLink}
                 onChange={(e) => setVideoLink(e.target.value)}
                 placeholder="https://youtube.com/watch?v=... or https://tiktok.com/@... or https://instagram.com/p/..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0A5CFF]"
                 required
                 whileFocus={{ scale: 1.01 }}
                 transition={{ duration: 0.2 }}
@@ -538,7 +537,7 @@ export default function CreateCampaignPage() {
               type="submit"
               variant="primary"
               disabled={uploading}
-              className="bg-primary hover:bg-brand-blue"
+              className="bg-[#0A5CFF] hover:bg-[#3B82F6]"
             >
               {uploading ? "Creating Campaign..." : "Create Campaign"}
             </Button>

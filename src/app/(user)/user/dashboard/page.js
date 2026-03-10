@@ -55,6 +55,8 @@ function DashboardContent() {
       transcribing: "bg-yellow-100 text-yellow-700",
       generating: "bg-purple-100 text-purple-700",
       finished: "bg-green-100 text-green-700",
+      published: "bg-green-100 text-green-700",
+      submitted_successfully: "bg-green-100 text-green-700",
       failed: "bg-red-100 text-red-700",
     };
     return statusColors[status] || "bg-gray-100 text-gray-700";
@@ -66,7 +68,9 @@ function DashboardContent() {
       uploaded: "Uploaded",
       transcribing: "Transcribing",
       generating: "Generating",
-      finished: "Finished",
+      finished: "Ready for Publish",
+      published: "Published",
+      submitted_successfully: "Submitted Successfully",
       failed: "Failed",
     };
     return labels[status] || status;
@@ -82,6 +86,19 @@ function DashboardContent() {
       .slice(0, 2);
   };
 
+  if (loading || authLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] py-12">
+        <div className="flex justify-center mb-6">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-100 border-t-primary"></div>
+        </div>
+        <p className="text-gray-600 font-semibold text-lg animate-pulse tracking-wide text-center">
+          Loading Data...
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="bg-linear-to-r from-primary to-brand-blue rounded-xl p-6 mb-6 h-ful text-white shadow-lg">
@@ -94,7 +111,7 @@ function DashboardContent() {
                 className="w-16 h-16 rounded-full border-4 border-white shadow-lg object-cover shrink-0"
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-white/20 shrink-0 flex items-center justify-center text-white text-xl font-bold border-4 border-white shadow-lg">
+              <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-white text-xl font-bold border-4 border-white shadow-lg shrink-0">
                 {getInitials(user?.name)}
               </div>
             )}
@@ -108,7 +125,7 @@ function DashboardContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-linear-to-br from-blue-500 to-blue-600 rounded-lg shadow-md p-4 text-white">
           <div className="flex items-center justify-between">
             <div>
@@ -140,36 +157,23 @@ function DashboardContent() {
         <div className="bg-linear-to-br from-yellow-500 to-yellow-600 rounded-lg shadow-md p-4 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-yellow-100 text-xs mb-1">In Progress</p>
-              <p className="text-2xl font-bold">{stats.inProgress}</p>
+              <p className="text-yellow-100 text-xs mb-1">Total Amount Spent</p>
+              <p className="text-2xl font-bold">${stats.totalAmountSpent || 0}</p>
             </div>
             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-linear-to-br from-green-500 to-green-600 rounded-lg shadow-md p-4 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-100 text-xs mb-1">Distributed</p>
-              <p className="text-2xl font-bold">{stats.distributed}</p>
-            </div>
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
         </div>
 
         <div className="bg-linear-to-br from-red-500 to-red-600 rounded-lg shadow-md p-4 text-white">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between">
             <div>
               <p className="text-red-100 text-xs mb-1">Failed</p>
               <p className="text-2xl font-bold">{stats.failed}</p>
+              <p className="text-red-200 text-[10px] mt-1">Article generation failed</p>
             </div>
             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,16 +208,16 @@ function DashboardContent() {
               <Link
                 key={campaign._id || campaign.id}
                 href={campaign.status === "finished" ? `/user/edit/${campaign._id}` : `/user/processing/${campaign._id}`}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-primary transition-all"
+                className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-primary transition-all"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
                     <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 truncate max-w-[200px] md:max-w-md">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900 truncate">
                       {campaign.article?.headline || `Campaign #${campaign._id?.slice(-8)}`}
                     </p>
                     <p className="text-sm text-gray-600">
@@ -222,23 +226,25 @@ function DashboardContent() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(campaign.status)}`}
                   >
                     {getStatusLabel(campaign.status)}
                   </span>
-                  {campaign.status === "finished" && (
-                    <span className="text-primary text-sm font-semibold flex items-center gap-1">
-                      Edit
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </span>
-                  )}
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <div className="flex items-center gap-4">
+                    {campaign.status === "finished" && (
+                      <span className="text-primary text-sm font-semibold flex items-center gap-1 whitespace-nowrap">
+                        Publish Now
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </span>
+                    )}
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
               </Link>
             ))}

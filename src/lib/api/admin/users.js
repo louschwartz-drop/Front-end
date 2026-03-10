@@ -1,8 +1,8 @@
 import api from "../axios";
 
 export const adminUserService = {
-    getAllUsers: async () => {
-        const response = await api.get("/admin/users");
+    getAllUsers: async (params) => {
+        const response = await api.get("/admin/users", { params });
         return response.data;
     },
     getUserCampaigns: async (userId) => {

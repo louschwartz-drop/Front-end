@@ -12,6 +12,26 @@ const api = axios.create({
   },
 });
 
+// Request interceptor for adding the auth token
+api.interceptors.request.use(
+  (config) => {
+    try {
+      const authStorage = localStorage.getItem("auth-storage");
+      if (authStorage) {
+        const { state } = JSON.parse(authStorage);
+        const token = state?.token;
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      }
+    } catch (error) {
+      console.error("Error setting auth header:", error);
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
 // Response interceptor for handling errors globally
 api.interceptors.response.use(
   (response) => response,

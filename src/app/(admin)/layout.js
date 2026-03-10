@@ -15,19 +15,19 @@ export default function Layout({ children }) {
   }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex w-full">
+    <div className="h-screen w-screen overflow-hidden bg-gray-50 flex">
       {/* Sidebar */}
       <AdminSidebar
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden w-full">
+      {/* Main Layout Container - Fixed positioning like User Dashboard */}
+      <div className="flex-1 flex flex-col min-w-0 h-full">
         {/* Header */}
         <AdminHeader setMobileMenuOpen={setMobileMenuOpen} />
 
-        {/* Page Content */}
+        {/* Page Content - Scrollable */}
         <main className="flex-1 overflow-y-auto bg-gray-50">
           <div className="p-4 sm:p-6 lg:p-8">{children}</div>
         </main>

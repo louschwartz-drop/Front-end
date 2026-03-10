@@ -21,7 +21,7 @@ const testimonials = [
     role: "Content Creator",
     company: "TechVlogs",
     rating: 5,
-    text: "DropPR.ai has transformed how I scale my content. In just 6 months, I've distributed 45 press releases that generated over $180,000 in brand value. The AI-powered article generation saves me hours every week.",
+    text: "Drop PR has transformed how I scale my content. In just 6 months, I've distributed 45 press releases that generated over $180,000 in brand value. The AI-powered article generation saves me hours every week.",
     avatar: "👩‍💼",
   },
   {
@@ -29,7 +29,7 @@ const testimonials = [
     role: "Marketing Director",
     company: "StartupX",
     rating: 5,
-    text: "The distribution network is incredible. Our press releases consistently get picked up by major outlets like TechCrunch and Forbes. DropPR.ai has become essential to our PR strategy.",
+    text: "The distribution network is incredible. Our press releases consistently get picked up by major outlets like TechCrunch and Forbes. Drop PR has become essential to our PR strategy.",
     avatar: "👨‍💼",
   },
   {
@@ -81,8 +81,8 @@ export default function Home() {
 
   return (
     <>
-      <div className="min-h-screen bg-white flex flex-col">
-        <section className="relative min-h-[75vh] flex items-center justify-center overflow-hidden bg-linear-to-br from-primary via-brand-blue to-primary">
+      <div className="min-h-screen bg-white flex flex-col overflow-x-hidden">
+        <section className="relative min-h-[75vh] flex items-center justify-center overflow-x-hidden bg-linear-to-br from-primary via-brand-blue to-primary">
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <motion.div
               className="absolute -top-40 -right-40 w-96 h-96 bg-white rounded-full mix-blend-overlay filter blur-3xl opacity-10"
@@ -125,31 +125,47 @@ export default function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2, duration: 0.6 }}
-                    className="text-4xl sm:text-5xl md:text-6xl  font-extrabold text-white leading-tight mb-6"
+                    className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight mb-2"
                   >
                     Turn Your Videos Into
                     <br />
+                    Published
+                    <br />
                     <span className="relative">
                       <span className="relative z-10">
-                        Publisher-Hosted Press
+                        Press Articles
                       </span>
-                      <motion.div
-                        className="absolute -bottom-5 left-0 w-full h-3 bg-white/30 rounded-full z-0"
-                        initial={{ width: 0 }}
-                        animate={{ width: "100%" }}
-                        transition={{ delay: 0.8, duration: 0.6 }}
-                      />
+                      <div className="absolute -bottom-4 left-0 w-full md:w-[120%] h-[3px] pointer-events-none">
+                        <motion.div
+                          animate={{ opacity: [0.4, 1, 0.4] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                          className="absolute inset-0 bg-linear-to-r from-transparent via-white/80 to-transparent blur-[2px]"
+                        />
+                        <motion.div
+                          animate={{ scaleX: [0.8, 1.2, 0.8], opacity: [0.7, 1, 0.7] }}
+                          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                          className="absolute inset-x-0 top-0 h-full bg-linear-to-r from-transparent via-white to-transparent shadow-[0_0_25px_rgba(255,255,255,1)]"
+                        />
+                      </div>
                     </span>
                   </motion.h1>
 
                   <motion.p
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4, duration: 0.6 }}
-                    className="text-xl sm:text-2xl text-blue-100 mb-5 leading-relaxed"
+                    transition={{ delay: 0.3, duration: 0.6 }}
+                    className="text-xl sm:text-2xl font-bold text-[#fcf9a6] mt-8 mb-6"
                   >
-                    Get your content published on licensed media sites, indexed
-                    for AI search, and visible in traditional news results
+                    Plans starting at $99
+                  </motion.p>
+
+                  <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4, duration: 0.6 }}
+                    className="text-xl sm:text-xl text-blue-100 mb-5 leading-relaxed"
+                  >
+                    Upload a video file or paste a link from YouTube, TikTok, Instagram, or your podcast. We turn it into a published article and distribute it across licensed media sites.
                   </motion.p>
 
                   <motion.div
@@ -184,7 +200,7 @@ export default function Home() {
                       whileTap={{ scale: 0.95 }}
                       className="px-8 sm:px-12 py-4 sm:py-5 bg-white text-primary font-bold text-lg sm:text-xl rounded-xl transition-all shadow-xl hover:shadow-2xl"
                     >
-                      Start Publishing Now
+                      Amplify Your Content
                     </motion.button>
                     <motion.button
                       onClick={() => router.push("/faq")}
@@ -195,30 +211,47 @@ export default function Home() {
                       Learn More
                     </motion.button>
                   </motion.div>
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.0, duration: 0.6 }}
+                    className="text-sm text-blue-200 mt-2 font-medium"
+                  >
+                    No contracts · Plans starting at $99
+                  </motion.p>
                 </motion.div>
 
                 <motion.div
                   initial={{ opacity: 0, x: 30 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3, duration: 0.8 }}
-                  className="relative"
+                  className="relative w-full shadow-2xl rounded-2xl"
                 >
-                  <div className="relative bg-white/10 h-[450px] backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20">
-                    <Image
-                      src="/hero.jpeg"
-                      alt="Content Publishing Dashboard"
-                      fill
-                      className="object-cover rounded-3xl"
-                      priority
-                    />
-                  </div>
+                  <Image
+                    src="/hero3.png"
+                    alt="Content Publishing Dashboard"
+                    width={0}
+                    height={0}
+                    sizes="100vw"
+                    style={{ width: '100%', height: 'auto' }}
+                    className="rounded-2xl"
+                    priority
+                  />
                 </motion.div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="w-full bg-white py-16 border-b border-gray-100 overflow-hidden">
+        <section className="w-full bg-white py-16 relative overflow-x-hidden">
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4/5 h-[2px]">
+            <div className="absolute inset-0 bg-linear-to-r from-transparent via-gray-200 to-transparent" />
+            <motion.div
+              animate={{ opacity: [0.3, 0.9, 0.3], scaleX: [0.9, 1.1, 0.9] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute inset-0 bg-linear-to-r from-transparent via-brand-blue/40 to-transparent blur-[3px]"
+            />
+          </div>
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -228,7 +261,7 @@ export default function Home() {
               className="max-w-6xl mx-auto"
             >
               <p className="text-center text-sm font-semibold text-gray-600 mb-8 uppercase tracking-wider">
-                Trusted by creators and brands worldwide
+                Built for creators, founders, agencies, and growth teams
               </p>
               <div className="relative overflow-hidden">
                 <div className="flex animate-marquee whitespace-nowrap">
@@ -260,7 +293,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="w-full bg-linear-to-b from-white to-gray-50 py-20">
+        <section className="w-full bg-linear-to-b from-white to-gray-50 py-20 overflow-x-hidden">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-6xl mx-auto">
               <motion.div
@@ -302,11 +335,10 @@ export default function Home() {
                 className="text-center mb-16"
               >
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
-                  Why Choose DropPR.ai
+                  Stop Renting Attention. Start Owning Authority.
                 </h2>
                 <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
-                  Everything you need to amplify your content and reach new
-                  audiences worldwide
+                  Social media algorithms are volatile, and post half-lives are shrinking to mere minutes. Drop PR turns your content into &ldquo;Performance PR.&rdquo; By distributing your videos as editorial articles on legacy media sites, you leverage &ldquo;borrowed authority&rdquo; to rank instantly on Google and secure your place as a trusted citation in AI models.
                 </p>
               </motion.div>
 
@@ -314,9 +346,9 @@ export default function Home() {
                 {[
                   {
                     icon: "M13 10V3L4 14h7v7l9-11h-7z",
-                    title: "Lightning Fast",
+                    title: "Lightning Fast Distribution",
                     description:
-                      "Transform your video into a published article in minutes, not days. Our AI-powered pipeline processes content at unprecedented speed.",
+                      "Get your content published across 1500+ media outlets in minutes, not weeks. Our automated pipeline ensures your press releases reach major publications like TechCrunch,",
                   },
                   {
                     icon: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z",
@@ -328,7 +360,7 @@ export default function Home() {
                     icon: "M12 19l9 2-9-18-9 18 9-2zm0 0v-8",
                     title: "Global Distribution",
                     description:
-                      "Publish to 1500+ top-tier media outlets including TechCrunch, Forbes, and Business Insider. Reach audiences you never could before.",
+                      "Publish to 1500+ top-tier national and local media outlets including, Yahoo!, AP, USA Today, TechCrunch, Forbes, and Business Insider. Reach audiences you never could before.",
                   },
                   {
                     icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
@@ -344,9 +376,9 @@ export default function Home() {
                   },
                   {
                     icon: "M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01",
-                    title: "Full Control",
+                    title: "You stay in control",
                     description:
-                      "Edit, refine, and customize every article before publishing. Use AI regeneration for specific sections or manual editing.",
+                      "You approve every article before distribution. We do not publish without your sign-off.",
                   },
                 ].map((feature, index) => (
                   <motion.div
@@ -390,7 +422,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="w-full bg-linear-to-b from-gray-50 to-white py-20">
+        <section className="w-full bg-linear-to-b from-gray-50 to-white py-20 overflow-x-hidden">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-6xl mx-auto">
               <motion.div
@@ -413,23 +445,23 @@ export default function Home() {
                 {[
                   {
                     icon: "M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12",
-                    title: "Upload Your Content",
+                    title: "Drop Your Link",
                     description:
-                      "Share your video or link from YouTube, TikTok, Instagram, or upload directly. Our system supports multiple formats and platforms.",
+                      "Upload a video or paste a link from any major platform. Our system instantly pulls the key content and prepares it for editorial processing.",
                     step: "01",
                   },
                   {
                     icon: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z",
-                    title: "AI Creates Article",
+                    title: "AI Editorial Transformation",
                     description:
-                      "Our advanced AI transcribes, analyzes, and generates a professional press release optimized for media distribution and SEO.",
+                      "Our AI extracts the facts and drafts a clean AP-style article built for publisher approval, search visibility, and AI discovery.",
                     step: "02",
                   },
                   {
                     icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-                    title: "Publish & Distribute",
+                    title: "Publish and Distribute",
                     description:
-                      "Review, edit, and distribute your article to 500+ top media outlets worldwide. Track performance and measure impact.",
+                      "We publish the finished article across our media network and deliver live URLs you can share, cite, and promote.",
                     step: "03",
                   },
                 ].map((step, index) => (
@@ -483,7 +515,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="w-full bg-primary py-20 relative overflow-hidden">
+        <section className="w-full bg-primary py-20 relative overflow-x-hidden">
           <div className="absolute inset-0 bg-linear-to-br from-primary via-brand-dark to-primary opacity-50"></div>
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="max-w-6xl mx-auto">
@@ -498,8 +530,7 @@ export default function Home() {
                   What Our Customers Say
                 </h2>
                 <p className="text-lg text-blue-100 max-w-2xl mx-auto">
-                  Join thousands of creators and brands who trust DropPR.ai for
-                  their PR distribution
+                  Join the creators and brands turning everyday content into real media coverage with Drop PR.
                 </p>
               </motion.div>
 
@@ -579,7 +610,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="w-full bg-linear-to-b from-white via-gray-50 to-white py-24">
+        <section className="w-full bg-linear-to-b from-white via-gray-50 to-white py-24 overflow-x-hidden">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
               <motion.div
@@ -590,10 +621,10 @@ export default function Home() {
                 className="text-center mb-16"
               >
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
-                  Why Creators & Brands Choose DropPR.ai
+                  If you create content, you should publish it as press
                 </h2>
                 <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
-                  Join the revolution in content distribution and PR management
+                  Two powerful use cases. One unstoppable distribution engine.
                 </p>
               </motion.div>
 
@@ -622,13 +653,10 @@ export default function Home() {
                       </svg>
                     </div>
                     <h3 className="text-2xl md:text-3xl font-bold mb-4">
-                      Lightning Fast Distribution
+                      For Creators & Affiliates: Evergreen Amplification
                     </h3>
                     <p className="text-blue-100 leading-relaxed text-lg">
-                      Get your content published across 500+ media outlets in
-                      minutes, not weeks. Our automated pipeline ensures your
-                      press releases reach major publications like TechCrunch,
-                      Forbes, and Business Insider instantly.
+                      Turn your product reviews and insights into high-DA citations. Replace disappearing social feeds with search-indexed media that drives traffic to your affiliate links for years. Turn audience momentum into authority.
                     </p>
                   </div>
                   <div className="flex items-center gap-4 pt-6 border-t border-white/20">
@@ -661,12 +689,10 @@ export default function Home() {
                       </svg>
                     </div>
                     <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-                      Enterprise-Grade Security
+                      For Brands: Feed the LLMs
                     </h3>
                     <p className="text-gray-600 leading-relaxed text-lg">
-                      Your content is protected with end-to-end encryption, GDPR
-                      & CCPA compliance, and SOC 2 certified infrastructure.
-                      Trusted by Fortune 500 companies and startups alike.
+                      AI models like ChatGPT and Perplexity prioritize mentions from authoritative media outlets. Drop PR guarantees your brand and creator-led campaigns are surfaced in AI search results by embedding them in the trusted publisher data sets that LLMs rely on. Support product launches with indexed coverage that drives traffic.
                     </p>
                   </div>
                   <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
@@ -740,7 +766,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="w-full bg-linear-to-br from-primary to-brand-blue py-20">
+        <section className="w-full bg-linear-to-br from-primary to-brand-blue py-20 overflow-x-hidden">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto text-center">
               <motion.div
@@ -750,13 +776,25 @@ export default function Home() {
                 transition={{ duration: 0.6 }}
               >
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-6">
-                  Ready to Share Your Story to The World?
+                  Ready to Share Your Story to the World
                 </h2>
-                <p className="text-lg sm:text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
-                  Join creators and brands who are amplifying their content with
-                  DropPR.ai. Start publishing today and reach millions of
-                  readers worldwide.
+                <p className="text-lg sm:text-xl text-blue-100 mb-6 max-w-2xl mx-auto">
+                  Join creators and brands who are amplifying their content with Drop PR. Start publishing today and reach millions of readers worldwide.
                 </p>
+                <div className="flex flex-col items-center gap-2 mb-10 text-white font-medium text-lg">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Fast turnaround
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Transparent distribution
+                  </div>
+                </div>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <motion.button
                     onClick={handleDropprClick}
@@ -764,7 +802,7 @@ export default function Home() {
                     whileTap={{ scale: 0.95 }}
                     className="px-8 sm:px-12 py-4 sm:py-5 bg-white text-primary font-bold text-lg sm:text-xl rounded-xl transition-all shadow-xl hover:shadow-2xl"
                   >
-                    Start Publishing Now
+                    Amplify Your Content
                   </motion.button>
                   <motion.button
                     onClick={() => router.push("/contact")}

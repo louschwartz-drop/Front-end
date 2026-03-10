@@ -4,13 +4,22 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
+import { campaignService } from "@/lib/api/user/campaigns";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import PreviewPublishModal from "@/components/user/PreviewPublishModal";
+import FullArticlePreview from "@/components/user/FullArticlePreview";
+import userAuthStore from "@/store/userAuthStore";
+import Button from "@/components/ui/Button";
 
 export default function CampaignsPage() {
     const router = useRouter();
     const [campaigns, setCampaigns] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("all");
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalResults, setTotalResults] = useState(0);
     const [deleteModal, setDeleteModal] = useState({
         show: false,
         campaignId: null,
@@ -20,17 +29,33 @@ export default function CampaignsPage() {
         text: "",
         title: "",
     });
+    const [previewModal, setPreviewModal] = useState({
+        show: false,
+        campaign: null,
+    });
+    const [fullPreview, setFullPreview] = useState({
+        show: false,
+        campaign: null,
+    });
+
+    const { user } = userAuthStore();
 
     useEffect(() => {
-        fetchCampaigns();
+        const timeoutId = setTimeout(() => {
+            fetchCampaigns();
+        }, searchTerm ? 500 : 0);
 
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm, currentPage]);
+
+    useEffect(() => {
         // Poll for active campaigns every 3 seconds
         const pollInterval = setInterval(() => {
             fetchCampaigns(true); // Silent refresh
         }, 3000);
 
         return () => clearInterval(pollInterval);
-    }, []);
+    }, [searchTerm, currentPage]); // Re-start interval when params change if needed
 
     const fetchCampaigns = async (silent = false) => {
         try {
@@ -38,17 +63,26 @@ export default function CampaignsPage() {
             const user = userAuthStore.getState().user;
 
             if (!user) {
-                router.push("/login");
+                router.push("/");
                 return;
             }
 
             const userId = user._id || user.id;
 
             const { campaignService } = await import("@/lib/api/user/campaigns");
-            const response = await campaignService.getUserCampaigns(userId);
+            const response = await campaignService.getUserCampaigns({
+                userId,
+                page: currentPage,
+                limit: 12,
+                search: searchTerm
+            });
 
             if (response.success) {
                 setCampaigns(response.data);
+                if (response.pagination) {
+                    setTotalPages(response.pagination.totalPages);
+                    setTotalResults(response.pagination.total);
+                }
             }
         } catch (error) {
             if (!silent) {
@@ -108,7 +142,9 @@ export default function CampaignsPage() {
             uploaded: { color: "bg-blue-500", label: "Uploaded" },
             transcribing: { color: "bg-yellow-500", label: "Transcribing" },
             generating: { color: "bg-purple-500", label: "Generating" },
-            finished: { color: "bg-green-500", label: "Finished" },
+            finished: { color: "bg-green-500", label: "Ready for Publish" },
+            published: { color: "bg-green-600", label: "Published" },
+            submitted_successfully: { color: "bg-green-600", label: "Submitted Successfully" },
             failed: { color: "bg-red-500", label: "Failed" },
         };
 
@@ -123,6 +159,50 @@ export default function CampaignsPage() {
         );
     };
 
+    const handlePublish = async (campaignId) => {
+        // Refresh user data first to ensure we have latest credit count
+        await userAuthStore.getState().refreshUser();
+
+        const currentUser = userAuthStore.getState().user;
+        const hasCredits = (currentUser?.planCredits || []).some(pc => pc.remainingArticles > 0);
+
+        console.log('Publish Clicked:', {
+            campaignId,
+            hasCredits,
+            user: currentUser
+        });
+
+        // Check if user has available releases
+        const campaign = campaigns.find(c => c._id === campaignId);
+
+        if (!hasCredits) {
+            toast.info("No releases available. You can purchase a plan from the publish preview window.");
+        }
+
+        setPreviewModal({ show: true, campaign });
+    };
+
+    const handlePublishConfirm = async (planId = null) => {
+        try {
+            const { pressReleaseService } = await import("@/lib/api/user/press-releases");
+            const response = await pressReleaseService.publish(previewModal.campaign._id, planId);
+
+            if (response.success) {
+                toast.success(response.message || "Published successfully!");
+                // Update local user store to reflect consumed credit
+                await userAuthStore.getState().refreshUser();
+                setPreviewModal({ show: false, campaign: null });
+                fetchCampaigns();
+            } else {
+                toast.error(response.message || "Failed to publish");
+            }
+        } catch (error) {
+            console.error("Publish error:", error);
+            toast.error("Failed to publish campaign");
+            throw error;
+        }
+    };
+
     const filteredCampaigns = campaigns.filter((campaign) => {
         if (filter === "all") return true;
         if (filter === "active")
@@ -130,6 +210,7 @@ export default function CampaignsPage() {
                 campaign.status,
             );
         if (filter === "finished") return campaign.status === "finished";
+        if (filter === "published") return campaign.status === "published" || campaign.status === "submitted_successfully";
         if (filter === "failed") return campaign.status === "failed";
         return true;
     });
@@ -156,41 +237,70 @@ export default function CampaignsPage() {
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">My Campaigns</h1>
-                        <p className="text-gray-600 mt-2">
+                        <h1 className="md:text-3xl text-xl font-bold text-gray-900">My Campaigns</h1>
+                        <p className="text-gray-600 mt-2 md:text-base text-sm">
                             Manage and track your video campaigns
                         </p>
                     </div>
                     <button
                         onClick={() => router.push("/user/dashboard/create")}
-                        className="px-6 py-3 bg-[#0A5CFF] text-white rounded-lg hover:bg-[#3B82F6] font-semibold shadow-sm"
+                        className="md:px-6 md:py-3 px-3 py-2 bg-[#0A5CFF] text-white rounded-lg hover:bg-[#3B82F6] text-sm md:text-base font-semibold shadow-sm"
                     >
                         + Create Campaign
                     </button>
                 </div>
 
-                {/* Filter Tabs */}
-                <div className="mb-6 flex gap-2 border-b border-gray-200">
-                    {[
-                        { key: "all", label: "All" },
-                        { key: "active", label: "Active" },
-                        { key: "finished", label: "Finished" },
-                        { key: "failed", label: "Failed" },
-                    ].map((tab) => (
-                        <button
-                            key={tab.key}
-                            onClick={() => setFilter(tab.key)}
-                            className={`px-4 py-2 font-medium transition-colors ${filter === tab.key
-                                ? "text-[#0A5CFF] border-b-2 border-[#0A5CFF]"
-                                : "text-gray-600 hover:text-gray-900"
-                                }`}
+                {/* Search and Filter */}
+                <div className="mb-6 space-y-4">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="Search campaigns by headline..."
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary outline-none"
+                        />
+                        <svg
+                            className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
                         >
-                            {tab.label}
-                        </button>
-                    ))}
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
+                        </svg>
+                    </div>
+
+                    <div className="flex gap-1 md:gap-2 border-b border-gray-200">
+                        {[
+                            { key: "all", label: "All" },
+                            { key: "active", label: "Active" },
+                            { key: "finished", label: "Ready for Publish" },
+                            { key: "published", label: "Published" },
+                            { key: "failed", label: "Failed" },
+                        ].map((tab) => (
+                            <button
+                                key={tab.key}
+                                onClick={() => setFilter(tab.key)}
+                                className={` px-1 md:px-4 py-2 font-medium transition-colors ${filter === tab.key
+                                    ? "text-[#0A5CFF] border-b-2 border-[#0A5CFF]"
+                                    : "text-gray-600 hover:text-gray-900"
+                                    }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                {/* Campaigns Table */}
+                {/* Campaigns Cards */}
                 {filteredCampaigns.length === 0 ? (
                     <div className="text-center py-16 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                         <svg
@@ -220,144 +330,188 @@ export default function CampaignsPage() {
                         </button>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredCampaigns.map((campaign) => (
+                            <motion.div
+                                key={campaign._id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 overflow-hidden"
+                            >
+                                {/* Card Header */}
+                                <div className="p-5 border-b border-gray-100">
+                                    <div className="flex items-start justify-between mb-3">
+                                        {getStatusBadge(campaign.status)}
+                                        <span className="text-xs text-gray-500">
+                                            {new Date(campaign.createdAt).toLocaleDateString(
+                                                "en-US",
+                                                {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    year: "numeric",
+                                                },
+                                            )}
+                                        </span>
+                                    </div>
+
+                                    {/* Headline */}
+                                    <div className="mb-2">
+                                        <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
                                             Headline
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        </h3>
+                                        {campaign.article?.headline ? (
+                                            <p className="text-sm font-semibold text-gray-900 line-clamp-2">
+                                                {campaign.article.headline}
+                                            </p>
+                                        ) : (
+                                            <p className="text-sm text-gray-400 italic">
+                                                No headline yet
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Error Message */}
+                                    {campaign.errorMessage && (
+                                        <p className="text-xs text-red-600 mt-2 line-clamp-2">
+                                            {campaign.errorMessage}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Card Body */}
+                                <div className="p-5 space-y-4">
+                                    {/* Transcript */}
+                                    <div>
+                                        <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
                                             Transcript
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Video URL
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Created
-                                        </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {filteredCampaigns.map((campaign) => (
-                                        <motion.tr
-                                            key={campaign._id}
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            className="hover:bg-gray-50 transition-colors"
-                                        >
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {getStatusBadge(campaign.status)}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="max-w-xs">
-                                                    {campaign.article?.headline ? (
-                                                        <p className="text-sm font-medium text-gray-900 truncate">
-                                                            {campaign.article.headline}
-                                                        </p>
-                                                    ) : (
-                                                        <p className="text-sm text-gray-400 italic">
-                                                            No headline yet
-                                                        </p>
-                                                    )}
-                                                    {campaign.errorMessage && (
-                                                        <p className="text-xs text-red-600 mt-1">
-                                                            {campaign.errorMessage}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="max-w-xs">
-                                                    {campaign.rawTranscript ? (
-                                                        <>
-                                                            <p className="text-sm text-gray-600 line-clamp-3">
-                                                                {campaign.rawTranscript}
-                                                            </p>
-                                                            <button
-                                                                onClick={() => handleViewTranscript(campaign)}
-                                                                className="text-xs text-[#0A5CFF] hover:underline mt-1"
-                                                            >
-                                                                View Full
-                                                            </button>
-                                                        </>
-                                                    ) : (
-                                                        <span className="text-xs text-gray-400 italic">
-                                                            Pending...
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {campaign.videoUrl ? (
-                                                    <a
-                                                        href={campaign.videoUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-sm text-[#0A5CFF] hover:underline max-w-xs truncate block"
-                                                        title={campaign.videoUrl}
-                                                    >
-                                                        View Video
-                                                    </a>
-                                                ) : (
-                                                    <span className="text-sm text-gray-400">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {new Date(campaign.createdAt).toLocaleDateString(
-                                                    "en-US",
-                                                    {
-                                                        month: "short",
-                                                        day: "numeric",
-                                                        year: "numeric",
-                                                    },
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <div className="flex gap-2 justify-end">
-                                                    {campaign.status === "finished" && (
-                                                        <button
-                                                            onClick={() =>
-                                                                router.push(`/user/edit/${campaign._id}`)
-                                                            }
-                                                            className="px-3 py-1 bg-[#0A5CFF] text-white rounded hover:bg-[#3B82F6]"
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                    )}
+                                        </h4>
+                                        {campaign.rawTranscript ? (
+                                            <div>
+                                                <p className="text-sm text-gray-600 line-clamp-3 mb-1">
+                                                    {campaign.rawTranscript}
+                                                </p>
+                                                <button
+                                                    onClick={() => handleViewTranscript(campaign)}
+                                                    className="text-xs text-[#0A5CFF] hover:underline font-medium"
+                                                >
+                                                    View Full Transcript
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span className="text-sm text-gray-400 italic">
+                                                Pending...
+                                            </span>
+                                        )}
+                                    </div>
 
-                                                    {["uploading", "transcribing", "generating"].includes(
-                                                        campaign.status,
-                                                    ) && (
-                                                            <button
-                                                                onClick={() =>
-                                                                    router.push(`/user/processing/${campaign._id}`)
-                                                                }
-                                                                className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-                                                            >
-                                                                View
-                                                            </button>
-                                                        )}
+                                    {/* Video URL */}
+                                    <div>
+                                        <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                                            Video
+                                        </h4>
+                                        {campaign.videoUrl ? (
+                                            <a
+                                                href={campaign.videoUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-[#0A5CFF] hover:underline font-medium inline-flex items-center gap-1"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                View Video
+                                            </a>
+                                        ) : (
+                                            <span className="text-sm text-gray-400">No video available</span>
+                                        )}
+                                    </div>
+                                </div>
 
-                                                    <button
-                                                        onClick={() => handleDeleteClick(campaign._id)}
-                                                        className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </motion.tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                {/* Card Footer - Actions */}
+                                <div className="px-5 py-4 bg-gray-50 border-t border-gray-100">
+                                    <div className="flex flex-wrap gap-2">
+                                        {campaign.status === "finished" && (
+                                            <button
+                                                onClick={() =>
+                                                    router.push(`/user/edit/${campaign._id}`)
+                                                }
+                                                className="flex-1 px-3 py-2 bg-[#0A5CFF] text-white text-sm font-medium rounded hover:bg-[#3B82F6] transition-colors"
+                                            >
+                                                Publish Now
+                                            </button>
+                                        )}
+
+                                        {(campaign.status === "published" || campaign.status === "submitted_successfully") && (
+                                            <button
+                                                onClick={() =>
+                                                    setFullPreview({ show: true, campaign })
+                                                }
+                                                className="flex-1 px-3 py-2 bg-blue-100 text-blue-700 text-sm font-medium rounded hover:bg-blue-200 transition-colors"
+                                            >
+                                                Preview
+                                            </button>
+                                        )}
+
+                                        {["uploading", "transcribing", "generating"].includes(
+                                            campaign.status,
+                                        ) && (
+                                                <button
+                                                    onClick={() =>
+                                                        router.push(`/user/processing/${campaign._id}`)
+                                                    }
+                                                    className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded hover:bg-gray-200 transition-colors"
+                                                >
+                                                    View
+                                                </button>
+                                            )}
+
+                                        {(campaign.status !== "published" && campaign.status !== "submitted_successfully") && (
+                                            <button
+                                                onClick={() => handleDeleteClick(campaign._id)}
+                                                className="px-3 py-2 bg-red-100 text-red-700 text-sm font-medium rounded hover:bg-red-200 transition-colors"
+                                            >
+                                                Delete
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Pagination */}
+                {filteredCampaigns.length > 0 && (
+                    <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100 pt-8">
+                        <p className="text-sm text-gray-500 font-medium">
+                            Showing <span className="text-gray-900 font-bold">{(currentPage - 1) * 12 + 1}</span> to{" "}
+                            <span className="text-gray-900 font-bold">
+                                {Math.min(currentPage * 12, totalResults)}
+                            </span>{" "}
+                            of <span className="text-gray-900 font-bold">{totalResults}</span> campaigns
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                onClick={() => {
+                                    setCurrentPage((prev) => Math.max(1, prev - 1));
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                disabled={currentPage === 1}
+                                variant="outline"
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                disabled={currentPage === totalPages}
+                                variant="outline"
+                            >
+                                Next
+                            </Button>
                         </div>
                     </div>
                 )}
@@ -509,6 +663,24 @@ export default function CampaignsPage() {
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* Preview Publish Modal (For publishing flow) */}
+            <PreviewPublishModal
+                isOpen={previewModal.show}
+                onClose={() => setPreviewModal({ show: false, campaign: null })}
+                campaign={previewModal.campaign}
+                article={previewModal.campaign?.article}
+                onPublish={handlePublishConfirm}
+            />
+
+            {/* Full Article Preview (For viewing published articles) */}
+            <FullArticlePreview
+                isOpen={fullPreview.show}
+                onClose={() => setFullPreview({ show: false, campaign: null })}
+                campaign={fullPreview.campaign}
+                article={fullPreview.campaign?.article}
+                productCard={fullPreview.campaign?.productCard}
+            />
         </>
     );
 }

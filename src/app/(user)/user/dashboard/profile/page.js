@@ -7,8 +7,90 @@ import { toast } from "react-toastify";
 import api from "@/lib/api/axios";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
+import { isValidPhoneNumber } from "libphonenumber-js";
 import { uploadFileToS3 } from "@/utils/awsService";
 import ImageCropper from "@/components/ui/ImageCropper";
+import { CreditCard, Trash2, ShieldCheck } from "lucide-react";
+
+import { paymentService } from "@/lib/api/user/payments";
+
+function CardManagement() {
+  const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const { user } = userAuthStore();
+  const userId = user?._id || user?.id;
+
+  useEffect(() => {
+    if (userId) {
+      loadCards();
+    }
+  }, [userId]);
+
+  const loadCards = async () => {
+    try {
+      const res = await paymentService.getCards(userId);
+      if (res.success) setCards(res.data);
+    } catch (error) {
+      console.error("Failed to load cards:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (cardId) => {
+    if (!confirm("Are you sure you want to remove this card?")) return;
+    try {
+      const res = await paymentService.deleteCard(cardId);
+      if (res.success) {
+        toast.success("Card removed");
+        setCards(cards.filter(c => c.id !== cardId));
+      }
+    } catch (error) {
+      toast.error("Failed to remove card");
+    }
+  };
+
+  if (loading) return <div className="animate-pulse flex space-x-4"><div className="flex-1 h-12 bg-gray-100 rounded"></div></div>;
+
+  return (
+    <div className="space-y-4">
+      {cards.length === 0 ? (
+        <div className="text-sm text-gray-500 bg-gray-50 p-4 rounded-lg border border-dashed border-gray-200">
+          No saved payment methods found. They will appear here once you complete a purchase.
+        </div>
+      ) : (
+        cards.map(card => (
+          <div key={card.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                <CreditCard className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 capitalize">
+                  {card.card.brand} •••• {card.card.last4}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Expires {card.card.exp_month}/{card.card.exp_year}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleDelete(card.id)}
+              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
+        ))
+      )}
+      <div className="flex items-center gap-2 mt-4 text-xs text-gray-400">
+        <ShieldCheck className="w-4 h-4" />
+        Securely powered by Stripe
+      </div>
+    </div>
+  );
+}
 
 function ProfilePageContent() {
   const {
@@ -106,6 +188,13 @@ function ProfilePageContent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Phone validation using standard libphonenumber-js
+    if (formData.phone && !isValidPhoneNumber("+" + formData.phone.replace(/\D/g, ""))) {
+      toast.error("Please Enter a Valid Number");
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -184,7 +273,7 @@ function ProfilePageContent() {
                     className="w-24 h-24 rounded-full object-cover border-4 border-gray-100"
                   />
                 ) : (
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center border-4 border-gray-100">
+                  <div className="w-24 h-24 rounded-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center border-4 border-gray-100">
                     <span className="text-3xl font-bold text-white">
                       {getInitials(user?.name)}
                     </span>
@@ -409,6 +498,18 @@ function ProfilePageContent() {
                 </button>
               </div>
             </form>
+          </div>
+
+          {/* Payment Methods Section */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6 mt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Payment Methods
+            </h3>
+
+            <CardManagement />
           </div>
 
           {/* Security Section */}

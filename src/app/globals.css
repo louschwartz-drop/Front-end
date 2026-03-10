@@ -10,16 +10,30 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  
+
   --color-primary: #0A5CFF;
   --color-brand-blue: #3B82F6;
   --color-brand-dark: #1E40AF;
+}
+
+html {
+  height: 100%;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  position: relative;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
 }
 
 /* Custom scrollbar */
@@ -72,9 +86,12 @@ body {
 
 /* Gradient animation */
 @keyframes gradient {
-  0%, 100% {
+
+  0%,
+  100% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
@@ -90,6 +107,7 @@ body {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -109,7 +127,7 @@ div[id^="gsi"] {
   justify-content: center !important;
 }
 
-div[id^="gsi"] > div {
+div[id^="gsi"]>div {
   min-height: 42px !important;
   height: 42px !important;
   width: 100% !important;
@@ -121,19 +139,27 @@ div[id^="gsi"] > div {
 div[id^="gsi"] button {
   min-height: 42px !important;
   height: 42px !important;
-  font-size: 0.875rem !important; /* text-sm - match OAuthButton */
+  font-size: 0.875rem !important;
+  /* text-sm - match OAuthButton */
   font-weight: 500 !important;
-  padding: 0.625rem 1rem !important; /* px-4 py-2.5 - match OAuthButton */
+  padding: 0.625rem 1rem !important;
+  /* px-4 py-2.5 - match OAuthButton */
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 0.5rem !important; /* gap-2 - match OAuthButton */
+  gap: 0.5rem !important;
+  /* gap-2 - match OAuthButton */
   width: 100% !important;
-  border: 1px solid #d1d5db !important; /* border-gray-300 - match OAuthButton */
-  border-radius: 0.5rem !important; /* rounded-lg - match OAuthButton */
-  background-color: white !important; /* bg-white - match OAuthButton */
-  color: #374151 !important; /* text-gray-700 - match OAuthButton */
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important; /* shadow-sm - match OAuthButton */
+  border: 1px solid #d1d5db !important;
+  /* border-gray-300 - match OAuthButton */
+  border-radius: 0.5rem !important;
+  /* rounded-lg - match OAuthButton */
+  background-color: white !important;
+  /* bg-white - match OAuthButton */
+  color: #374151 !important;
+  /* text-gray-700 - match OAuthButton */
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+  /* shadow-sm - match OAuthButton */
   cursor: pointer !important;
   transition: all 0.2s !important;
   font-family: inherit !important;
@@ -141,11 +167,13 @@ div[id^="gsi"] button {
 }
 
 div[id^="gsi"] button:hover {
-  background-color: #f9fafb !important; /* hover:bg-gray-50 - match OAuthButton */
+  background-color: #f9fafb !important;
+  /* hover:bg-gray-50 - match OAuthButton */
 }
 
 div[id^="gsi"] button:active {
-  transform: scale(0.98) !important; /* active:scale-[0.98] - match OAuthButton */
+  transform: scale(0.98) !important;
+  /* active:scale-[0.98] - match OAuthButton */
 }
 
 div[id^="gsi"] button:focus {
@@ -156,11 +184,12 @@ div[id^="gsi"] button:focus {
 }
 
 /* Google button - icon and text both centered */
-div[id^="gsi"] button > div {
+div[id^="gsi"] button>div {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 0.5rem !important; /* gap-2 - match OAuthButton */
+  gap: 0.5rem !important;
+  /* gap-2 - match OAuthButton */
   width: 100% !important;
 }
 
@@ -172,12 +201,14 @@ div[id^="gsi"] button img {
 }
 
 div[id^="gsi"] button span {
-  font-size: 0.875rem !important; /* text-sm - match OAuthButton */
+  font-size: 0.875rem !important;
+  /* text-sm - match OAuthButton */
   font-weight: 500 !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  color: #374151 !important; /* text-gray-700 - match OAuthButton */
+  color: #374151 !important;
+  /* text-gray-700 - match OAuthButton */
 }
 
 /* Global cursor pointer for buttons and links */

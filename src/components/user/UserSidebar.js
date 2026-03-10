@@ -45,6 +45,25 @@ export const USER_MENU_ITEMS = [
     ),
   },
   {
+    href: "/user/dashboard/press-releases",
+    label: "Press Releases",
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+        />
+      </svg>
+    ),
+  },
+  {
     href: "/user/dashboard/payment-history",
     label: "Payment History",
     icon: (
@@ -157,16 +176,38 @@ export default function UserSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
           shadow-xl
           h-screen
           border-r border-gray-200
+          relative
         `}
       >
+        {/* Close Button for Mobile */}
+        <button
+          onClick={() => setMobileMenuOpen(false)}
+          className="lg:hidden absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200 z-50"
+          aria-label="Close sidebar"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2.5}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
         {/* Top Section - Profile + Navigation Menu */}
-        <div className=" flex flex-col h-full">
+        <div className="flex flex-col h-full">
           <div className="flex-1 overflow-y-auto">
             {/* Profile Section */}
             <Link href={"/user/dashboard/profile"}>
-              <div className="flex-shrink-0 p-8 text-center border-b border-gray-200">
+              <div className="flex-shrink-0 p-3 md:p-8 text-center border-b border-gray-200">
                 {/* Avatar - Centered */}
-                <div className="flex justify-center mb-4">
+                <div className="flex justify-center">
                   {mounted && user?.avatar ? (
                     <img
                       src={user.avatar}
@@ -187,18 +228,20 @@ export default function UserSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
                   </h3>
                   <p className="text-sm text-gray-600">{mounted ? (user?.email || "") : ""}</p>
                 </div>
+
+
               </div>
             </Link>
 
             {/* Navigation Menu */}
-            <nav className="py-6 px-4">
+            <nav className="py-3 px-2 md:py-6">
               <div className="space-y-3">
                 {USER_MENU_ITEMS.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     className={`
-                    flex items-center gap-4 px-6 py-4 rounded-xl
+                    flex items-center gap-x-2 py-3 px-6 rounded-xl
                     transition-all duration-300 ease-in-out
                     ${isActive(item.href)
                         ? "bg-blue-600 text-white shadow-md"
@@ -224,8 +267,7 @@ export default function UserSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
           </div>
 
           {/* Bottom Section - Fixed at bottom */}
-          {/* Bottom Section - Fixed at bottom */}
-          <div className="flex-shrink-0 border-t border-gray-200 ">
+          <div className="flex-shrink-0 border-t border-gray-200">
             {/* Support Section Header */}
             <div className="flex items-center gap-3 pl-6 pt-3">
               <h4 className="text-xs font-semibold text-gray-800 uppercase tracking-wider whitespace-nowrap">
@@ -234,11 +276,11 @@ export default function UserSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
               <div className="flex-1 h-px bg-gray-200"></div>
             </div>
 
-            <div className="space-y-1  pt-2">
+            <div className="space-y-1 pt-2">
               {/* Go to Website */}
               <Link
                 href="/"
-                className="w-full flex items-center gap-4 px-4 py-2.5 text-gray-700 hover:bg-gray-50  duration-300 group"
+                className="w-full flex items-center gap-4 px-4 py-2.5 text-gray-700 hover:bg-gray-50 duration-300 group"
               >
                 <svg
                   className="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
@@ -275,8 +317,6 @@ export default function UserSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
                 </svg>
                 <span className="text-sm font-medium">Help</span>
               </Link>
-
-              {/* Logout */}
             </div>
           </div>
         </div>

@@ -1,19 +1,38 @@
 "use client";
 
-import { useCallback, useMemo, memo } from "react";
+import { useCallback, useMemo, memo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import adminAuthStore from "@/store/adminAuthStore";
 import { ADMIN_MENU_ITEMS } from "./AdminSidebar";
+import ConfirmationModal from "../ui/ConfirmationModal";
 
 const AdminHeader = memo(function AdminHeader({ setMobileMenuOpen }) {
   const router = useRouter();
   const pathname = usePathname();
   const { admin: user, logout } = adminAuthStore();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = useCallback(() => {
-    logout();
-    router.push("/");
+  const handleLogoutClick = useCallback(() => {
+    setIsModalOpen(true);
+  }, []);
+
+  const handleConfirmLogout = useCallback(async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      router.push("/admin/login");
+    } catch (err) {
+      console.error("Logout failed", err);
+    } finally {
+      setIsLoggingOut(false);
+      setIsModalOpen(false);
+    }
   }, [logout, router]);
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
 
   const getInitials = useCallback((name) => {
     if (!name) return "A";
@@ -40,7 +59,7 @@ const AdminHeader = memo(function AdminHeader({ setMobileMenuOpen }) {
   }, [isActive]);
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-30 border-b border-gray-200 flex-shrink-0 w-full">
+    <header className="bg-white shadow-sm sticky top-0 z-30 border-b border-gray-200 shrink-0 w-full">
       <div className="px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           {/* Mobile Menu Button */}
@@ -77,10 +96,10 @@ const AdminHeader = memo(function AdminHeader({ setMobileMenuOpen }) {
                 <img
                   src={user.avatar}
                   alt={user.name}
-                  className="w-10 h-10 rounded-full object-cover border-2 border-[#0A5CFF]"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-primary"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-[#0A5CFF] flex items-center justify-center text-white font-semibold border-2 border-[#0A5CFF]">
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold border-2 border-primary">
                   {getInitials(user?.name)}
                 </div>
               )}
@@ -92,7 +111,7 @@ const AdminHeader = memo(function AdminHeader({ setMobileMenuOpen }) {
               </div>
             </div>
             <button
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-700 cursor-pointer"
               title="Logout"
             >
@@ -113,6 +132,17 @@ const AdminHeader = memo(function AdminHeader({ setMobileMenuOpen }) {
           </div>
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmLogout}
+        title="Admin Logout"
+        message="Are you sure you want to log out of the admin panel?"
+        confirmText="Logout"
+        cancelText="Cancel"
+        confirmColor="bg-red-600 hover:bg-red-700"
+        isLoading={isLoggingOut}
+      />
     </header>
   );
 });

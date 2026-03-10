@@ -4,21 +4,38 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { adminUserService } from "@/lib/api/admin/users";
 import { toast } from "react-toastify";
+import Button from "@/components/ui/Button";
 
 export default function AdminUsersPage() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalResults, setTotalResults] = useState(0);
 
     useEffect(() => {
-        fetchUsers();
-    }, []);
+        const timeoutId = setTimeout(() => {
+            fetchUsers();
+        }, searchTerm ? 500 : 0);
+
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm, currentPage]);
 
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const response = await adminUserService.getAllUsers();
+            const response = await adminUserService.getAllUsers({
+                page: currentPage,
+                limit: 10,
+                search: searchTerm
+            });
             if (response && response.success) {
                 setUsers(response.data);
+                if (response.pagination) {
+                    setTotalPages(response.pagination.totalPages);
+                    setTotalResults(response.pagination.total);
+                }
             }
         } catch (error) {
             console.error("Error fetching users:", error);
@@ -30,12 +47,31 @@ export default function AdminUsersPage() {
 
     return (
         <div className="mx-auto">
-            <div className="mb-8 flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Users</h1>
-                    <p className="text-gray-600 mt-2">
-                        Manage and view all registered users
-                    </p>
+            <div className="mb-6">
+                <div className="relative">
+                    <input
+                        type="text"
+                        placeholder="Search users by name or email..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary outline-none"
+                    />
+                    <svg
+                        className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                    </svg>
                 </div>
             </div>
 
@@ -89,6 +125,33 @@ export default function AdminUsersPage() {
                     </div>
                 )}
             </div>
+
+            {/* Pagination */}
+            {!loading && totalPages > 1 && (
+                <div className="mt-6 flex items-center justify-between">
+                    <div className="text-sm text-gray-700">
+                        Showing {(currentPage - 1) * 10 + 1} to{" "}
+                        {Math.min(currentPage * 10, totalResults)}{" "}
+                        of {totalResults} users
+                    </div>
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1}
+                            variant="outline"
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                            disabled={currentPage >= totalPages}
+                            variant="outline"
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

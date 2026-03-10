@@ -144,8 +144,7 @@ function ProcessingContent() {
                 autoClose: 2000,
               },
             );
-            // REDIRECT TO CAMPAIGNS LIST ON SUCCESS
-            router.replace("/user/dashboard/campaigns");
+            router.replace(`/user/edit/${campaignId}`);
 
             // Clear polling
             if (pollInterval) {
