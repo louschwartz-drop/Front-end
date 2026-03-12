@@ -1,9 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import VideoModal from "@/components/ui/VideoModal";
 
 export default function FullArticlePreview({ isOpen, onClose, campaign, article, productCard }) {
+    const [isVideoOpen, setIsVideoOpen] = useState(false);
+    const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+
     if (!isOpen) return null;
+
+    const campaignId = campaign?._id || campaign?.id;
+    const downloadUrl = (format) => `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/user/campaigns/${campaignId}/download/${format}`;
+
+    const handleDownload = (format) => {
+        window.open(downloadUrl(format), "_blank");
+        setShowDownloadDropdown(false);
+    };
 
     const displayData = article || campaign?.article || {};
     const displayProduct = productCard || campaign?.productCard || {};
@@ -24,24 +37,72 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                     exit={{ scale: 0.95, y: 20 }}
                     className="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl md:rounded-3xl shadow-2xl p-5 sm:p-8 md:p-12 article-preview"
                 >
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 md:top-6 md:right-6 text-gray-400 hover:text-gray-600 z-10"
-                    >
-                        <svg
-                            className="w-5 h-5 md:w-6 md:h-6"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                    <div className="absolute top-4 right-4 md:top-6 md:right-6 flex items-center gap-2 z-10">
+                        {/* Download Dropdown */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-bold transition-all"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Download
+                            </button>
+                            
+                            <AnimatePresence>
+                                {showDownloadDropdown && (
+                                    <>
+                                        <div className="fixed inset-0 z-10" onClick={() => setShowDownloadDropdown(false)} />
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-20"
+                                        >
+                                            <button
+                                                onClick={() => handleDownload('pdf')}
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0A5CFF] flex items-center gap-2"
+                                            >
+                                                <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
+                                                </svg>
+                                                PDF Document
+                                            </button>
+                                            <button
+                                                onClick={() => handleDownload('word')}
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0A5CFF] flex items-center gap-2"
+                                            >
+                                                <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M10 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H10z" />
+                                                </svg>
+                                                Word Document
+                                            </button>
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
+                        <button
+                            onClick={onClose}
+                            className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-1.5 rounded-lg transition-all"
                         >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M6 18L18 6M6 6l12 12"
-                            />
-                        </svg>
-                    </button>
+                            <svg
+                                className="w-5 h-5 md:w-6 md:h-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                />
+                            </svg>
+                        </button>
+                    </div>
 
                     <div className="max-w-2xl mx-auto space-y-4 md:space-y-8">
                         <h2 className="text-2xl md:text-4xl font-extrabold text-gray-900 leading-tight">
@@ -140,14 +201,12 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                                 <p className="text-[9px] md:text-xs font-bold text-gray-400 uppercase tracking-wider">
                                     Original Source:
                                 </p>
-                                <a
-                                    href={displayProduct.sourceVideoLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-500 underline break-all"
+                                <button
+                                    onClick={() => setIsVideoOpen(true)}
+                                    className="text-blue-500 underline break-all text-left"
                                 >
                                     {displayProduct.sourceVideoLink || "Watch original creator video"}
-                                </a>
+                                </button>
                             </div>
                             <p className="">
                                 {displayProduct.authorName &&
@@ -155,6 +214,12 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                             </p>
                         </div>
                     </div>
+
+                    <VideoModal 
+                        isOpen={isVideoOpen} 
+                        onClose={() => setIsVideoOpen(false)} 
+                        videoUrl={displayProduct.sourceVideoLink} 
+                    />
                 </motion.div>
             </div>
         </AnimatePresence>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import { campaignService } from "@/lib/api/user/campaigns";
@@ -10,6 +11,8 @@ import PreviewPublishModal from "@/components/user/PreviewPublishModal";
 import FullArticlePreview from "@/components/user/FullArticlePreview";
 import userAuthStore from "@/store/userAuthStore";
 import Button from "@/components/ui/Button";
+
+const VideoModal = dynamic(() => import("@/components/ui/VideoModal"), { ssr: false });
 
 export default function CampaignsPage() {
     const router = useRouter();
@@ -20,6 +23,10 @@ export default function CampaignsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalResults, setTotalResults] = useState(0);
+    const [videoModal, setVideoModal] = useState({
+        show: false,
+        url: "",
+    });
     const [deleteModal, setDeleteModal] = useState({
         show: false,
         campaignId: null,
@@ -59,15 +66,14 @@ export default function CampaignsPage() {
 
     const fetchCampaigns = async (silent = false) => {
         try {
-            const { default: userAuthStore } = await import("@/store/userAuthStore");
-            const user = userAuthStore.getState().user;
+            const userState = userAuthStore.getState().user;
 
-            if (!user) {
+            if (!userState) {
                 router.push("/");
                 return;
             }
 
-            const userId = user._id || user.id;
+            const userId = userState._id || userState.id;
 
             const { campaignService } = await import("@/lib/api/user/campaigns");
             const response = await campaignService.getUserCampaigns({
@@ -410,10 +416,8 @@ export default function CampaignsPage() {
                                             Video
                                         </h4>
                                         {campaign.videoUrl ? (
-                                            <a
-                                                href={campaign.videoUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                            <button
+                                                onClick={() => setVideoModal({ show: true, url: campaign.videoUrl })}
                                                 className="text-sm text-[#0A5CFF] hover:underline font-medium inline-flex items-center gap-1"
                                             >
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -421,7 +425,7 @@ export default function CampaignsPage() {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
                                                 View Video
-                                            </a>
+                                            </button>
                                         ) : (
                                             <span className="text-sm text-gray-400">No video available</span>
                                         )}
@@ -449,7 +453,7 @@ export default function CampaignsPage() {
                                                 }
                                                 className="flex-1 px-3 py-2 bg-blue-100 text-blue-700 text-sm font-medium rounded hover:bg-blue-200 transition-colors"
                                             >
-                                                Preview
+                                                Preview Art
                                             </button>
                                         )}
 
@@ -680,6 +684,13 @@ export default function CampaignsPage() {
                 campaign={fullPreview.campaign}
                 article={fullPreview.campaign?.article}
                 productCard={fullPreview.campaign?.productCard}
+            />
+
+            {/* Inline Video Viewer */}
+            <VideoModal
+                isOpen={videoModal.show}
+                onClose={() => setVideoModal({ show: false, url: "" })}
+                videoUrl={videoModal.url}
             />
         </>
     );

@@ -20,6 +20,7 @@ export default function CreateCampaignPage() {
   const [dragActive, setDragActive] = useState(false);
   const [videoDuration, setVideoDuration] = useState(null);
   const [durationError, setDurationError] = useState(null);
+  const [urlError, setUrlError] = useState(null);
   const fileInputRef = useRef(null);
   const MAX_VIDEO_DURATION_MINUTES = 5;
   const MAX_VIDEO_DURATION_SECONDS = MAX_VIDEO_DURATION_MINUTES * 60;
@@ -121,16 +122,39 @@ export default function CreateCampaignPage() {
     }
   };
 
-  const validateLink = (link) => {
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
-    const tiktokRegex = /^(https?:\/\/)?(www\.)?(tiktok\.com)\/.+$/;
-    const instagramRegex = /^(https?:\/\/)?(www\.)?(instagram\.com)\/.+$/;
+  const getPlatformError = (link) => {
+    const PATTERNS = {
+      youtubeShorts: /^(https?:\/\/)?(www\.)?youtube\.com\/shorts\/[a-zA-Z0-9_-]+(\?.*)?$/,
+      instagram: /^(https?:\/\/)?(www\.)?instagram\.com\/(reels?|p)\/[a-zA-Z0-9_-]+\/?(\?.*)?$/,
+      tiktok: /^(https?:\/\/)?((www|vm)\.)?tiktok\.com\/(.+\/video\/\d+|[a-zA-Z0-9_-]+)\/?(\?.*)?$/,
+    };
 
-    return (
-      youtubeRegex.test(link) ||
-      tiktokRegex.test(link) ||
-      instagramRegex.test(link)
-    );
+    if (PATTERNS.youtubeShorts.test(link)) return null;
+    if (PATTERNS.instagram.test(link)) return null;
+    if (PATTERNS.tiktok.test(link)) return null;
+
+    if (link.includes("youtube.com") || link.includes("youtu.be") || link.includes("youtub")) {
+      return "Only YouTube Shorts are supported (Format: youtube.com/shorts/...)";
+    }
+    if (link.includes("instagram.com") || link.includes("instagr")) {
+      return "Only Instagram Reels or Posts are supported (Format: instagram.com/reel/...)";
+    }
+    if (link.includes("tiktok.com") || link.includes("tiktok")) {
+      return "Please provide a valid TikTok video link (Format: tiktok.com/@user/video/...)";
+    }
+
+    return "Please enter a valid YouTube Shorts, Instagram, or TikTok link";
+  };
+
+  const handleUrlChange = (e) => {
+    const value = e.target.value;
+    setVideoLink(value);
+    if (value) {
+      const error = getPlatformError(value);
+      setUrlError(error);
+    } else {
+      setUrlError(null);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -146,9 +170,13 @@ export default function CreateCampaignPage() {
       return;
     }
 
-    if (uploadMethod === "link" && !validateLink(videoLink)) {
-      toast.error("Please enter a valid YouTube, TikTok, or Instagram link");
-      return;
+    if (uploadMethod === "link") {
+      const error = getPlatformError(videoLink);
+      if (error) {
+        setUrlError(error);
+        toast.error(error);
+        return;
+      }
     }
 
     setUploading(true);
@@ -505,15 +533,38 @@ export default function CreateCampaignPage() {
               <motion.input
                 type="url"
                 value={videoLink}
-                onChange={(e) => setVideoLink(e.target.value)}
-                placeholder="https://youtube.com/watch?v=... or https://tiktok.com/@... or https://instagram.com/p/..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0A5CFF]"
+                onChange={handleUrlChange}
+                placeholder="https://youtube.com/shorts/... or https://instagram.com/reel/... or https://tiktok.com/@user/video/..."
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ${urlError ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-[#0A5CFF]"
+                  }`}
                 required
                 whileFocus={{ scale: 1.01 }}
                 transition={{ duration: 0.2 }}
               />
+              <AnimatePresence>
+                {urlError && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <p className="text-sm text-red-600 mt-2 font-medium">
+                      {urlError}
+                    </p>
+                    <div className="mt-2 p-3 bg-red-50 border border-red-100 rounded-md">
+                      <p className="text-xs text-red-700 font-semibold mb-1">Expected Formats:</p>
+                      <ul className="text-[10px] text-red-600 list-disc list-inside space-y-0.5">
+                        <li>YouTube: youtube.com/shorts/VIDEO_ID</li>
+                        <li>Instagram: instagram.com/reel/REEL_ID or /p/POST_ID</li>
+                        <li>TikTok: tiktok.com/@user/video/VIDEO_ID</li>
+                      </ul>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <p className="text-sm text-gray-500 mt-2">
-                Supported: YouTube, TikTok, Instagram
+                Supported: YouTube Shorts, Instagram Reels/Posts, TikTok
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 Maximum video length: {MAX_VIDEO_DURATION_MINUTES} minutes
