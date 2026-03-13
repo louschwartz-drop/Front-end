@@ -217,18 +217,25 @@ function DashboardContent() {
                     </svg>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-gray-900 truncate">
+                    <p className="font-semibold text-gray-900 line-clamp-2">
                       {campaign.article?.headline || `Campaign #${campaign._id?.slice(-8)}`}
                     </p>
-                    <p className="text-sm text-gray-600">
-                      {new Date(campaign.createdAt).toLocaleDateString()} •{" "}
-                      {campaign.videoSource === "local_upload" ? "Upload" : "Link"}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <p className="text-sm text-gray-600">
+                        {new Date(campaign.createdAt).toLocaleDateString()} •{" "}
+                        {campaign.videoSource === "local_upload" ? "Upload" : "Link"}
+                      </p>
+                      <span
+                        className={`md:hidden px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${getStatusColor(campaign.status)}`}
+                      >
+                        {getStatusLabel(campaign.status)}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(campaign.status)}`}
+                    className={`hidden md:block px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(campaign.status)}`}
                   >
                     {getStatusLabel(campaign.status)}
                   </span>

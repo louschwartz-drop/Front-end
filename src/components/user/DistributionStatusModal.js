@@ -17,6 +17,23 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
         try {
             // Using campaignId as guid
             const res = await xprArticleRelease.checkStatus({ guid: campaignId });
+            
+            // Handle 202 (Processing) - The backend returns { success: true, message: "..." } with 202 status
+            // If the message contains "processed", or if data is missing, it's likely a processing state
+            if (res.success && (!res.data || (res.message && res.message.toLowerCase().includes("processed")))) {
+                toast.success(res.message || "Story is being processed and will be available shortly.", { toastId: "processing-status" });
+                setStatusData({
+                    overallStatus: "processing",
+                    destinations: [],
+                    total: 0,
+                    pending: 0,
+                    published: 0,
+                    message: res.message || "Still in progress... Your status will update soon"
+                });
+                setLoading(false);
+                return;
+            }
+
             if (res.success && res.data) {
                 const data = res.data;
 

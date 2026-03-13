@@ -21,6 +21,7 @@ export default function EditPage() {
   const [headlineRegenerated, setHeadlineRegenerated] = useState(false);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [initialData, setInitialData] = useState(null);
+  const [isEditingAuthor, setIsEditingAuthor] = useState(false);
 
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
@@ -119,6 +120,11 @@ export default function EditPage() {
   }, [editData, productCard, context, debouncedSave, loading]);
 
   useEffect(() => {
+    if (!campaignId || campaignId === "undefined") {
+      router.push("/user/dashboard");
+      return;
+    }
+
     if (campaignId) {
       const fetchCampaign = async () => {
         try {
@@ -185,6 +191,7 @@ export default function EditPage() {
       fetchCampaign();
     }
   }, [campaignId]);
+
 
   const handleRegenerate = async (actionId) => {
     setRegenerating(true);
@@ -596,12 +603,32 @@ export default function EditPage() {
                     className="w-full text-gray-700 border-none focus:ring-0 p-0 resize-none italic font-serif disabled:text-gray-400"
                     placeholder="An authentic quote from the video..."
                   />
-                  {productCard.authorName && (
-                    <div className="flex items-center gap-2 pt-2 border-t border-gray-50">
-                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Attributed to:</span>
-                      <span className="text-[10px] font-bold text-[#0A5CFF]">{productCard.authorName}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 pt-2 border-t border-gray-50">
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Attributed to:</span>
+                    {isEditingAuthor ? (
+                      <input
+                        value={productCard.authorName}
+                        onChange={(e) => setProductCard({ ...productCard, authorName: e.target.value })}
+                        onBlur={() => setIsEditingAuthor(false)}
+                        onKeyDown={(e) => e.key === 'Enter' && setIsEditingAuthor(false)}
+                        autoFocus
+                        className="text-[10px] font-bold text-[#0A5CFF] bg-blue-50/50 border-none focus:ring-0 p-0"
+                      />
+                    ) : (
+                      <div className="flex items-center gap-1 group/author">
+                        <span className="text-[10px] font-bold text-[#0A5CFF]">{productCard.authorName || "Author"}</span>
+                        <button 
+                          onClick={() => setIsEditingAuthor(true)}
+                          className="p-1 hover:bg-gray-100 rounded transition-all"
+                          title="Edit Author Name"
+                        >
+                          <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </SectionCard>
 
@@ -827,6 +854,7 @@ export default function EditPage() {
       <FullArticlePreview
         isOpen={showPreview}
         onClose={() => setShowPreview(false)}
+        campaign={{ _id: campaignId }}
         article={editData}
         productCard={productCard}
       />

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-toastify";
 import VideoModal from "@/components/ui/VideoModal";
 
 export default function FullArticlePreview({ isOpen, onClose, campaign, article, productCard }) {
@@ -10,10 +11,20 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
 
     if (!isOpen) return null;
 
-    const campaignId = campaign?._id || campaign?.id;
-    const downloadUrl = (format) => `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/user/campaigns/${campaignId}/download/${format}`;
+    // Use a more robust way to get the ID, checking both campaign and provided article
+    const campaignId = campaign?._id || campaign?.id || article?._id || article?.id;
+    
+    const downloadUrl = (format) => {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+        return `${baseUrl}/user/campaigns/${campaignId}/download/${format}`;
+    };
 
     const handleDownload = (format) => {
+        if (!campaignId || campaignId === "undefined") {
+            console.error("No campaign ID found for download");
+            toast.error("Error: Campaign ID missing. Please try refreshing the page.");
+            return;
+        }
         window.open(downloadUrl(format), "_blank");
         setShowDownloadDropdown(false);
     };
@@ -119,25 +130,7 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                             {displayData.introduction}
                         </div>
 
-                        <div className="text-sm md:text-lg text-gray-700 leading-relaxed md:leading-loose space-y-4 md:space-y-6 whitespace-pre-wrap">
-                            {displayData.body}
-                        </div>
-
-                        {/* Creator Quote Section */}
-                        {displayData.creatorQuote && (
-                            <div className="py-4 md:py-8 border-y border-gray-100 flex flex-col items-center gap-2 md:gap-4">
-                                <div className="italic text-base md:text-xl text-gray-800 text-center leading-relaxed font-serif">
-                                    "{displayData.creatorQuote}"
-                                </div>
-                                {displayProduct.authorName && (
-                                    <div className="text-xs md:text-sm font-bold text-gray-500 uppercase tracking-widest">
-                                        — {displayProduct.authorName}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Preview Product Block */}
+                        {/* Preview Product Block Moved Higher */}
                         <div className="bg-gray-50 rounded-2xl md:rounded-3xl p-4 md:p-8 border border-gray-100 my-6 md:my-10">
                             <span className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest mb-3 md:mb-4 block text-center md:text-left">
                                 Featured Product
@@ -170,6 +163,24 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                                 </div>
                             </div>
                         </div>
+
+                        <div className="text-sm md:text-lg text-gray-700 leading-relaxed md:leading-loose space-y-4 md:space-y-6 whitespace-pre-wrap">
+                            {displayData.body}
+                        </div>
+
+                        {/* Creator Quote Section */}
+                        {displayData.creatorQuote && (
+                            <div className="py-4 md:py-8 border-y border-gray-100 flex flex-col items-center gap-2 md:gap-4">
+                                <div className="italic text-base md:text-xl text-gray-800 text-center leading-relaxed font-serif">
+                                    "{displayData.creatorQuote}"
+                                </div>
+                                {displayProduct.authorName && (
+                                    <div className="text-xs md:text-sm font-bold text-gray-500 uppercase tracking-widest">
+                                        From {displayProduct.authorName}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <div className="space-y-3 md:space-y-4">
                             <h4 className="text-xl md:text-2xl font-bold text-gray-900">
