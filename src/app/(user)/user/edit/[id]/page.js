@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import debounce from "lodash/debounce";
 import PreviewPublishModal from "@/components/user/PreviewPublishModal";
 import FullArticlePreview from "@/components/user/FullArticlePreview";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import userAuthStore from "@/store/userAuthStore";
 
 export default function EditPage() {
@@ -24,6 +25,7 @@ export default function EditPage() {
   const [isEditingAuthor, setIsEditingAuthor] = useState(false);
 
   const [showValidationModal, setShowValidationModal] = useState(false);
+  const [showRegenConfirm, setShowRegenConfirm] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
   const [isValidated, setIsValidated] = useState(false);
   const [validating, setValidating] = useState(false);
@@ -521,7 +523,7 @@ export default function EditPage() {
                   </div>
                 ))}
                 <button
-                  onClick={() => handleRegenerate("REWRITE_WITH_CONTEXT")}
+                  onClick={() => setShowRegenConfirm(true)}
                   disabled={regenerating || isLimitReached}
                   className="ml-auto bg-[#0A5CFF] text-white text-[10px] font-bold px-4 py-1.5 rounded-full hover:bg-blue-600 shadow-md shadow-blue-100 disabled:bg-gray-400"
                 >
@@ -849,6 +851,20 @@ export default function EditPage() {
           </div>
         )}
       </AnimatePresence>
+      
+      {/* Regeneration Confirmation */}
+      <ConfirmationModal
+        isOpen={showRegenConfirm}
+        onClose={() => setShowRegenConfirm(false)}
+        onConfirm={() => {
+          setShowRegenConfirm(false);
+          handleRegenerate("REWRITE_WITH_CONTEXT");
+        }}
+        title="Regenerate Full Article?"
+        message="This will overwrite your current article content using the updated context. Your current version will be saved in the history, but any unsaved manual changes to the body or headline might be lost."
+        confirmText="Regenerate Content"
+        confirmColor="bg-[#0A5CFF] hover:bg-blue-700"
+      />
 
       {/* Preview Modal */}
       <FullArticlePreview

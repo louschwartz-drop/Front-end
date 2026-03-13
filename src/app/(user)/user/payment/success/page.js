@@ -20,7 +20,7 @@ function PaymentSuccessContent() {
         // Small delay to let webhook finish, though we don't strictly need it for UI
         const timer = setTimeout(() => {
             setStatus("success");
-        }, 2000);
+        }, 3000);
         return () => clearTimeout(timer);
     }, [sessionId]);
 
