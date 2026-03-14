@@ -46,7 +46,7 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                     initial={{ scale: 0.95, y: 20 }}
                     animate={{ scale: 1, y: 0 }}
                     exit={{ scale: 0.95, y: 20 }}
-                    className="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl md:rounded-3xl shadow-2xl p-5 sm:p-8 md:p-12 article-preview"
+                    className="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl md:rounded-3xl shadow-2xl p-5 sm:p-8 md:p-12 article-preview scrollbar-thin scrollbar-thumb-primary/20 hover:scrollbar-thumb-primary/50 scrollbar-track-transparent"
                 >
                     <div className="absolute top-4 right-4 md:top-6 md:right-6 flex items-center gap-2 z-10">
                         {/* Download Dropdown */}
@@ -73,7 +73,7 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                                         >
                                             <button
                                                 onClick={() => handleDownload('pdf')}
-                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0A5CFF] flex items-center gap-2"
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-primary flex items-center gap-2"
                                             >
                                                 <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                                                     <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
@@ -82,7 +82,7 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                                             </button>
                                             <button
                                                 onClick={() => handleDownload('word')}
-                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0A5CFF] flex items-center gap-2"
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-primary flex items-center gap-2"
                                             >
                                                 <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                                                     <path d="M10 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H10z" />
@@ -115,13 +115,13 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                         </button>
                     </div>
 
-                    <div className="max-w-2xl mx-auto space-y-4 md:space-y-8">
+                    <div className="max-w-2xl mx-auto space-y-4 md:space-y-8 pt-12 md:pt-0">
                         <h2 className="text-2xl md:text-4xl font-extrabold text-gray-900 leading-tight">
                             {displayData.headline}
                         </h2>
 
                         {displayData.summary && (
-                            <div className="text-sm md:text-lg text-gray-800 leading-relaxed font-semibold italic border-l-4 border-[#0A5CFF] pl-4 py-1">
+                            <div className="text-sm md:text-lg text-gray-800 leading-relaxed font-semibold italic border-l-4 border-primary pl-4 py-1">
                                 {displayData.summary}
                             </div>
                         )}
@@ -137,7 +137,7 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                             </span>
                             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 md:gap-8 text-center sm:text-left">
                                 {displayProduct.thumbnail && (
-                                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl md:rounded-2xl overflow-hidden bg-white shadow-sm flex-shrink-0">
+                                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl md:rounded-2xl overflow-hidden bg-white shadow-sm shrink-0">
                                         <img
                                             src={displayProduct.thumbnail}
                                             alt="Product"
@@ -149,16 +149,24 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                                     <h4 className="text-lg md:text-xl font-bold text-gray-900">
                                         {displayProduct.productName}
                                     </h4>
-                                    <div className="space-y-0.5 md:space-y-1">
-                                        <p className="text-xs md:text-sm text-gray-600">
-                                            Category: {displayData.productSummary?.category}
+                                    <div className="space-y-1.5 md:space-y-2 mt-2">
+                                        <p className="text-xs md:text-sm text-gray-400 font-bold uppercase tracking-wider">
+                                            Details
                                         </p>
-                                        <p className="text-xs md:text-sm text-gray-600">
-                                            Use case: {displayData.productSummary?.useCase}
-                                        </p>
-                                        <p className="text-xs md:text-sm text-gray-600">
-                                            Positioning: {displayData.productSummary?.positioning}
-                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {(displayData.categories || displayData.productSummary?.category)?.split(",").map(c => c.trim()).filter(c => c).map((cat, idx) => (
+                                                <span key={idx} className="px-2 py-0.5 bg-blue-50 text-primary text-[10px] md:text-xs font-bold rounded-full border border-blue-100">
+                                                    {cat}
+                                                </span>
+                                            ))}
+                                            {!displayData.categories && !displayData.productSummary?.category && (
+                                                <span className="text-xs text-gray-400 italic">No categories</span>
+                                            )}
+                                        </div>
+                                        <div className="text-xs md:text-sm text-gray-600 space-y-1 mt-2">
+                                            <p><span className="font-bold opacity-60">Use case:</span> {displayData.productSummary?.useCase}</p>
+                                            <p><span className="font-bold opacity-60">Positioning:</span> {displayData.productSummary?.positioning}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -200,9 +208,12 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                                     href={displayProduct.affiliateLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-[#0A5CFF] underline break-all font-medium text-xs md:text-base"
+                                    className="text-primary hover:text-blue-700 underline font-semibold text-xs md:text-base transition-colors flex items-center gap-1.5 w-fit"
                                 >
-                                    {displayProduct.affiliateLink || "[Affiliate Link]"}
+                                    Click here to see product
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
                                 </a>
                             </div>
                         </div>
@@ -214,9 +225,12 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                                 </p>
                                 <button
                                     onClick={() => setIsVideoOpen(true)}
-                                    className="text-blue-500 underline break-all text-left"
+                                    className="text-blue-500 hover:text-blue-700 underline font-medium text-left transition-colors flex items-center gap-1.5"
                                 >
-                                    {displayProduct.sourceVideoLink || "Watch original creator video"}
+                                    Watch Original Creator Video
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
                                 </button>
                             </div>
                             <p className="">

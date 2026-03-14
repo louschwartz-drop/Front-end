@@ -62,7 +62,10 @@ function DashboardContent() {
     return statusColors[status] || "bg-gray-100 text-gray-700";
   };
 
-  const getStatusLabel = (status) => {
+  const getStatusLabel = (campaign) => {
+    const status = campaign.status;
+    const isLanguageError = campaign.errorMessage?.toLowerCase().includes("language");
+    
     const labels = {
       uploading: "Uploading",
       uploaded: "Uploaded",
@@ -71,7 +74,7 @@ function DashboardContent() {
       finished: "Ready for Publish",
       published: "Published",
       submitted_successfully: "Submitted Successfully",
-      failed: "Failed",
+      failed: isLanguageError ? "Language Not Supported" : "Failed",
     };
     return labels[status] || status;
   };
@@ -228,7 +231,7 @@ function DashboardContent() {
                       <span
                         className={`md:hidden px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${getStatusColor(campaign.status)}`}
                       >
-                        {getStatusLabel(campaign.status)}
+                        {getStatusLabel(campaign)}
                       </span>
                     </div>
                   </div>
@@ -237,7 +240,7 @@ function DashboardContent() {
                   <span
                     className={`hidden md:block px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(campaign.status)}`}
                   >
-                    {getStatusLabel(campaign.status)}
+                    {getStatusLabel(campaign)}
                   </span>
                   <div className="flex items-center gap-4">
                     {campaign.status === "finished" && (

@@ -12,7 +12,8 @@ import {
     FileText,
     DollarSign,
     Filter,
-    ArrowUpRight
+    ArrowUpRight,
+    X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
@@ -30,6 +31,13 @@ export default function PaymentHistoryPage() {
         endDate: ""
     });
     const [totalResults, setTotalResults] = useState(0);
+    const today = new Date().toISOString().split('T')[0];
+
+    const clearFilters = () => {
+        setSearchTerm("");
+        setDateRange({ startDate: "", endDate: "" });
+        setCurrentPage(1);
+    };
 
     const fetchHistory = async () => {
         if (!user?.id && !user?._id) return;
@@ -96,21 +104,42 @@ export default function PaymentHistoryPage() {
                         />
                     </div>
 
-                    <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl shadow-sm">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <input
-                            type="date"
-                            className="text-xs font-bold text-gray-700 outline-none w-24 md:w-32"
-                            value={dateRange.startDate}
-                            onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                        />
-                        <span className="text-gray-300">to</span>
-                        <input
-                            type="date"
-                            className="text-xs font-bold text-gray-700 outline-none w-24 md:w-32"
-                            value={dateRange.endDate}
-                            onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                        />
+                    <div className="flex flex-wrap items-center gap-2 md:gap-4">
+                        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl shadow-sm">
+                            <Calendar className="w-4 h-4 text-gray-400" />
+                            <div className="flex items-center gap-2">
+                                <div className="flex flex-col">
+                                    <input
+                                        type="date"
+                                        max={dateRange.endDate || today}
+                                        className="text-xs font-bold text-gray-700 outline-none w-24 md:w-32"
+                                        value={dateRange.startDate}
+                                        onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                                    />
+                                </div>
+                                <span className="text-gray-300 mt-1">to</span>
+                                <div className="flex flex-col">
+                                    <input
+                                        type="date"
+                                        min={dateRange.startDate}
+                                        max={today}
+                                        className="text-xs font-bold text-gray-700 outline-none w-24 md:w-32"
+                                        value={dateRange.endDate}
+                                        onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {(searchTerm || dateRange.startDate || dateRange.endDate) && (
+                            <button
+                                onClick={clearFilters}
+                                className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
+                            >
+                                <X className="w-3.5 h-3.5" />
+                                Clear
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

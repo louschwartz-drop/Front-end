@@ -28,11 +28,16 @@ const VideoModal = ({ isOpen, onClose, videoUrl }) => {
         return null;
     };
 
+    const isDirectVideo = (url) => {
+        return url.match(/\.(mp4|webm|ogg|mov)$|^blob:|^data:video\//i);
+    };
+
     const embedUrl = getEmbedUrl(videoUrl);
+    const directVideo = isDirectVideo(videoUrl);
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -62,6 +67,13 @@ const VideoModal = ({ isOpen, onClose, videoUrl }) => {
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
                         />
+                    ) : directVideo ? (
+                        <video
+                            src={videoUrl}
+                            controls
+                            autoPlay
+                            className="w-full h-full"
+                        />
                     ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-white space-y-4">
                             <svg className="w-16 h-16 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,7 +84,7 @@ const VideoModal = ({ isOpen, onClose, videoUrl }) => {
                                 href={videoUrl} 
                                 target="_blank" 
                                 rel="noopener noreferrer" 
-                                className="px-6 py-2 bg-[#0A5CFF] rounded-full font-bold hover:bg-blue-600 transition-all"
+                                className="px-6 py-2 bg-primary rounded-full font-bold hover:bg-blue-600 transition-all"
                             >
                                 Watch on External Site
                             </a>

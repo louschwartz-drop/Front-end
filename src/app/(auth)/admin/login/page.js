@@ -268,17 +268,7 @@ function LoginForm({ redirectPath }) {
                 </Button>
               </form>
 
-              <div className="mt-8 pt-6 border-t border-gray-100">
-                <p className="text-center text-sm text-gray-500">
-                  Need help?{" "}
-                  <Link
-                    href="/"
-                    className="text-brand-blue hover:underline font-medium"
-                  >
-                    Contact Support
-                  </Link>
-                </p>
-              </div>
+
             </div>
           </div>
         </div>

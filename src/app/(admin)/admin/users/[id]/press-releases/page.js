@@ -1,17 +1,24 @@
 "use client";
+
 import { useState, useEffect, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Eye, Link, CheckCircle, Search, Filter, ChevronLeft, ChevronRight, Play, Activity, Clock, Flag } from "lucide-react";
+import { 
+    FileText, Eye, Link, CheckCircle, Search, Filter, 
+    ChevronLeft, ChevronRight, Play, Activity, Clock, Flag, X
+} from "lucide-react";
 import { toast } from "react-toastify";
 import Button from "@/components/ui/Button";
 import debounce from "lodash/debounce";
-import userAuthStore from "@/store/userAuthStore";
-import { pressReleaseService } from "@/lib/api/user/press-releases";
+import { adminPressReleaseService } from "@/lib/api/admin/press-releases";
 import FullArticlePreview from "@/components/user/FullArticlePreview";
 import DistributionStatusModal from "@/components/user/DistributionStatusModal";
-import VideoModal from "@/components/ui/VideoModal";
 
-export default function UserPressReleasesPage() {
+export default function AdminUserPressReleasesPage() {
+    const params = useParams();
+    const router = useRouter();
+    const userId = params.id;
+
     const [releases, setReleases] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -27,25 +34,25 @@ export default function UserPressReleasesPage() {
         campaignId: null,
         title: "",
     });
-    const [isRefreshing, setIsRefreshing] = useState(false);
-    const [filter, setFilter] = useState("all"); // all, in-progress, finished, pending
-    const [videoModal, setVideoModal] = useState({
-        show: false,
-        url: "",
-    });
+    const [statusFilter, setStatusFilter] = useState("all");
+    const [dateFilter, setDateFilter] = useState("");
+    const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
 
-    const { user } = userAuthStore();
-    const userId = user?._id || user?.id;
+    const statusOptions = [
+        { id: "all", label: "All Press Releases" },
+        { id: "in-progress", label: "In Progress", color: "amber" },
+        { id: "finished", label: "Finished", color: "emerald" },
+        { id: "pending", label: "Queued", color: "blue" }
+    ];
 
     const loadReleases = async (page = 1, search = "") => {
-        if (!userId) {
-            setLoading(false);
-            return;
-        }
+        if (!userId) return;
 
         setLoading(true);
         try {
-            const res = await pressReleaseService.getAll(userId, {
+            // Using admin service to fetch releases for this specific user
+            const res = await adminPressReleaseService.getAll({
+                userId,
                 page,
                 limit: 10,
                 search
@@ -57,7 +64,7 @@ export default function UserPressReleasesPage() {
                 setTotalResults(res.pagination.total);
             }
         } catch (error) {
-            console.error('Error loading press releases:', error);
+            console.error('Error loading press releases for admin:', error);
             toast.error("Failed to load press releases");
         } finally {
             setLoading(false);
@@ -74,7 +81,9 @@ export default function UserPressReleasesPage() {
     );
 
     useEffect(() => {
-        loadReleases(currentPage, searchTerm);
+        if (userId) {
+            loadReleases(currentPage, searchTerm);
+        }
     }, [userId, currentPage]);
 
     const handleSearchChange = (e) => {
@@ -83,6 +92,10 @@ export default function UserPressReleasesPage() {
         debouncedSearch(value);
     };
 
+    const clearFilters = () => {
+        setStatusFilter("all");
+        setDateFilter("");
+    };
 
     const getStatusStyle = (status, release) => {
         if (release.distributionStatus?.needsReview) return "bg-rose-100 text-rose-700 border-rose-200";
@@ -122,66 +135,100 @@ export default function UserPressReleasesPage() {
     };
 
     const filteredReleases = releases.filter(release => {
-        if (filter === "all") return true;
         const label = getStatusLabel(release);
-        if (filter === "in-progress") return label === "IN PROGRESS";
-        if (filter === "finished") return label === "FINISHED";
-        if (filter === "pending") return label === "PENDING" || label === "SUBMITTED_SUCCESSFULLY";
-        return true;
+        const matchesStatus = statusFilter === "all" || 
+            (statusFilter === "in-progress" ? label === "IN PROGRESS" :
+             statusFilter === "finished" ? label === "FINISHED" :
+             statusFilter === "pending" ? (label === "PENDING" || label === "SUBMITTED_SUCCESSFULLY") : true);
+        
+        const matchesDate = !dateFilter || 
+            new Date(release.createdAt).toISOString().split('T')[0] === dateFilter;
+
+        return matchesStatus && matchesDate;
     });
 
     return (
-        <div className="space-y-4 md:space-y-8 max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Your Press Releases</h1>
-                    <p className="text-xs md:text-sm text-gray-500 font-medium tracking-tight">Manage and track your published stories.</p>
+        <div className="mx-auto">
+            {/* Page Header */}
+            <div className="mb-8">
+                <button
+                    onClick={() => router.back()}
+                    className="flex items-center text-gray-500 hover:text-gray-700 transition-colors mb-4 text-sm font-medium"
+                >
+                    <ChevronLeft className="w-5 h-5 mr-1" />
+                    Back to Users
+                </button>
+                <h1 className="text-3xl font-bold text-gray-900">User Press Releases</h1>
+                <p className="text-gray-600 mt-2">Viewing all press releases for this specific user</p>
+            </div>
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+
+                    <div className="flex flex-wrap items-center gap-4 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+                        <div className="flex items-center gap-2 px-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Date</label>
+                            <input 
+                                type="date"
+                                value={dateFilter}
+                                onChange={(e) => setDateFilter(e.target.value)}
+                                className="bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary block w-40 p-2 outline-none transition-all cursor-pointer hover:border-primary/40"
+                            />
+                        </div>
+                        {(statusFilter !== "all" || dateFilter !== "" || searchTerm !== "") && (
+                            <button
+                                onClick={() => {
+                                    clearFilters();
+                                    setSearchTerm("");
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                            >
+                                <X className="w-3.5 h-3.5" />
+                                Clear
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                <div className="relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+            {/* Status Filter Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <div className="flex flex-wrap items-center gap-2">
+                    {statusOptions.map((f) => (
+                        <button
+                            key={f.id}
+                            onClick={() => setStatusFilter(f.id)}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all flex items-center gap-2 ${statusFilter === f.id
+                                ? "bg-gray-900 text-white border-gray-900 shadow-sm scale-105"
+                                : "bg-white text-gray-500 border-gray-100 hover:border-gray-300"
+                                }`}
+                        >
+                            {f.id !== "all" && (
+                                <div className={`w-2 h-2 rounded-full bg-${f.color}-500 shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />
+                            )}
+                            {f.label}
+                            <span className={`ml-1 text-[9px] ${statusFilter === f.id ? "text-gray-400" : "text-gray-300"}`}>
+                                ({releases.filter(r => {
+                                    if (f.id === "all") return true;
+                                    const label = getStatusLabel(r);
+                                    if (f.id === "in-progress") return label === "IN PROGRESS";
+                                    if (f.id === "finished") return label === "FINISHED";
+                                    if (f.id === "pending") return label === "PENDING" || label === "SUBMITTED_SUCCESSFULLY";
+                                    return true;
+                                }).length})
+                            </span>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="relative group flex-1 md:flex-none">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
                     <input
                         type="text"
-                        placeholder="Search by article headline..."
-                        className="pl-10 md:pl-12 pr-4 md:pr-6 py-2 md:py-3 bg-white border border-gray-200 rounded-xl md:rounded-2xl w-full md:w-80 shadow-sm focus:ring-2 focus:ring-blue-600/20 outline-none transition-all font-medium text-xs md:text-sm"
+                        placeholder="Search headline..."
+                        className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl w-full md:w-64 shadow-sm focus:ring-2 focus:ring-blue-600/20 outline-none transition-all font-medium text-xs"
                         value={searchTerm}
                         onChange={handleSearchChange}
                     />
                 </div>
-            </div>
-
-            {/* Status Filter Bar */}
-            <div className="flex flex-wrap items-center gap-2 mb-6">
-                {[
-                    { id: "all", label: "All Press Releases" },
-                    { id: "in-progress", label: "In Progress", color: "amber" },
-                    { id: "finished", label: "Finished", color: "emerald" },
-                    { id: "pending", label: "Queued", color: "blue" }
-                ].map((f) => (
-                    <button
-                        key={f.id}
-                        onClick={() => setFilter(f.id)}
-                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all flex items-center gap-2 ${filter === f.id
-                            ? "bg-gray-900 text-white border-gray-900 shadow-sm scale-105"
-                            : "bg-white text-gray-500 border-gray-100 hover:border-gray-300"
-                            }`}
-                    >
-                        {f.id !== "all" && (
-                            <div className={`w-2 h-2 rounded-full bg-${f.color}-500 shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />
-                        )}
-                        {f.label}
-                        <span className={`ml-1 text-[9px] ${filter === f.id ? "text-gray-400" : "text-gray-300"}`}>
-                            ({releases.filter(r => {
-                                if (f.id === "all") return true;
-                                const label = getStatusLabel(r);
-                                if (f.id === "in-progress") return label === "IN PROGRESS";
-                                if (f.id === "finished") return label === "FINISHED";
-                                if (f.id === "pending") return label === "PENDING" || label === "SUBMITTED_SUCCESSFULLY";
-                                return true;
-                            }).length})
-                        </span>
-                    </button>
-                ))}
             </div>
 
             {loading && releases.length === 0 ? (
@@ -197,7 +244,7 @@ export default function UserPressReleasesPage() {
                     </div>
                     <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-1 md:mb-2">No Press Releases Found</h3>
                     <p className="text-xs md:text-sm text-gray-500 mb-6 md:mb-8 max-w-xs md:max-w-sm mx-auto font-medium px-4">
-                        {searchTerm ? "No results match your search criteria." : "Once you purchase a distribution plan, your press releases will appear here."}
+                        {searchTerm ? "No results match your search criteria." : "There are no press releases for this user yet."}
                     </p>
                 </div>
             ) : (
@@ -225,16 +272,15 @@ export default function UserPressReleasesPage() {
                                             </div>
                                         )}
                                         {release.campaign?.videoUrl && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setVideoModal({ show: true, url: release.campaign.videoUrl });
-                                                }}
-                                                className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                                            <a
+                                                href={release.campaign.videoUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center"
                                                 title="View Source Video"
                                             >
                                                 <Play className="w-4 h-4 md:w-6 md:h-6 text-white fill-current" />
-                                            </button>
+                                            </a>
                                         )}
                                     </div>
                                     <div className="min-w-0 flex-1">
@@ -295,7 +341,7 @@ export default function UserPressReleasesPage() {
                                     </button>
 
                                     <button
-                                        onClick={() => setStatusModal({ show: true, campaignId: release.campaign._id, title: release.campaign.article?.headline })}
+                                        onClick={() => setStatusModal({ show: true, campaignId: release.campaign?._id, title: release.campaign?.article?.headline })}
                                         className="p-1.5 md:p-2 hover:bg-blue-50 rounded-lg transition-all text-blue-500 hover:text-blue-700 group/btn flex items-center gap-1"
                                         title="View Distribution Status"
                                     >
@@ -303,13 +349,15 @@ export default function UserPressReleasesPage() {
                                     </button>
 
                                     {release.campaign?.videoUrl && (
-                                        <button
-                                            onClick={() => setVideoModal({ show: true, url: release.campaign.videoUrl })}
+                                        <a
+                                            href={release.campaign.videoUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
                                             className="p-1.5 md:p-2 hover:bg-gray-100 rounded-lg transition-all text-gray-500 hover:text-blue-600 group/btn"
                                             title="View Source Video"
                                         >
                                             <Link className="w-4 h-4 md:w-5 md:h-5 group-hover/btn:scale-110 transition-transform" />
-                                        </button>
+                                        </a>
                                     )}
                                 </div>
                             </motion.div>
@@ -317,7 +365,7 @@ export default function UserPressReleasesPage() {
                     </div>
 
                     {/* Pagination */}
-                    {true && (
+                    {totalPages > 1 && (
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 md:pt-6 border-t border-gray-100">
                             <p className="text-[10px] md:text-sm text-gray-500 font-medium">
                                 Showing <span className="text-gray-900 font-bold">{(currentPage - 1) * 10 + 1}</span> to{" "}
@@ -345,8 +393,7 @@ export default function UserPressReleasesPage() {
                         </div>
                     )}
                 </div>
-            )
-            }
+            )}
 
             {/* Full Article Preview */}
             <FullArticlePreview
@@ -371,12 +418,6 @@ export default function UserPressReleasesPage() {
                     ));
                 }}
             />
-            {/* Video Modal */}
-            <VideoModal
-                isOpen={videoModal.show}
-                onClose={() => setVideoModal({ show: false, url: "" })}
-                videoUrl={videoModal.url}
-            />
-        </div >
+        </div>
     );
 }

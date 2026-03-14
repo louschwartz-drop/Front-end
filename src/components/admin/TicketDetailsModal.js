@@ -81,8 +81,6 @@ export default function TicketDetailsModal({ ticket, isOpen, onClose, onUpdateSt
                             <div className="grid gap-3">
                                 <InfoItem label="How Found" value={ticket.howFound} />
                                 <InfoItem label="Salesperson" value={ticket.salesperson || "None"} />
-                                <InfoItem label="Current Providers" value={ticket.currentNewswire?.join(", ") || "None"} />
-                                <InfoItem label="Other Providers" value={ticket.otherNewswire || "N/A"} />
                             </div>
                         </div>
                     </div>

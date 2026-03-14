@@ -81,13 +81,16 @@ export default function AdminSupportPage() {
     };
 
     return (
-        <div className="container mx-auto pb-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Support Tickets</h1>
-                    <p className="text-gray-500 text-sm mt-1">Manage and respond to user enquiries</p>
-                </div>
+        <div className="mx-auto">
+            {/* Page Header */}
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900">Contact Queries</h1>
+                <p className="text-gray-600 mt-2">
+                    Manage and respond to user enquiries and support requests
+                </p>
+            </div>
 
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                 <div className="relative w-full md:w-96">
                     <input
                         type="text"

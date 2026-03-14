@@ -87,7 +87,7 @@ export default function Header() {
             >
               <Image
                 src="/logo.png"
-                alt="Drop PR"
+                alt="DropPR.ai"
                 width={160}
                 height={60}
                 className="h-10 md:h-14 w-auto object-contain"

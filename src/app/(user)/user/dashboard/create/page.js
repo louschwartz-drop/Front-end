@@ -124,17 +124,17 @@ export default function CreateCampaignPage() {
 
   const getPlatformError = (link) => {
     const PATTERNS = {
-      youtubeShorts: /^(https?:\/\/)?(www\.)?youtube\.com\/shorts\/[a-zA-Z0-9_-]+(\?.*)?$/,
-      instagram: /^(https?:\/\/)?(www\.)?instagram\.com\/(reels?|p)\/[a-zA-Z0-9_-]+\/?(\?.*)?$/,
+      youtube: /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/(watch\?v=|shorts\/|live\/|v\/|embed\/)?([a-zA-Z0-9_-]{11})?(\S*)?$/,
+      instagram: /^(https?:\/\/)?(www\.)?instagram\.com\/(reels?|p|stories)\/[a-zA-Z0-9_-]+\/?(\?.*)?$/,
       tiktok: /^(https?:\/\/)?((www|vm)\.)?tiktok\.com\/(.+\/video\/\d+|[a-zA-Z0-9_-]+)\/?(\?.*)?$/,
     };
 
-    if (PATTERNS.youtubeShorts.test(link)) return null;
+    if (PATTERNS.youtube.test(link)) return null;
     if (PATTERNS.instagram.test(link)) return null;
     if (PATTERNS.tiktok.test(link)) return null;
 
-    if (link.includes("youtube.com") || link.includes("youtu.be") || link.includes("youtub")) {
-      return "Only YouTube Shorts are supported (Format: youtube.com/shorts/...)";
+    if (link.includes("youtube.com") || link.includes("youtu.be")) {
+      return "Please enter a valid YouTube video or Shorts link";
     }
     if (link.includes("instagram.com") || link.includes("instagr")) {
       return "Only Instagram Reels or Posts are supported (Format: instagram.com/reel/...)";
@@ -143,7 +143,7 @@ export default function CreateCampaignPage() {
       return "Please provide a valid TikTok video link (Format: tiktok.com/@user/video/...)";
     }
 
-    return "Please enter a valid YouTube Shorts, Instagram, or TikTok link";
+    return "Please enter a valid YouTube, Instagram, or TikTok link";
   };
 
   const handleUrlChange = (e) => {
@@ -534,7 +534,7 @@ export default function CreateCampaignPage() {
                 type="url"
                 value={videoLink}
                 onChange={handleUrlChange}
-                placeholder="https://youtube.com/shorts/... or https://instagram.com/reel/... or https://tiktok.com/@user/video/..."
+                placeholder="YouTube, Instagram Reel, or TikTok video link..."
                 className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ${urlError ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-[#0A5CFF]"
                   }`}
                 required
@@ -555,16 +555,16 @@ export default function CreateCampaignPage() {
                     <div className="mt-2 p-3 bg-red-50 border border-red-100 rounded-md">
                       <p className="text-xs text-red-700 font-semibold mb-1">Expected Formats:</p>
                       <ul className="text-[10px] text-red-600 list-disc list-inside space-y-0.5">
-                        <li>YouTube: youtube.com/shorts/VIDEO_ID</li>
-                        <li>Instagram: instagram.com/reel/REEL_ID or /p/POST_ID</li>
-                        <li>TikTok: tiktok.com/@user/video/VIDEO_ID</li>
+                        <li>YouTube: youtube.com/watch?v=ID or /shorts/ID</li>
+                        <li>Instagram: instagram.com/reel/ID or /p/ID</li>
+                        <li>TikTok: tiktok.com/@user/video/ID</li>
                       </ul>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
               <p className="text-sm text-gray-500 mt-2">
-                Supported: YouTube Shorts, Instagram Reels/Posts, TikTok
+                Supported: YouTube, Instagram Reels/Posts, TikTok
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 Maximum video length: {MAX_VIDEO_DURATION_MINUTES} minutes

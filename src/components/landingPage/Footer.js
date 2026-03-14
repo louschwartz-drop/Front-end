@@ -15,7 +15,7 @@ export default function Footer() {
             >
               <Image
                 src="/logo.png"
-                alt="Drop PR"
+                alt="DropPR.ai"
                 width={160}
                 height={160}
                 className="rounded-lg"
@@ -75,7 +75,7 @@ export default function Footer() {
         <div className="border-t border-gray-800 mt-10 pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-gray-400 text-sm text-center md:text-left">
-              &copy; {new Date().getFullYear()} Drop PR. All rights reserved.
+              &copy; {new Date().getFullYear()} DropPR.ai. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
               <a

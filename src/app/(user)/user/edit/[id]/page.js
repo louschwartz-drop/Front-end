@@ -9,6 +9,7 @@ import PreviewPublishModal from "@/components/user/PreviewPublishModal";
 import FullArticlePreview from "@/components/user/FullArticlePreview";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import userAuthStore from "@/store/userAuthStore";
+import { PREDEFINED_CATEGORIES } from "@/lib/constants";
 
 export default function EditPage() {
   const router = useRouter();
@@ -75,6 +76,49 @@ export default function EditPage() {
       return false;
     }
   };
+
+  const [validatingImage, setValidatingImage] = useState(false);
+
+  const checkImageValidity = async (url) => {
+    if (!url || !isValidUrl(url)) {
+      setValidatingImage(false);
+      return;
+    }
+    
+    setValidatingImage(true);
+    const isValid = await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = url;
+      setTimeout(() => resolve(false), 5000);
+    });
+
+    if (!isValid) {
+      setThumbnailUrlError("This image URL seems broken or unreachable.");
+    } else {
+      setThumbnailUrlError("");
+    }
+    setValidatingImage(false);
+  };
+
+  const debouncedImageCheck = useCallback(
+    debounce((url) => {
+      checkImageValidity(url);
+    }, 1000),
+    []
+  );
+
+  useEffect(() => {
+    if (productCard.thumbnail && isValidUrl(productCard.thumbnail)) {
+      // Don't validate if it's already the initial value or a known good one
+      // But for simplicity in this reactive form, we check when it changes
+      debouncedImageCheck(productCard.thumbnail);
+    } else {
+      setValidatingImage(false);
+      if (!productCard.thumbnail) setThumbnailUrlError("");
+    }
+  }, [productCard.thumbnail, debouncedImageCheck]);
 
   const [showPreview, setShowPreview] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
@@ -215,6 +259,7 @@ export default function EditPage() {
           conclusion: response.data.article.conclusion || "",
           creatorQuote: response.data.article.creatorQuote || "",
           summary: response.data.article.summary || "",
+          categories: response.data.article.categories || prev.categories,
         }));
         setVersions(response.data.versions);
         if (actionId === "OPTIMIZE_HEADLINE") {
@@ -420,7 +465,9 @@ export default function EditPage() {
     !productCard.sourceVideoLink?.trim() ||
     !isValidUrl(productCard.thumbnail) ||
     !isValidUrl(productCard.affiliateLink) ||
-    !isValidUrl(productCard.sourceVideoLink);
+    !isValidUrl(productCard.sourceVideoLink) ||
+    !!thumbnailUrlError ||
+    validatingImage;
 
   if (loading) {
     return (
@@ -428,7 +475,7 @@ export default function EditPage() {
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-4 border-[#0A5CFF] border-t-transparent rounded-full"
+          className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
         />
       </div>
     );
@@ -445,7 +492,7 @@ export default function EditPage() {
             </svg>
           </button>
           <h1 className="text-lg md:text-xl font-bold text-gray-900 hidden sm:block">Editor</h1>
-          <div className="h-6 w-[1px] bg-gray-200 hidden sm:block"></div>
+          <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
           <div className="text-[10px] md:text-xs text-gray-500 max-w-[120px] sm:max-w-none truncate">
             {lastSaved ? `Auto-saved at ${lastSaved.toLocaleTimeString()}` : "Ready to edit"}
           </div>
@@ -465,7 +512,7 @@ export default function EditPage() {
           </button>
           <button
             onClick={() => setShowPreview(true)}
-            className="p-1 sm:p-2 md:px-4 md:py-2 text-sm font-medium text-[#0A5CFF] hover:bg-blue-50 rounded-lg flex items-center gap-2"
+            className="p-1 sm:p-2 md:px-4 md:py-2 text-sm font-medium text-primary hover:bg-blue-50 rounded-lg flex items-center gap-2"
             title="Preview"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -485,7 +532,7 @@ export default function EditPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-4 shadow-sm"
           >
-            <div className="bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold">!</div>
+            <div className="bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold">!</div>
             <div>
               <h4 className="text-red-800 font-bold text-sm">You have reached your maximum edits limit.</h4>
               <p className="text-red-600 text-[11px]">The main article content is now locked. You can still update the Product Mandatory Card below.</p>
@@ -525,7 +572,7 @@ export default function EditPage() {
                 <button
                   onClick={() => setShowRegenConfirm(true)}
                   disabled={regenerating || isLimitReached}
-                  className="ml-auto bg-[#0A5CFF] text-white text-[10px] font-bold px-4 py-1.5 rounded-full hover:bg-blue-600 shadow-md shadow-blue-100 disabled:bg-gray-400"
+                  className="ml-auto bg-primary text-white text-[10px] font-bold px-4 py-1.5 rounded-full hover:bg-blue-600 shadow-md shadow-blue-100 disabled:bg-gray-400"
                 >
                   {regenerating && regeneratingAction === "REWRITE_WITH_CONTEXT" ? "Rewriting..." : "Apply All"}
                 </button>
@@ -614,11 +661,11 @@ export default function EditPage() {
                         onBlur={() => setIsEditingAuthor(false)}
                         onKeyDown={(e) => e.key === 'Enter' && setIsEditingAuthor(false)}
                         autoFocus
-                        className="text-[10px] font-bold text-[#0A5CFF] bg-blue-50/50 border-none focus:ring-0 p-0"
+                        className="text-[10px] font-bold text-primary bg-blue-50/50 border-none focus:ring-0 p-0"
                       />
                     ) : (
                       <div className="flex items-center gap-1 group/author">
-                        <span className="text-[10px] font-bold text-[#0A5CFF]">{productCard.authorName || "Author"}</span>
+                        <span className="text-[10px] font-bold text-primary">{productCard.authorName || "Author"}</span>
                         <button 
                           onClick={() => setIsEditingAuthor(true)}
                           className="p-1 hover:bg-gray-100 rounded transition-all"
@@ -680,11 +727,11 @@ export default function EditPage() {
                     value={editData.ctaText}
                     disabled={isLimitReached}
                     onChange={(e) => setEditData({ ...editData, ctaText: e.target.value })}
-                    className="w-full text-[12px] sm:text-[15px] font-bold text-[#0A5CFF] border border-blue-100 rounded-lg p-2 sm:p-3 bg-blue-50/20 disabled:text-blue-300 disabled:border-gray-100 disabled:bg-gray-50"
+                    className="w-full text-[12px] sm:text-[15px] font-bold text-primary border border-blue-100 rounded-lg p-2 sm:p-3 bg-blue-50/20 disabled:text-blue-300 disabled:border-gray-100 disabled:bg-gray-50"
                     placeholder="Buy [Product Name] Today..."
                   />
                   <div className="p-2 sm:p-4 text-[15px] sm:text-normal rounded-xl border-2 border-dashed border-gray-100 bg-gray-50 flex items-center justify-center">
-                    <button className="px-6 py-2 bg-[#0A5CFF] text-white font-bold rounded shadow-md pointer-events-none opacity-50">
+                    <button className="px-6 py-2 bg-primary text-white font-bold rounded shadow-md pointer-events-none opacity-50">
                       {editData.ctaText || "CTA Button Preview"}
                     </button>
                   </div>
@@ -712,7 +759,7 @@ export default function EditPage() {
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Thumbnail URL</label>
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className={`text-[10px] font-bold ${uploadingThumbnail ? "text-gray-400" : "text-[#0A5CFF] hover:underline"}`}
+                      className={`text-[10px] font-bold ${uploadingThumbnail ? "text-gray-400" : "text-primary hover:underline"}`}
                       disabled={uploadingThumbnail}
                     >
                       {uploadingThumbnail ? "Uploading..." : "Upload File"}
@@ -734,14 +781,16 @@ export default function EditPage() {
                     }}
                     onBlur={() => {
                       const val = productCard.thumbnail;
-                      setThumbnailUrlError(val && !isValidUrl(val) ? "Please enter a valid URL (e.g. https://...)" : "");
+                      if (val && !isValidUrl(val)) {
+                        setThumbnailUrlError("Please enter a valid URL (e.g. https://...)");
+                      }
                     }}
                     className={`w-full text-xs font-semibold text-gray-900 bg-gray-50/50 border rounded-lg px-3 py-2.5 focus:bg-white focus:ring-1 transition-all outline-none ${thumbnailUrlError ? "border-red-300 focus:border-red-500 focus:ring-red-200" : "border-gray-200 focus:border-blue-300 focus:ring-blue-100"}`}
                     placeholder="https://..."
                   />
                   {thumbnailUrlError && <p className="text-[10px] text-red-500 font-medium mt-1">{thumbnailUrlError}</p>}
                   {productCard.thumbnail && !thumbnailUrlError && (
-                    <div className="mt-2 w-[100px] h-[100px] rounded-lg overflow-hidden border border-gray-100 bg-gray-50 flex-shrink-0">
+                    <div className="mt-2 w-[100px] h-[100px] rounded-lg overflow-hidden border border-gray-100 bg-gray-50 shrink-0">
                       <img src={productCard.thumbnail} alt="Preview" className="w-full h-full object-cover" />
                     </div>
                   )}
@@ -770,11 +819,9 @@ export default function EditPage() {
                   placeholder="https://..."
                 />
 
-                <SidebarField
-                  label="Categories (comma separated)"
-                  value={editData.categories}
+                <CategorySelector 
+                  categories={editData.categories}
                   onChange={(val) => setEditData({ ...editData, categories: val })}
-                  placeholder="e.g. Technology, Health, Startups"
                 />
 
                 <div className="pt-4 mt-4 border-t border-gray-100 flex flex-col gap-3">
@@ -790,7 +837,7 @@ export default function EditPage() {
                     onClick={handlePublishClick}
                     className={`w-full py-2.5 rounded-xl font-bold text-sm transition-all shadow-md flex justify-center items-center gap-2 ${isPublishDisabled || validating
                       ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      : "bg-gradient-to-r from-blue-600 to-[#0A5CFF] text-white hover:shadow-lg focus:ring-4 focus:ring-blue-100"
+                      : "bg-linear-to-r from-blue-600 to-primary text-white hover:shadow-lg focus:ring-4 focus:ring-blue-100"
                       }`}
                   >
                     {validating ? (
@@ -863,7 +910,7 @@ export default function EditPage() {
         title="Regenerate Full Article?"
         message="This will overwrite your current article content using the updated context. Your current version will be saved in the history, but any unsaved manual changes to the body or headline might be lost."
         confirmText="Regenerate Content"
-        confirmColor="bg-[#0A5CFF] hover:bg-blue-700"
+        confirmColor="bg-primary hover:bg-blue-700"
       />
 
       {/* Preview Modal */}
@@ -906,7 +953,7 @@ export default function EditPage() {
                         <p className="text-sm font-bold text-gray-900">Version {versions.length - i}</p>
                         <p className="text-[10px] text-gray-500 uppercase font-semibold">{new Date(v.createdAt).toLocaleString()}</p>
                       </div>
-                      <span className="text-xs text-[#0A5CFF] opacity-0 group-hover:opacity-100 font-bold transition-opacity">Restore</span>
+                      <span className="text-xs text-primary opacity-0 group-hover:opacity-100 font-bold transition-opacity">Restore</span>
                     </button>
                   ))
                 )}
@@ -939,7 +986,7 @@ function SectionCard({ label, children, onAiAction, aiLabel, aiDisabled, seconda
             <button
               onClick={onAiAction}
               disabled={disabled || aiDisabled}
-              className="bg-white border border-blue-200 text-[#0A5CFF] text-[9px] sm:text-[10px] font-bold px-1 sm:px-3 py-1 rounded-full hover:bg-blue-50 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-white border border-blue-200 text-primary text-[9px] sm:text-[10px] font-bold px-1 sm:px-3 py-1 rounded-full hover:bg-blue-50 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {aiLabel}
             </button>
@@ -960,6 +1007,110 @@ function SectionCard({ label, children, onAiAction, aiLabel, aiDisabled, seconda
   );
 }
 
+function CategorySelector({ categories, onChange }) {
+  const [inputValue, setInputValue] = useState("");
+  const categoriesList = categories ? categories.split(",").map(c => c.trim()).filter(c => c) : [];
+
+  const handleAddCategory = (cat) => {
+    if (!cat) return;
+    const cleanCat = cat.replace(/,/g, "").trim();
+    if (cleanCat && !categoriesList.includes(cleanCat)) {
+      const newCategories = [...categoriesList, cleanCat].join(", ");
+      onChange(newCategories);
+    }
+    setInputValue("");
+  };
+
+  const handleRemoveCategory = (cat) => {
+    const newCategories = categoriesList.filter(c => c !== cat).join(", ");
+    onChange(newCategories);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      handleAddCategory(inputValue);
+    }
+  };
+
+  const suggestions = PREDEFINED_CATEGORIES.filter(c => !categoriesList.includes(c));
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Campaign Categories</label>
+        <span className="text-[10px] font-bold text-blue-400">Optional</span>
+      </div>
+      
+      {/* Active Tags Display */}
+      <div className="flex flex-wrap gap-2 min-h-[32px] p-2 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+        {categoriesList.map(cat => (
+          <motion.span 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            key={cat} 
+            className="flex items-center gap-1.5 bg-white text-primary text-[10px] font-bold px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm group hover:border-red-200 hover:text-red-500 transition-all cursor-default"
+          >
+            {cat}
+            <button 
+              onClick={() => handleRemoveCategory(cat)}
+              className="text-gray-300 group-hover:text-red-500 transition-colors ml-1"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </motion.span>
+        ))}
+        {categoriesList.length === 0 && (
+          <p className="text-[10px] text-gray-400 italic flex items-center h-6 px-1">No categories selected</p>
+        )}
+      </div>
+
+      {/* Suggested Box */}
+      {suggestions.length > 0 && (
+        <div className="p-3 bg-blue-50/30 rounded-xl border border-blue-50">
+          <p className="text-[9px] font-black text-blue-400 uppercase mb-2 tracking-widest">Quick Add Suggested</p>
+          <div className="flex flex-wrap gap-1.5">
+            {suggestions.slice(0, 10).map(cat => (
+               <button 
+                 key={cat}
+                 onClick={() => handleAddCategory(cat)}
+                 className="text-[10px] bg-white border border-gray-200 px-2.5 py-1.5 rounded-lg hover:border-blue-300 hover:text-primary hover:shadow-sm transition-all flex items-center gap-1.5 font-semibold text-gray-600 group"
+               >
+                 <svg className="w-3 h-3 text-gray-300 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                 </svg>
+                 {cat}
+               </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Custom Tag Input */}
+      <div className="relative group">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+        </div>
+        <input
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={() => inputValue && handleAddCategory(inputValue)}
+          placeholder="Type custom & press Enter..."
+          className="w-full text-xs font-semibold text-gray-900 bg-white border border-gray-200 rounded-xl px-10 py-3 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
+        />
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-focus-within:opacity-100 transition-opacity">
+          <kbd className="px-1.5 py-0.5 text-[8px] font-bold text-gray-400 bg-gray-50 border border-gray-200 rounded uppercase">Enter</kbd>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SidebarField({ label, value, onChange, error, placeholder }) {
   return (
     <div className="space-y-1">
@@ -967,13 +1118,14 @@ function SidebarField({ label, value, onChange, error, placeholder }) {
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={`w-full text-xs font-semibold text-gray-900 bg-gray-50/50 border rounded-lg px-3 py-2.5 focus:bg-white focus:ring-1 transition-all outline-none ${error
-          ? "border-red-300 focus:border-red-500 focus:ring-red-200"
-          : "border-gray-200 focus:border-blue-300 focus:ring-blue-100"
-          }`}
+        className={`w-full text-xs font-semibold text-gray-900 bg-gray-50/50 border rounded-lg px-3 py-2.5 focus:bg-white focus:ring-1 transition-all outline-none ${
+          error 
+            ? "border-red-300 focus:border-red-500 focus:ring-red-200" 
+            : "border-gray-200 focus:border-blue-300 focus:ring-blue-100"
+        }`}
+        placeholder={placeholder || `Enter ${label.toLowerCase()}...`}
       />
-      {error && <p className="text-[10px] text-red-500 font-medium">{error}</p>}
+      {error && <p className="text-[10px] text-red-500 font-medium mt-1">{error}</p>}
     </div>
   );
 }

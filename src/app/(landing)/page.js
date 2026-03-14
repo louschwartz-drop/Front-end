@@ -21,7 +21,7 @@ const testimonials = [
     role: "Content Creator",
     company: "TechVlogs",
     rating: 5,
-    text: "Drop PR has transformed how I scale my content. In just 6 months, I've distributed 45 press releases that generated over $180,000 in brand value. The AI-powered article generation saves me hours every week.",
+    text: "DropPR.ai has transformed how I scale my content. In just 6 months, I've distributed 45 press releases that generated over $180,000 in brand value. The AI-powered article generation saves me hours every week.",
     avatar: "👩‍💼",
   },
   {
@@ -29,7 +29,7 @@ const testimonials = [
     role: "Marketing Director",
     company: "StartupX",
     rating: 5,
-    text: "The distribution network is incredible. Our press releases consistently get picked up by major outlets like TechCrunch and Forbes. Drop PR has become essential to our PR strategy.",
+    text: "The distribution network is incredible. Our press releases consistently get picked up by major outlets like TechCrunch and Forbes. DropPR.ai has become essential to our PR strategy.",
     avatar: "👨‍💼",
   },
   {
@@ -338,7 +338,7 @@ export default function Home() {
                   Stop Renting Attention. Start Owning Authority.
                 </h2>
                 <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
-                  Social media algorithms are volatile, and post half-lives are shrinking to mere minutes. Drop PR turns your content into &ldquo;Performance PR.&rdquo; By distributing your videos as editorial articles on legacy media sites, you leverage &ldquo;borrowed authority&rdquo; to rank instantly on Google and secure your place as a trusted citation in AI models.
+                  Social media algorithms are volatile, and post half-lives are shrinking to mere minutes. DropPR.ai turns your content into &ldquo;Performance PR.&rdquo; By distributing your videos as editorial articles on legacy media sites, you leverage &ldquo;borrowed authority&rdquo; to rank instantly on Google and secure your place as a trusted citation in AI models.
                 </p>
               </motion.div>
 
@@ -530,7 +530,7 @@ export default function Home() {
                   What Our Customers Say
                 </h2>
                 <p className="text-lg text-blue-100 max-w-2xl mx-auto">
-                  Join the creators and brands turning everyday content into real media coverage with Drop PR.
+                  Join the creators and brands turning everyday content into real media coverage with DropPR.ai.
                 </p>
               </motion.div>
 
@@ -692,7 +692,7 @@ export default function Home() {
                       For Brands: Feed the LLMs
                     </h3>
                     <p className="text-gray-600 leading-relaxed text-lg">
-                      AI models like ChatGPT and Perplexity prioritize mentions from authoritative media outlets. Drop PR guarantees your brand and creator-led campaigns are surfaced in AI search results by embedding them in the trusted publisher data sets that LLMs rely on. Support product launches with indexed coverage that drives traffic.
+                      AI models like ChatGPT and Perplexity prioritize mentions from authoritative media outlets. DropPR.ai guarantees your brand and creator-led campaigns are surfaced in AI search results by embedding them in the trusted publisher data sets that LLMs rely on. Support product launches with indexed coverage that drives traffic.
                     </p>
                   </div>
                   <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
@@ -779,7 +779,7 @@ export default function Home() {
                   Ready to Share Your Story to the World
                 </h2>
                 <p className="text-lg sm:text-xl text-blue-100 mb-6 max-w-2xl mx-auto">
-                  Join creators and brands who are amplifying their content with Drop PR. Start publishing today and reach millions of readers worldwide.
+                  Join creators and brands who are amplifying their content with DropPR.ai. Start publishing today and reach millions of readers worldwide.
                 </p>
                 <div className="flex flex-col items-center gap-2 mb-10 text-white font-medium text-lg">
                   <div className="flex items-center gap-2">

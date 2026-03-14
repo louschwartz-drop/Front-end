@@ -164,10 +164,7 @@ export default function PaymentPage() {
                 <span>Subtotal</span>
                 <span>${plan.price.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-gray-500 text-sm">
-                <span>Processing Fee</span>
-                <span className="text-green-600 font-bold">Free</span>
-              </div>
+
               <div className="flex justify-between items-center pt-3 mt-3 border-t-2 border-dashed border-gray-100">
                 <span className="text-lg font-bold text-gray-900">Total Amount</span>
                 <div className="text-right">

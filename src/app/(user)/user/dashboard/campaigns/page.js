@@ -53,7 +53,7 @@ export default function CampaignsPage() {
         }, searchTerm ? 500 : 0);
 
         return () => clearTimeout(timeoutId);
-    }, [searchTerm, currentPage]);
+    }, [searchTerm, currentPage, filter]);
 
     useEffect(() => {
         // Poll for active campaigns every 3 seconds
@@ -62,7 +62,7 @@ export default function CampaignsPage() {
         }, 3000);
 
         return () => clearInterval(pollInterval);
-    }, [searchTerm, currentPage]); // Re-start interval when params change if needed
+    }, [searchTerm, currentPage, filter]); // Re-start interval when params change if needed
 
     const fetchCampaigns = async (silent = false) => {
         try {
@@ -80,7 +80,8 @@ export default function CampaignsPage() {
                 userId,
                 page: currentPage,
                 limit: 12,
-                search: searchTerm
+                search: searchTerm,
+                status: filter
             });
 
             if (response.success) {
@@ -142,7 +143,11 @@ export default function CampaignsPage() {
         setTranscriptModal({ show: false, text: "", title: "" });
     };
 
-    const getStatusBadge = (status) => {
+    const getStatusBadge = (campaign) => {
+        const status = campaign.status;
+        const isIrrelevant = campaign.errorMessage?.toLowerCase().includes("irrelevant");
+        const isLanguageError = campaign.errorMessage?.toLowerCase().includes("language");
+        
         const statusConfig = {
             uploading: { color: "bg-blue-500", label: "Uploading" },
             uploaded: { color: "bg-blue-500", label: "Uploaded" },
@@ -151,14 +156,17 @@ export default function CampaignsPage() {
             finished: { color: "bg-green-500", label: "Ready for Publish" },
             published: { color: "bg-green-600", label: "Published" },
             submitted_successfully: { color: "bg-green-600", label: "Submitted Successfully" },
-            failed: { color: "bg-red-500", label: "Failed" },
+            failed: { 
+                color: "bg-red-500", 
+                label: isLanguageError ? "Language Not Supported" : (isIrrelevant ? "Content Irrelevant" : "Failed") 
+            },
         };
 
         const config = statusConfig[status] || statusConfig.uploading;
 
         return (
             <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${config.color}`}
+                className={`px-3 py-1 rounded-full text-[10px] md:text-xs font-semibold text-white shadow-sm ${config.color}`}
             >
                 {config.label}
             </span>
@@ -209,17 +217,7 @@ export default function CampaignsPage() {
         }
     };
 
-    const filteredCampaigns = campaigns.filter((campaign) => {
-        if (filter === "all") return true;
-        if (filter === "active")
-            return ["uploading", "uploaded", "transcribing", "generating"].includes(
-                campaign.status,
-            );
-        if (filter === "finished") return campaign.status === "finished";
-        if (filter === "published") return campaign.status === "published" || campaign.status === "submitted_successfully";
-        if (filter === "failed") return campaign.status === "failed";
-        return true;
-    });
+    const displayedCampaigns = campaigns;
 
     if (loading) {
         return (
@@ -227,7 +225,7 @@ export default function CampaignsPage() {
                 <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="w-12 h-12 border-4 border-[#0A5CFF] border-t-transparent rounded-full"
+                    className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
                 />
             </div>
         );
@@ -250,7 +248,7 @@ export default function CampaignsPage() {
                     </div>
                     <button
                         onClick={() => router.push("/user/dashboard/create")}
-                        className="md:px-6 md:py-3 px-3 py-2 bg-[#0A5CFF] text-white rounded-lg hover:bg-[#3B82F6] text-sm md:text-base font-semibold shadow-sm"
+                        className="md:px-6 md:py-3 px-3 py-2 bg-primary text-white rounded-lg hover:bg-brand-blue text-sm md:text-base font-semibold shadow-sm"
                     >
                         + Create Campaign
                     </button>
@@ -294,9 +292,12 @@ export default function CampaignsPage() {
                         ].map((tab) => (
                             <button
                                 key={tab.key}
-                                onClick={() => setFilter(tab.key)}
+                                onClick={() => {
+                                    setFilter(tab.key);
+                                    setCurrentPage(1);
+                                }}
                                 className={` px-1 md:px-4 py-2 font-medium transition-colors ${filter === tab.key
-                                    ? "text-[#0A5CFF] border-b-2 border-[#0A5CFF]"
+                                    ? "text-primary border-b-2 border-primary"
                                     : "text-gray-600 hover:text-gray-900"
                                     }`}
                             >
@@ -307,7 +308,7 @@ export default function CampaignsPage() {
                 </div>
 
                 {/* Campaigns Cards */}
-                {filteredCampaigns.length === 0 ? (
+                {displayedCampaigns.length === 0 ? (
                     <div className="text-center py-16 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                         <svg
                             className="mx-auto h-12 w-12 text-gray-400"
@@ -330,14 +331,14 @@ export default function CampaignsPage() {
                         </p>
                         <button
                             onClick={() => router.push("/user/dashboard/create")}
-                            className="mt-6 px-6 py-2 bg-[#0A5CFF] text-white rounded-lg hover:bg-[#3B82F6]"
+                            className="mt-6 px-6 py-2 bg-primary text-white rounded-lg hover:bg-brand-blue"
                         >
                             Create New Campaign
                         </button>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredCampaigns.map((campaign) => (
+                        {displayedCampaigns.map((campaign) => (
                             <motion.div
                                 key={campaign._id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -347,7 +348,7 @@ export default function CampaignsPage() {
                                 {/* Card Header */}
                                 <div className="p-5 border-b border-gray-100">
                                     <div className="flex items-start justify-between mb-3">
-                                        {getStatusBadge(campaign.status)}
+                                        {getStatusBadge(campaign)}
                                         <span className="text-xs text-gray-500">
                                             {new Date(campaign.createdAt).toLocaleDateString(
                                                 "en-US",
@@ -378,9 +379,14 @@ export default function CampaignsPage() {
 
                                     {/* Error Message */}
                                     {campaign.errorMessage && (
-                                        <p className="text-xs text-red-600 mt-2 line-clamp-2">
-                                            {campaign.errorMessage}
-                                        </p>
+                                        <div className="mt-2 bg-red-50 p-2 rounded border border-red-100">
+                                            <p className="text-[10px] text-red-600 leading-tight font-medium" title={campaign.errorMessage.length > 100 ? campaign.errorMessage : ""}>
+                                                <span className="font-bold uppercase mr-1">Error:</span>
+                                                {campaign.errorMessage.length > 80 
+                                                    ? `${campaign.errorMessage.substring(0, 80)}...` 
+                                                    : campaign.errorMessage}
+                                            </p>
+                                        </div>
                                     )}
                                 </div>
 
@@ -398,7 +404,7 @@ export default function CampaignsPage() {
                                                 </p>
                                                 <button
                                                     onClick={() => handleViewTranscript(campaign)}
-                                                    className="text-xs text-[#0A5CFF] hover:underline font-medium"
+                                                    className="text-xs text-primary hover:underline font-medium"
                                                 >
                                                     View Full Transcript
                                                 </button>
@@ -418,7 +424,7 @@ export default function CampaignsPage() {
                                         {campaign.videoUrl ? (
                                             <button
                                                 onClick={() => setVideoModal({ show: true, url: campaign.videoUrl })}
-                                                className="text-sm text-[#0A5CFF] hover:underline font-medium inline-flex items-center gap-1"
+                                                className="text-sm text-primary hover:underline font-medium inline-flex items-center gap-1"
                                             >
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -440,7 +446,7 @@ export default function CampaignsPage() {
                                                 onClick={() =>
                                                     router.push(`/user/edit/${campaign._id}`)
                                                 }
-                                                className="flex-1 px-3 py-2 bg-[#0A5CFF] text-white text-sm font-medium rounded hover:bg-[#3B82F6] transition-colors"
+                                                className="flex-1 px-3 py-2 bg-primary text-white text-sm font-medium rounded hover:bg-brand-blue transition-colors"
                                             >
                                                 Publish Now
                                             </button>
@@ -475,7 +481,7 @@ export default function CampaignsPage() {
                                                 onClick={() => handleDeleteClick(campaign._id)}
                                                 className="px-3 py-2 bg-red-100 text-red-700 text-sm font-medium rounded hover:bg-red-200 transition-colors"
                                             >
-                                                Delete
+                                                {["uploading", "transcribing", "generating"].includes(campaign.status) ? "Cancel" : "Delete"}
                                             </button>
                                         )}
                                     </div>
@@ -486,7 +492,7 @@ export default function CampaignsPage() {
                 )}
 
                 {/* Pagination */}
-                {filteredCampaigns.length > 0 && (
+                {displayedCampaigns.length > 0 && (
                     <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100 pt-8">
                         <p className="text-sm text-gray-500 font-medium">
                             Showing <span className="text-gray-900 font-bold">{(currentPage - 1) * 12 + 1}</span> to{" "}
@@ -582,7 +588,7 @@ export default function CampaignsPage() {
                                     <button
                                         type="button"
                                         onClick={closeTranscriptModal}
-                                        className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0A5CFF] sm:mt-0 sm:w-auto sm:text-sm"
+                                        className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
                                     >
                                         Close
                                     </button>
@@ -619,7 +625,7 @@ export default function CampaignsPage() {
                                 className="relative z-50 inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6"
                             >
                                 <div className="sm:flex sm:items-start">
-                                    <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                    <div className="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                                         <svg
                                             className="h-6 w-6 text-red-600"
                                             fill="none"
@@ -636,12 +642,16 @@ export default function CampaignsPage() {
                                     </div>
                                     <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                                         <h3 className="text-lg leading-6 font-medium text-gray-900">
-                                            Delete Campaign
+                                            {campaigns.find(c => c._id === deleteModal.campaignId)?.status && 
+                                             ["uploading", "transcribing", "generating"].includes(campaigns.find(c => c._id === deleteModal.campaignId)?.status) 
+                                             ? "Cancel Analysis" : "Delete Campaign"}
                                         </h3>
                                         <div className="mt-2">
                                             <p className="text-sm text-gray-500">
-                                                Are you sure you want to delete this campaign? This
-                                                action cannot be undone.
+                                                {campaigns.find(c => c._id === deleteModal.campaignId)?.status && 
+                                                 ["uploading", "transcribing", "generating"].includes(campaigns.find(c => c._id === deleteModal.campaignId)?.status) 
+                                                 ? "Are you sure you want to cancel this analysis? This will stop all background processing and remove the campaign."
+                                                 : "Are you sure you want to delete this campaign? This action cannot be undone."}
                                             </p>
                                         </div>
                                     </div>
@@ -652,12 +662,14 @@ export default function CampaignsPage() {
                                         onClick={handleDeleteConfirm}
                                         className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
                                     >
-                                        Delete
+                                        {campaigns.find(c => c._id === deleteModal.campaignId)?.status && 
+                                         ["uploading", "transcribing", "generating"].includes(campaigns.find(c => c._id === deleteModal.campaignId)?.status) 
+                                         ? "Cancel & Delete" : "Delete"}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={handleDeleteCancel}
-                                        className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0A5CFF] sm:mt-0 sm:w-auto sm:text-sm"
+                                        className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
                                     >
                                         Cancel
                                     </button>

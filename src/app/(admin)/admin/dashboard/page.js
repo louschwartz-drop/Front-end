@@ -101,7 +101,7 @@ function AdminDashboardContent() {
               Admin Dashboard
             </h1>
             <p className="text-gray-600 mt-1">
-              Welcome to Drop PR Admin Panel
+              Welcome to DropPR.ai Admin Panel
             </p>
           </div>
 
@@ -179,7 +179,7 @@ function AdminDashboardContent() {
                   stats.recentCampaigns.map((campaign) => (
                     <Link
                       key={campaign._id}
-                      href={`/admin/campaigns/${campaign._id}`} // Or open modal if prefered, but link is safe
+                      href={`/admin/users/${campaign.userId?._id}/campaigns`}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
                     >
                       <div>
@@ -201,7 +201,7 @@ function AdminDashboardContent() {
                                 "bg-gray-200 text-gray-700"
                             }`}
                         >
-                          {campaign.status || "draft"}
+                          {campaign.errorMessage?.toLowerCase().includes("irrelevant") ? "Irrelevant Content" : (campaign.status || "draft")}
                         </span>
                       </div>
                     </Link>
@@ -242,14 +242,17 @@ function AdminDashboardContent() {
                 <span className="font-semibold text-gray-900">Campaigns</span>
               </Link>
 
-              <div className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-gray-200 hover:border-[#0A5CFF] hover:bg-blue-50 transition-all group cursor-pointer">
+              <Link
+                href="/admin/support"
+                className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-gray-200 hover:border-[#0A5CFF] hover:bg-blue-50 transition-all group cursor-pointer"
+              >
                 <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-purple-500 transition-colors">
                   <svg className="w-6 h-6 text-purple-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                   </svg>
                 </div>
-                <span className="font-semibold text-gray-900">Payments</span>
-              </div>
+                <span className="font-semibold text-gray-900">Contact Queries</span>
+              </Link>
 
               <Link
                 href="/admin/profile"

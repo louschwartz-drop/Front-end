@@ -302,6 +302,27 @@ function ProcessingContent() {
                 <p className="text-gray-600 text-base sm:text-lg">
                   This may take a few moments. Please don't close this page.
                 </p>
+
+                <div className="pt-4">
+                  <button
+                    onClick={async () => {
+                      if (window.confirm("Are you sure you want to cancel this analysis?")) {
+                        try {
+                          const { campaignService } = await import("@/lib/api/user/campaigns");
+                          await campaignService.deleteCampaign(campaignId);
+                          toast.info("Analysis cancelled");
+                          router.replace("/user/dashboard/campaigns");
+                        } catch (err) {
+                          console.error("Failed to cancel analysis:", err);
+                          toast.error("Failed to cancel analysis");
+                        }
+                      }
+                    }}
+                    className="px-6 py-2 border-2 border-red-500 text-red-500 font-semibold rounded-full hover:bg-red-500 hover:text-white transition-all transform hover:scale-105 active:scale-95"
+                  >
+                    Cancel Analysis
+                  </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

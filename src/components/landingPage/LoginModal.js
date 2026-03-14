@@ -53,7 +53,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
           <div className=" flex items-center justify-center mb-6">
             <Image
               src="/logo.png"
-              alt="Drop PR"
+              alt="DropPR.ai"
               width={150}
               height={150}
               priority
@@ -84,7 +84,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
                 Signing in...
               </Button>
             ) : (
-              <div className="w-full flex justify-center [&>div]:!w-full [&>div>iframe]:!w-full [&>div]:!max-w-none">
+              <div className="w-full [&>div]:w-full! [&>div>iframe]:w-full! [&>div]:max-w-none!">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}

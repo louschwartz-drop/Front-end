@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   LayoutDashboard,
   BarChart3,
+  Users,
   User,
   FileText,
   Home,
@@ -14,6 +15,8 @@ import {
   Smartphone,
   CreditCard,
   LifeBuoy,
+  UserCircle,
+  MessageSquare,
 } from "lucide-react";
 import adminAuthStore from "@/store/adminAuthStore";
 import Image from "next/image";
@@ -24,6 +27,11 @@ export const ADMIN_MENU_ITEMS = [
     href: "/admin/dashboard",
     label: "Dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    href: "/admin/users",
+    label: "Users",
+    icon: Users,
   },
   {
     href: "/admin/campaigns",
@@ -41,25 +49,15 @@ export const ADMIN_MENU_ITEMS = [
     icon: CreditCard,
   },
   {
-    href: "/admin/users",
-    label: "Users",
-    icon: User,
+    href: "/admin/support",
+    label: "Contact Queries",
+    icon: MessageSquare,
   },
   {
     href: "/admin/profile",
     label: "Profile",
-    icon: User,
+    icon: UserCircle,
   },
-  {
-    href: "/admin/support",
-    label: "Support",
-    icon: LifeBuoy,
-  },
-  // {
-  //   href: "/admin/activity-logs",
-  //   label: "Activity Logs",
-  //   icon: FileText,
-  // },
 ];
 
 function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
@@ -129,13 +127,13 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
             <div className="flex items-center gap-1">
               <Image
                 src="/drop-logo.png"
-                alt="Drop PR"
+                alt="DropPR.ai"
                 width={26}
                 height={26}
                 className=""
               />
 
-              <span className="font-bold text-xl">Drop PR</span>
+              <span className="font-bold text-xl">DropPR.ai</span>
             </div>
             <span className="text-xs text-gray-400 ml-9">Admin Panel</span>
           </Link>

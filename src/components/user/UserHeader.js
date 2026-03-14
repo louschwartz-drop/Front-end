@@ -65,7 +65,7 @@ export default function Header({ setMobileMenuOpen }) {
           <Link href={"/"}>
             <Image
               src="/logo.png"
-              alt="Drop PR"
+              alt="DropPR.ai"
               width={130}
               height={40}
               className="h-10 md:h-14 w-auto object-contain"

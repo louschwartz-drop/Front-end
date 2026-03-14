@@ -51,7 +51,6 @@ export default function CheckoutForm({ amount, campaignId, onSuccess, saveCard, 
                 toast.error("An unexpected error occurred.");
             }
         } else if (paymentIntent && paymentIntent.status === "succeeded") {
-            toast.success("Payment successful!");
             onSuccess(paymentIntent);
         } else {
             // Redirection handled by confirmPayment for other status or if redirect: "always"
@@ -104,7 +103,7 @@ export default function CheckoutForm({ amount, campaignId, onSuccess, saveCard, 
                     type="submit"
                     variant="primary"
                     fullWidth
-                    className="bg-[#0A5CFF] hover:bg-[#3B82F6] h-14 text-lg font-bold rounded-xl shadow-lg shadow-blue-200 transition-all hover:shadow-xl hover:-translate-y-0.5"
+                    className="bg-primary hover:bg-blue-500 h-14 text-lg font-bold rounded-xl shadow-lg shadow-blue-200 transition-all hover:shadow-xl hover:-translate-y-0.5"
                 >
                     {isLoading ? (
                         <div className="flex items-center justify-center gap-2">

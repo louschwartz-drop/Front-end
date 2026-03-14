@@ -97,7 +97,7 @@ export default function ContactPage() {
                 </div>
                 <p className="text-gray-600 text-sm md:text-base leading-relaxed">
                   Interested in our services? Chat with one of our sales
-                  representatives to explore how Drop PR can work for you.
+                  representatives to explore how DropPR.ai can work for you.
                 </p>
               </div>
 
@@ -121,7 +121,7 @@ export default function ContactPage() {
                       </svg>
                     </div>
                     <p className="text-sm text-gray-700 leading-relaxed">
-                      Chat with our sales representatives to see how Drop PR
+                      Chat with our sales representatives to see how DropPR.ai
                       can enhance your brand and make sure you're getting the
                       most value
                     </p>
