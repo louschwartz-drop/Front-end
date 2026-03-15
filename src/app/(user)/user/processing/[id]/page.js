@@ -303,6 +303,7 @@ function ProcessingContent() {
                   This may take a few moments. Please don't close this page.
                 </p>
 
+                {/* 
                 <div className="pt-4">
                   <button
                     onClick={async () => {
@@ -311,7 +312,7 @@ function ProcessingContent() {
                           const { campaignService } = await import("@/lib/api/user/campaigns");
                           await campaignService.deleteCampaign(campaignId);
                           toast.info("Analysis cancelled");
-                          router.replace("/user/dashboard/campaigns");
+                          router.replace("/user/dashboard/create");
                         } catch (err) {
                           console.error("Failed to cancel analysis:", err);
                           toast.error("Failed to cancel analysis");
@@ -323,6 +324,7 @@ function ProcessingContent() {
                     Cancel Analysis
                   </button>
                 </div>
+                */}
               </motion.div>
             )}
           </AnimatePresence>
