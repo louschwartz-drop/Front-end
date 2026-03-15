@@ -10,30 +10,7 @@ function isYouTube(url) {
 }
 
 async function runSocialLinkProcessing(campaignId, campaign, campaignService) {
-  const userId = campaign.userId?._id || campaign.userId?.id || campaign.userId;
-  const videoUrl = campaign.videoUrl;
-
-  if (isYouTube(videoUrl)) {
-    try {
-      const { extractYouTubeAudioClientSide } = await import("@/utils/youtubeClientExtract");
-      const { uploadAudioToS3 } = await import("@/utils/s3Upload");
-      const { default: userAuthStore } = await import("@/store/userAuthStore");
-      const user = userAuthStore.getState().user;
-      const uid = user?._id || user?.id || userId;
-
-      const { file, title, thumbnail } = await extractYouTubeAudioClientSide(videoUrl);
-      const s3Url = await uploadAudioToS3(file, uid);
-      await campaignService.processSocialLink(campaignId, {
-        audioUrl: s3Url,
-        videoThumbnail: thumbnail,
-        title,
-      });
-      return;
-    } catch (clientErr) {
-      console.warn("[Flow] Client-side extraction failed, falling back to server:", clientErr.message);
-    }
-  }
-
+  // Always use server-side processing to avoid CORS errors and ensure reliability
   await campaignService.processSocialLink(campaignId);
 }
 
@@ -151,6 +128,11 @@ function ProcessingContent() {
               clearInterval(pollInterval);
             }
           } else if (campaign.status === "failed") {
+            // Log technical detail to console for developers
+            if (campaign.technicalError) {
+              console.error("[Backend Technical Error]:", campaign.technicalError);
+            }
+
             toast.error(
               campaign.errorMessage || "Campaign processing failed",
               {
