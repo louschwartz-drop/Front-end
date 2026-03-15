@@ -126,7 +126,7 @@ export default function CreateCampaignPage() {
     const PATTERNS = {
       youtube: /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/(watch\?v=|shorts\/|live\/|v\/|embed\/)?([a-zA-Z0-9_-]{11})?(\S*)?$/,
       instagram: /^(https?:\/\/)?(www\.)?instagram\.com\/(reels?|p|stories)\/[a-zA-Z0-9_-]+\/?(\?.*)?$/,
-      tiktok: /^(https?:\/\/)?((www|vm)\.)?tiktok\.com\/(.+\/video\/\d+|[a-zA-Z0-9_-]+)\/?(\?.*)?$/,
+      tiktok: /^(https?:\/\/)?([\w-]+\.)?tiktok\.com\/[\w\d@_.\/-]+(\?.*)?$/i,
     };
 
     if (PATTERNS.youtube.test(link)) return null;
@@ -147,7 +147,7 @@ export default function CreateCampaignPage() {
   };
 
   const handleUrlChange = (e) => {
-    const value = e.target.value;
+    const value = e.target.value.trim();
     setVideoLink(value);
     if (value) {
       const error = getPlatformError(value);
