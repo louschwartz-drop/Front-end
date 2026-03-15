@@ -44,6 +44,11 @@ export default function CampaignsPage() {
         show: false,
         campaign: null,
     });
+    const [errorModal, setErrorModal] = useState({
+        show: false,
+        text: "",
+        title: "",
+    });
 
     const { user } = userAuthStore();
 
@@ -141,6 +146,18 @@ export default function CampaignsPage() {
 
     const closeTranscriptModal = () => {
         setTranscriptModal({ show: false, text: "", title: "" });
+    };
+
+    const handleViewError = (campaign) => {
+        setErrorModal({
+            show: true,
+            text: campaign.errorMessage || "No error details available.",
+            title: campaign.article?.headline || "Campaign Error Details",
+        });
+    };
+
+    const closeErrorModal = () => {
+        setErrorModal({ show: false, text: "", title: "" });
     };
 
     const getStatusBadge = (campaign) => {
@@ -379,13 +396,23 @@ export default function CampaignsPage() {
 
                                     {/* Error Message */}
                                     {campaign.errorMessage && (
-                                        <div className="mt-2 bg-red-50 p-2 rounded border border-red-100">
+                                        <div className="mt-2 bg-red-50 p-2 rounded border border-red-100 flex items-start justify-between gap-2 overflow-hidden">
                                             <p className="text-[10px] text-red-600 leading-tight font-medium" title={campaign.errorMessage.length > 100 ? campaign.errorMessage : ""}>
                                                 <span className="font-bold uppercase mr-1">Error:</span>
                                                 {campaign.errorMessage.length > 80 
                                                     ? `${campaign.errorMessage.substring(0, 80)}...` 
                                                     : campaign.errorMessage}
                                             </p>
+                                            <button 
+                                                onClick={() => handleViewError(campaign)}
+                                                className="shrink-0 p-1 text-red-600 hover:bg-red-100 rounded-full transition-colors"
+                                                title="View Full Error"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -697,6 +724,77 @@ export default function CampaignsPage() {
                 article={fullPreview.campaign?.article}
                 productCard={fullPreview.campaign?.productCard}
             />
+
+            {/* Error Detail Modal */}
+            <AnimatePresence>
+                {errorModal.show && (
+                    <div className="fixed inset-0 z-[60] overflow-y-auto">
+                        <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm"
+                                onClick={closeErrorModal}
+                            />
+
+                            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">
+                                &#8203;
+                            </span>
+
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                className="relative z-[70] inline-block align-bottom bg-white rounded-xl px-4 pt-5 pb-4 text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 border border-red-100"
+                            >
+                                <div className="absolute top-0 right-0 pt-4 pr-4">
+                                    <button
+                                        type="button"
+                                        onClick={closeErrorModal}
+                                        className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none"
+                                    >
+                                        <span className="sr-only">Close</span>
+                                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                <div className="sm:flex sm:items-start">
+                                    <div className="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                        <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                    </div>
+                                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                        <h3 className="text-lg leading-6 font-bold text-gray-900 mb-1">
+                                            Campaign Error Details
+                                        </h3>
+                                        <p className="text-xs text-gray-500 mb-4 truncate italic">
+                                            {errorModal.title}
+                                        </p>
+                                        <div className="mt-2 max-h-[40vh] overflow-y-auto bg-red-50 p-4 rounded-lg border border-red-100">
+                                            <p className="text-sm text-red-700 font-medium whitespace-pre-wrap leading-relaxed">
+                                                {errorModal.text}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-6 sm:flex sm:flex-row-reverse">
+                                    <button
+                                        type="button"
+                                        onClick={closeErrorModal}
+                                        className="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-6 py-2 bg-red-600 text-base font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:w-auto sm:text-sm transition-all"
+                                    >
+                                        Close Details
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Inline Video Viewer */}
             <VideoModal
