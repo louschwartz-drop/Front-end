@@ -1,4 +1,7 @@
-'use client';
+export const metadata = {
+  title: "Terms of Service - DropPR.ai",
+  description: "Terms of service and user agreements for the DropPR.ai article publishing and PR distribution platform.",
+};
 
 export default function TermsPage() {
   return (

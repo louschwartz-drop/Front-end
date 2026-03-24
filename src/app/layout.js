@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
+  metadataBase: new URL("https://www.droppr.ai"),
   title: "DropPR.ai - AI-Powered Media & PR Distribution Platform",
   description:
     "Build instant exposure with DropPR.ai. Convert your videos into AI-written articles and distribute them to top media outlets.",

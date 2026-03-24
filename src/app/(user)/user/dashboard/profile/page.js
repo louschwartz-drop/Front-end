@@ -10,13 +10,16 @@ import "react-phone-input-2/lib/style.css";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { uploadFileToS3 } from "@/utils/awsService";
 import ImageCropper from "@/components/ui/ImageCropper";
-import { CreditCard, Trash2, ShieldCheck } from "lucide-react";
+import { CreditCard, Trash2, ShieldCheck, Loader2, AlertTriangle, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { paymentService } from "@/lib/api/user/payments";
 
 function CardManagement() {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState(null);
+  const [cardToDelete, setCardToDelete] = useState(null);
 
   const { user } = userAuthStore();
   const userId = user?._id || user?.id;
@@ -38,49 +41,133 @@ function CardManagement() {
     }
   };
 
+  const handleSetDefault = async (cardId) => {
+    setProcessingId(cardId);
+    try {
+      const res = await paymentService.setDefaultCard(cardId, userId);
+      if (res.success) {
+        toast.success("Default card updated");
+        await loadCards();
+      }
+    } catch (error) {
+      toast.error("Failed to update default card");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const handleDelete = async (cardId) => {
-    if (!confirm("Are you sure you want to remove this card?")) return;
+    setProcessingId(cardId);
     try {
       const res = await paymentService.deleteCard(cardId);
       if (res.success) {
-        toast.success("Card removed");
-        setCards(cards.filter(c => c.id !== cardId));
+        toast.success("Card removed successfully");
+        await loadCards();
+      } else {
+        toast.error(res.message || "Failed to remove card");
       }
     } catch (error) {
-      toast.error("Failed to remove card");
+      console.error("Delete card error:", error);
+      toast.error(error.response?.data?.message || "Failed to remove card");
+    } finally {
+      setProcessingId(null);
+      setCardToDelete(null);
     }
   };
 
   if (loading) return <div className="animate-pulse flex space-x-4"><div className="flex-1 h-12 bg-gray-100 rounded"></div></div>;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
+      <AnimatePresence>
+        {cardToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-md overflow-hidden"
+            >
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle className="w-8 h-8 text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Remove Saved Card?</h3>
+                <p className="text-gray-500 text-sm leading-relaxed mb-6">
+                  Are you sure you want to remove this card ending in <span className="font-semibold text-gray-900">{cardToDelete.card.last4}</span>? You'll need to re-enter your details for future purchases.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => setCardToDelete(null)}
+                    className="flex-1 px-4 py-2.5 bg-gray-50 text-gray-700 font-semibold rounded-xl hover:bg-gray-100 transition-colors border border-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleDelete(cardToDelete.id)}
+                    disabled={processingId === cardToDelete.id}
+                    className="flex-1 px-4 py-2.5 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {processingId === cardToDelete.id && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Remove Card
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       {cards.length === 0 ? (
         <div className="text-sm text-gray-500 bg-gray-50 p-4 rounded-lg border border-dashed border-gray-200">
           No saved payment methods found. They will appear here once you complete a purchase.
         </div>
       ) : (
         cards.map(card => (
-          <div key={card.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+          <div key={card.id} className={`flex items-center justify-between p-4 border rounded-xl transition-all ${card.isDefault ? 'border-primary bg-blue-50/30 ring-1 ring-primary/20' : 'border-gray-200 hover:bg-gray-50'}`}>
             <div className="flex items-center gap-4">
-              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+              <div className={`p-2 rounded-lg ${card.isDefault ? 'bg-primary text-white' : 'bg-blue-50 text-blue-600'}`}>
                 <CreditCard className="w-6 h-6" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900 capitalize">
-                  {card.card.brand} •••• {card.card.last4}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-gray-900 capitalize">
+                    {card.card.brand} •••• {card.card.last4}
+                  </p>
+                  {card.isDefault && (
+                    <span className="px-2 py-0.5 bg-primary text-white text-[10px] font-bold uppercase tracking-wider rounded-full">
+                      Default
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-gray-500">
                   Expires {card.card.exp_month}/{card.card.exp_year}
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => handleDelete(card.id)}
-              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              {!card.isDefault && (
+                <button
+                  onClick={() => handleSetDefault(card.id)}
+                  disabled={processingId === card.id}
+                  className="px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white border border-primary/20 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                >
+                  {processingId === card.id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                  Set as Default
+                </button>
+              )}
+              <button
+                onClick={() => setCardToDelete(card)}
+                disabled={processingId === card.id}
+                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Remove Card"
+              >
+                {processingId === card.id ? (
+                  <Loader2 className="w-5 h-5 animate-spin text-red-600" />
+                ) : (
+                  <Trash2 className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           </div>
         ))
       )}

@@ -1,4 +1,7 @@
-'use client';
+export const metadata = {
+  title: "Privacy Policy - DropPR.ai",
+  description: "Privacy policy for DropPR.ai. Secure, enterprise-grade data protection for your article and press release content.",
+};
 
 export default function PrivacyPage() {
   return (

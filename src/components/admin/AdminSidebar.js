@@ -51,6 +51,11 @@ export const ADMIN_MENU_ITEMS = [
   {
     href: "/admin/support",
     label: "Contact Queries",
+    icon: LifeBuoy,
+  },
+  {
+    href: "/admin/feedback",
+    label: "User Feedback",
     icon: MessageSquare,
   },
   {

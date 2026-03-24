@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { MessageSquare } from "lucide-react";
 import ConfirmationModal from "../ui/ConfirmationModal";
+import FeedbackModal from "./FeedbackModal";
 import userAuthStore from "@/store/userAuthStore";
 
 export default function Header({ setMobileMenuOpen }) {
@@ -13,6 +15,7 @@ export default function Header({ setMobileMenuOpen }) {
 
   // Hooks are called unconditionally at the top
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogoutClick = () => {
@@ -88,8 +91,16 @@ export default function Header({ setMobileMenuOpen }) {
           </Link>
         </div>
 
-        {/* Logout Button */}
-        <div className="flex items-center space-x-4">
+        {/* Logout and Feedback Buttons */}
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <button
+            onClick={() => setIsFeedbackModalOpen(true)}
+            className="flex items-center justify-center sm:space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-700 p-2.5 sm:px-4 sm:py-2.5 rounded-lg transition-all duration-200 text-sm font-semibold shadow-sm hover:shadow-md active:scale-95"
+            title="Feedback"
+          >
+            <MessageSquare className="w-5 h-5" />
+            <span className="hidden sm:block">Feedback</span>
+          </button>
           <button
             onClick={handleLogoutClick}
             className="flex items-center justify-center sm:space-x-2 bg-[#0A5CFF] hover:bg-[#3B82F6] text-white p-2.5 sm:px-4 sm:py-2.5 rounded-lg transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg active:scale-95"
@@ -123,6 +134,13 @@ export default function Header({ setMobileMenuOpen }) {
         cancelText="Cancel"
         confirmColor="bg-red-600 hover:bg-red-700"
         isLoading={isLoggingOut}
+      />
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+        user={user}
       />
     </>
   );

@@ -16,5 +16,9 @@ export const paymentService = {
     getHistory: async (params) => {
         const response = await api.get("/user/payments/history", { params });
         return response.data;
+    },
+    setDefaultCard: async (cardId, userId) => {
+        const response = await api.post("/user/payments/cards/default", { cardId, userId });
+        return response.data;
     }
 };

@@ -29,16 +29,53 @@ export default function PaymentPage() {
   const { user } = userAuthStore();
   const userId = user?._id || user?.id;
 
-  const [saveCard, setSaveCard] = useState(true);
+  const [saveCard, setSaveCard] = useState(false);
+  const [savedCards, setSavedCards] = useState([]);
+  const [selectedCardId, setSelectedCardId] = useState("");
+  const [useNewCard, setUseNewCard] = useState(false);
 
   useEffect(() => {
-
     if (!planId) {
       router.push(`/user/pricing/${campaignId}`);
       return;
     }
+
+    // Wait until userId is loaded from the auth store before fetching plans and creating intent
+    // This prevents sending an empty payload and creating ghost/duplicate intents
+    if (!userId) return;
+
     loadPlan();
-  }, [campaignId, planId, userId, saveCard]);
+    loadSavedCards();
+  }, [campaignId, planId, userId]);
+
+  const loadSavedCards = async () => {
+    try {
+      const res = await paymentService.getCards(userId);
+      if (res.success && Array.isArray(res.data)) {
+        // Filter out duplicate cards by ID to prevent key React rendering errors
+        // and avoid showing the same card multiple times visually
+        const uniqueCardsMap = new Map();
+        res.data.forEach(card => {
+          if (card && card.id && !uniqueCardsMap.has(card.id)) {
+            uniqueCardsMap.set(card.id, card);
+          }
+        });
+        const uniqueCards = Array.from(uniqueCardsMap.values());
+
+        setSavedCards(uniqueCards);
+        const defaultCard = uniqueCards.find(c => c.isDefault);
+        if (defaultCard) {
+          setSelectedCardId(defaultCard.id);
+        } else if (uniqueCards.length > 0) {
+          setSelectedCardId(uniqueCards[0].id);
+        } else {
+          setUseNewCard(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading saved cards:", error?.response?.data || error.message || error);
+    }
+  };
 
   const loadPlan = async () => {
     try {
@@ -57,7 +94,7 @@ export default function PaymentPage() {
         toast.error("Failed to load plan details");
       }
     } catch (error) {
-      console.error("Error loading plan:", error);
+      console.error("Error loading plan:", error?.response?.data || error.message || error);
     } finally {
       setLoading(false);
     }
@@ -197,48 +234,114 @@ export default function PaymentPage() {
           <div className="bg-white rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.06)] border border-gray-100/50 p-4 sm:p-8 h-full flex flex-col">
             <div className="mb-8">
               <h1 className="text-lg sm:text-3xl font-black text-gray-900">Payment Details</h1>
-              <p className="text-gray-500 mt-2 font-medium text-sm sm:text-base">Enter your card information below to proceed.</p>
+              <p className="text-gray-500 mt-2 font-medium text-sm sm:text-base">
+                {savedCards.length > 0 ? "Choose a saved card or use a new one." : "Enter your card information below to proceed."}
+              </p>
             </div>
 
-            <div className="flex-1">
-              {clientSecret ? (
-                <Elements
-                  options={{
-                    clientSecret,
-                    appearance: {
-                      theme: 'stripe',
-                      variables: {
-                        colorPrimary: '#0A5CFF',
-                        colorBackground: '#ffffff',
-                        colorText: '#101828',
-                        colorDanger: '#ef4444',
-                        fontFamily: 'Inter, system-ui, sans-serif',
-                        borderRadius: '16px',
-                      },
-                      rules: {
-                        '.Input': {
-                          border: '1px solid #e2e8f0',
-                          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            <div className="flex-1 space-y-6">
+              {savedCards.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Saved Methods</p>
+                  <div className="grid grid-cols-1 gap-3">
+                    {savedCards.map(card => (
+                      <button
+                        key={card.id}
+                        onClick={() => {
+                          setSelectedCardId(card.id);
+                          setUseNewCard(false);
+                        }}
+                        className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${!useNewCard && selectedCardId === card.id ? 'border-primary bg-primary/5 ring-4 ring-primary/5' : 'border-gray-100 hover:border-gray-200 bg-white'}`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-8 rounded-lg flex items-center justify-center border ${!useNewCard && selectedCardId === card.id ? 'bg-white border-primary/20' : 'bg-gray-50 border-gray-100'}`}>
+                            <span className="text-[10px] font-black uppercase text-gray-600">{card.card.brand}</span>
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm font-bold text-gray-900">•••• {card.card.last4}</p>
+                            <p className="text-[10px] text-gray-400 font-medium">Expires {card.card.exp_month}/{card.card.exp_year}</p>
+                          </div>
+                        </div>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${!useNewCard && selectedCardId === card.id ? 'border-primary bg-primary' : 'border-gray-200'}`}>
+                          {!useNewCard && selectedCardId === card.id && (
+                            <div className="w-2 h-2 bg-white rounded-full" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setUseNewCard(true)}
+                      className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${useNewCard ? 'border-primary bg-primary/5 ring-4 ring-primary/5' : 'border-gray-100 hover:border-gray-200 bg-white'}`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                          </svg>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">Use a different card</p>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${useNewCard ? 'border-primary bg-primary' : 'border-gray-200'}`}>
+                        {useNewCard && <div className="w-2 h-2 bg-white rounded-full" />}
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {clientSecret && (useNewCard || savedCards.length === 0) ? (
+                <div className="pt-4">
+                  {savedCards.length > 0 && <p className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1 mb-3">New Card Details</p>}
+                  <Elements
+                    options={{
+                      clientSecret,
+                      appearance: {
+                        theme: 'stripe',
+                        variables: {
+                          colorPrimary: '#0A5CFF',
+                          colorBackground: '#ffffff',
+                          colorText: '#101828',
+                          colorDanger: '#ef4444',
+                          fontFamily: 'Inter, system-ui, sans-serif',
+                          borderRadius: '16px',
+                        },
+                        rules: {
+                          '.Input': {
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                          }
                         }
-                      }
-                    },
-                    paymentMethodCreation: 'manual',
-                    // This explicitly disables Link in the Elements instance
-                    link: {
-                      mode: 'never'
-                    }
-                  }}
-                  stripe={stripePromise}
-                >
-                  <CheckoutForm
-                    amount={plan.price}
-                    campaignId={campaignId}
-                    onSuccess={handlePaymentSuccess}
-                    saveCard={saveCard}
-                    setSaveCard={setSaveCard}
-                    userEmail={user?.email}
-                  />
-                </Elements>
+                      },
+                      paymentMethodCreation: 'manual',
+                      link: { mode: 'never' }
+                    }}
+                    stripe={stripePromise}
+                  >
+                    <CheckoutForm
+                      amount={plan.price}
+                      campaignId={campaignId}
+                      onSuccess={handlePaymentSuccess}
+                      saveCard={saveCard}
+                      setSaveCard={setSaveCard}
+                      userEmail={user?.email}
+                    />
+                  </Elements>
+                </div>
+              ) : clientSecret && !useNewCard && selectedCardId ? (
+                <div className="pt-6">
+                  <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
+                    <CheckoutForm
+                      amount={plan.price}
+                      campaignId={campaignId}
+                      onSuccess={handlePaymentSuccess}
+                      saveCard={false}
+                      setSaveCard={() => { }}
+                      userEmail={user?.email}
+                      paymentMethodId={selectedCardId}
+                      clientSecret={clientSecret}
+                    />
+                  </Elements>
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
                   <motion.div
