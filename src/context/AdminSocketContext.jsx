@@ -37,18 +37,18 @@ export function AdminSocketProvider({ children }) {
 
       if (!token) return;
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1';
-      let origin = 'http://localhost:3002';
-      try {
-        const urlObj = new URL(apiUrl);
-        origin = urlObj.origin;
-      } catch {
-        console.error('Invalid NEXT_PUBLIC_API_URL – falling back to localhost');
+      const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+      const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || '/socket.io';
+
+      if (!socketUrl) {
+        console.error('❌ NEXT_PUBLIC_SOCKET_URL is not defined in environment!');
+        return;
       }
 
-      console.log('🛠️  Connecting admin socket to:', `${origin}/admin`);
+      console.log('🛠️  Connecting admin socket to:', `${socketUrl}/admin`, 'Path:', socketPath);
 
-      const instance = io(`${origin}/admin`, {
+      const instance = io(`${socketUrl}/admin`, {
+        path: socketPath,
         auth: { token },
         withCredentials: true,
         transports: ['websocket', 'polling'], // Use websocket first

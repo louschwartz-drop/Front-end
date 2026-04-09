@@ -11,22 +11,14 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1';
-    let socketUrl = 'http://localhost:3002';
-    let socketPath = '/socket.io';
-    
-    try {
-      const urlObj = new URL(apiUrl);
-      socketUrl = urlObj.origin;
-      // Extract the path before /api/v1 (e.g. /dev)
-      const pathPrefix = urlObj.pathname.split('/api/v1')[0];
-      if (pathPrefix && pathPrefix !== '/') {
-        socketPath = `${pathPrefix}/socket.io`.replace('//', '/');
-      }
-    } catch (e) {
-      console.error('Invalid NEXT_PUBLIC_API_URL, using default socket URL');
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+    const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || '/socket.io';
+
+    if (!socketUrl) {
+      console.error('❌ NEXT_PUBLIC_SOCKET_URL is not defined in environment!');
+      return;
     }
-    
+
     console.log('🔌 Initializing socket with URL:', socketUrl, 'Path:', socketPath);
 
     const socketInstance = io(socketUrl, {
