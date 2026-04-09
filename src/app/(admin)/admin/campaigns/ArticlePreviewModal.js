@@ -5,10 +5,13 @@ import { X, Download, FileText, Video } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "@/components/ui/Button";
 import VideoModal from "@/components/ui/VideoModal";
+import { downloadCampaignFile } from "@/utils/downloadHelper";
+import { toast } from "react-toastify";
 
 export default function ArticlePreviewModal({ isOpen, onClose, campaign }) {
     const [isVideoOpen, setIsVideoOpen] = useState(false);
     const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     if (!isOpen || !campaign) return null;
 
@@ -21,9 +24,18 @@ export default function ArticlePreviewModal({ isOpen, onClose, campaign }) {
         return `${baseUrl}/user/campaigns/${campaignId}/download/${format}`;
     };
 
-    const handleDownload = (format) => {
-        window.open(downloadUrl(format), "_blank");
+    const handleDownload = async (format) => {
+        setIsDownloading(true);
         setShowDownloadDropdown(false);
+
+        try {
+            await downloadCampaignFile(campaignId, format);
+            toast.success(`${format.toUpperCase()} download started`);
+        } catch (error) {
+            toast.error(`Failed to download ${format}. Please try again.`);
+        } finally {
+            setIsDownloading(false);
+        }
     };
 
     return (
@@ -50,8 +62,12 @@ export default function ArticlePreviewModal({ isOpen, onClose, campaign }) {
                                 onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-bold transition-all"
                             >
-                                <Download className="w-4 h-4" />
-                                Download
+                                {isDownloading ? (
+                                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-gray-300 border-t-primary" />
+                                ) : (
+                                    <Download className="w-4 h-4" />
+                                )}
+                                {isDownloading ? "Processing..." : "Download"}
                             </button>
                             
                             <AnimatePresence>

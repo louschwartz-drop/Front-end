@@ -58,8 +58,19 @@ export default function CampaignsPage() {
         // Listen for real-time updates via Socket
         if (socket) {
             socket.on("campaign_updated", (data) => {
-                console.log("🔄 Campaigns List updated via socket:", data);
-                fetchCampaigns(true); // Silent refresh
+                console.log("🔄 Campaign updated via socket:", data.campaignId, data.status);
+                
+                if (data.campaign) {
+                    // Update only the specific campaign in state
+                    setCampaigns(prevCampaigns => 
+                        prevCampaigns.map(c => 
+                            c._id === data.campaignId ? data.campaign : c
+                        )
+                    );
+                } else {
+                    // Fallback to fetch if no campaign object provided
+                    fetchCampaigns(true);
+                }
             });
 
             return () => {

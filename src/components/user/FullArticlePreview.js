@@ -4,10 +4,12 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import VideoModal from "@/components/ui/VideoModal";
+import { downloadCampaignFile } from "@/utils/downloadHelper";
 
 export default function FullArticlePreview({ isOpen, onClose, campaign, article, productCard }) {
     const [isVideoOpen, setIsVideoOpen] = useState(false);
     const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     if (!isOpen) return null;
 
@@ -19,14 +21,24 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
         return `${baseUrl}/user/campaigns/${campaignId}/download/${format}`;
     };
 
-    const handleDownload = (format) => {
+    const handleDownload = async (format) => {
         if (!campaignId || campaignId === "undefined") {
             console.error("No campaign ID found for download");
             toast.error("Error: Campaign ID missing. Please try refreshing the page.");
             return;
         }
-        window.open(downloadUrl(format), "_blank");
+
+        setIsDownloading(true);
         setShowDownloadDropdown(false);
+
+        try {
+            await downloadCampaignFile(campaignId, format);
+            toast.success(`${format.toUpperCase()} download started`);
+        } catch (error) {
+            toast.error(`Failed to download ${format}. Please try again.`);
+        } finally {
+            setIsDownloading(false);
+        }
     };
 
     const displayData = article || campaign?.article || {};
@@ -55,10 +67,14 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                                 onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-bold transition-all"
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                <svg className={`w-4 h-4 ${isDownloading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    {isDownloading ? (
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    ) : (
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    )}
                                 </svg>
-                                Download
+                                {isDownloading ? "Processing..." : "Download"}
                             </button>
                             
                             <AnimatePresence>
