@@ -13,7 +13,7 @@ import {
 import Button from "@/components/ui/Button";
 import userAuthStore from "@/store/userAuthStore";
 import Link from "next/link";
-export default function LoginModal({ isOpen, onClose, onSuccess }) {
+export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect = true }) {
   const [isLoading, setIsLoading] = useState(false);
   const { loginWithGoogle, error, clearError } = userAuthStore();
   const router = useRouter();
@@ -27,8 +27,10 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
         await loginWithGoogle(credentialResponse.credential);
         onSuccess?.();
         onClose();
-        // Redirect to user dashboard create page
-        router.push("/user/dashboard/create");
+        // Redirect to user dashboard create page if requested
+        if (shouldRedirect) {
+          router.push("/user/dashboard/create");
+        }
       }
     } catch (err) {
       console.error("Google Sign-In error:", err);

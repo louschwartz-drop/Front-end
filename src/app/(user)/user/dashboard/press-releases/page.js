@@ -131,11 +131,11 @@ export default function UserPressReleasesPage() {
     });
 
     return (
-        <div className="space-y-4 md:space-y-8 max-w-7xl mx-auto">
+        <div className="w-full">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Your Press Releases</h1>
-                    <p className="text-xs md:text-sm text-gray-500 font-medium tracking-tight">Manage and track your published stories.</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Your Press Releases</h1>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">Manage and track your published stories.</p>
                 </div>
 
                 <div className="relative group">
@@ -212,7 +212,7 @@ export default function UserPressReleasesPage() {
                                 className="bg-white p-2.5 md:p-5 rounded-xl md:rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6"
                             >
                                 <div className="flex items-center gap-3 md:gap-5 flex-1 min-w-0">
-                                    <div className="relative w-14 h-14 md:w-20 md:h-20 rounded-lg md:rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200 group-hover:border-blue-200 transition-colors">
+                                    <div className="relative w-14 h-14 md:w-20 md:h-20 rounded-lg md:rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200 group-hover:border-blue-200 transition-colors">
                                         {(release.campaign?.productCard?.thumbnail || release.campaign?.videoThumbnail) ? (
                                             <img
                                                 src={release.campaign?.productCard?.thumbnail || release.campaign?.videoThumbnail}

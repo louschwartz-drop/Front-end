@@ -171,7 +171,7 @@ export default function UserSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
         className={`
           lg:w-72 
           bg-white
-          ${mobileMenuOpen ? "fixed inset-y-0 left-0 z-50 w-80" : "hidden lg:block"}
+          ${mobileMenuOpen ? "fixed inset-y-0 left-0 z-50 w-72" : "hidden lg:block"}
           flex flex-col
           shadow-xl
           h-screen
@@ -205,28 +205,30 @@ export default function UserSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
           <div className="flex-1 overflow-y-auto">
             {/* Profile Section */}
             <Link href={"/user/dashboard/profile"}>
-              <div className="flex-shrink-0 p-3 md:p-8 text-center border-b border-gray-200">
+              <div className="flex-shrink-0 p-3 md:py-6 md:px-4 text-center border-b border-gray-200">
                 {/* Avatar - Centered */}
-                <div className="flex justify-center">
+                <div className="flex justify-center mb-3">
                   {mounted && user?.avatar ? (
                     <img
                       src={user.avatar}
                       alt={user.name}
-                      className="w-20 h-20 rounded-full object-cover border-3 border-blue-500 shadow-lg ring-2 ring-blue-500/30"
+                      className="w-14 h-14 rounded-full object-cover border-2 border-blue-500 shadow-md ring-2 ring-blue-500/20"
                     />
                   ) : (
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg ring-2 ring-blue-500/30">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-md ring-2 ring-blue-500/20">
                       {mounted ? getInitials(user?.name) : "U"}
                     </div>
                   )}
                 </div>
 
                 {/* User Info - Vertical Stack */}
-                <div className="space-y-1">
-                  <h3 className="text-lg font-semibold text-gray-900">
+                <div className="space-y-0.5">
+                  <h3 className="text-base font-semibold text-gray-900 truncate px-2">
                     {mounted ? (user?.name || "User") : "Loading..."}
                   </h3>
-                  <p className="text-sm text-gray-600">{mounted ? (user?.email || "") : ""}</p>
+                  <p className="text-xs text-gray-500 truncate px-2">
+                    {mounted ? (user?.email || "") : ""}
+                  </p>
                 </div>
 
 
@@ -234,17 +236,17 @@ export default function UserSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
             </Link>
 
             {/* Navigation Menu */}
-            <nav className="py-3 px-2 md:py-6">
-              <div className="space-y-3">
+            <nav className="py-2 px-2 md:py-4">
+              <div className="space-y-1">
                 {USER_MENU_ITEMS.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     className={`
-                    flex items-center gap-x-2 py-3 px-6 rounded-xl
+                    flex items-center gap-x-3 py-2 px-4 rounded-lg
                     transition-all duration-300 ease-in-out
                     ${isActive(item.href)
-                        ? "bg-blue-600 text-white shadow-md"
+                        ? "bg-blue-600 text-white shadow-sm"
                         : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                       }
                     group
@@ -280,7 +282,7 @@ export default function UserSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
               {/* Go to Website */}
               <Link
                 href="/"
-                className="w-full flex items-center gap-4 px-4 py-2.5 text-gray-700 hover:bg-gray-50 duration-300 group"
+                className="w-full flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 duration-300 group"
               >
                 <svg
                   className="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
@@ -295,11 +297,11 @@ export default function UserSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
                     d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
                   />
                 </svg>
-                <span className="text-sm font-medium">Go to Website</span>
+                <span className="text-[13px] font-medium">Go to Website</span>
               </Link>
               <Link
                 href="/contact"
-                className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <svg
@@ -315,7 +317,7 @@ export default function UserSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
                     d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <span className="text-sm font-medium">Help</span>
+                <span className="text-[13px] font-medium">Help</span>
               </Link>
             </div>
           </div>

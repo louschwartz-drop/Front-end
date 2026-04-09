@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
+import { useSocket } from "@/context/SocketContext";
 
 function isYouTube(url) {
   return url && (url.includes("youtube.com") || url.includes("youtu.be"));
@@ -24,6 +25,7 @@ const processingSteps = [
 function ProcessingContent() {
   const router = useRouter();
   const params = useParams();
+  const socket = useSocket();
   const campaignId = params.id;
   const [currentStep, setCurrentStep] = useState(0);
   const [processingComplete, setProcessingComplete] = useState(false);
@@ -156,18 +158,53 @@ function ProcessingContent() {
       }
     };
 
-    // Initial poll
+    // Initial poll (just to get starting state)
     pollCampaignStatus();
 
-    // Poll every 3 seconds
-    pollInterval = setInterval(pollCampaignStatus, 3000);
+    // SOCKET LISTENERS
+    if (socket && campaignId) {
+      console.log(`📡 Joining socket room for campaign: ${campaignId}`);
+      socket.emit("join_campaign", { campaignId });
+
+      socket.on("media_progress", (data) => {
+        console.log("📈 Progress:", data.percent, data.message);
+        if (data.percent) setUploadProgress(data.percent);
+      });
+
+      socket.on("status_change", (data) => {
+        console.log("🚦 Status Change:", data.status);
+        const statusToStep = {
+          uploading: 0,
+          uploaded: 0,
+          transcribing: 1,
+          generating: 2,
+          finished: 3,
+          failed: 3,
+        };
+        setCurrentStep(statusToStep[data.status] || 0);
+
+        if (data.status === "finished") {
+          setProcessingComplete(true);
+          toast.success("Ready! Redirecting...", { autoClose: 2000 });
+          router.replace(`/user/edit/${campaignId}`);
+        }
+      });
+
+      socket.on("media_error", (data) => {
+        console.error("❌ Media Error:", data.message);
+        toast.error(data.message || "Processing failed");
+        router.replace("/user/dashboard/campaigns");
+      });
+    }
 
     return () => {
-      if (pollInterval) {
-        clearInterval(pollInterval);
+      if (socket) {
+        socket.off("media_progress");
+        socket.off("status_change");
+        socket.off("media_error");
       }
     };
-  }, [campaignId, router]);
+  }, [campaignId, router, socket]);
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-12rem)]">

@@ -1,16 +1,16 @@
-import api from "../axios";
+import apiAdmin from "./apiAdmin";
 
 export const adminUserService = {
     getAllUsers: async (params) => {
-        const response = await api.get("/admin/users", { params });
+        const response = await apiAdmin.get("/admin/users", { params });
         return response.data;
     },
     getUserCampaigns: async (userId) => {
-        const response = await api.get(`/admin/users/${userId}/campaigns`);
+        const response = await apiAdmin.get(`/admin/users/${userId}/campaigns`);
         return response.data;
     },
     getUserPayments: async (userId) => {
-        const response = await api.get(`/admin/users/${userId}/payments`);
+        const response = await apiAdmin.get(`/admin/users/${userId}/payments`);
         return response.data;
     },
 };

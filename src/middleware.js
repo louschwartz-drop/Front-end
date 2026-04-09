@@ -6,7 +6,6 @@ export function middleware(request) {
 
   // 1. Admin Route Protection
   if (pathname.startsWith("/admin")) {
-    // Exclude login page from check
     if (pathname === '/admin/login') {
       return NextResponse.next();
     }
@@ -17,7 +16,6 @@ export function middleware(request) {
     try {
       const decoded = jwtDecode(token);
       if (decoded.role !== 'admin' && decoded.role !== 'moderator') {
-        // Redirect non-admins to their dashboard or home
         return NextResponse.redirect(new URL('/user/dashboard', request.url));
       }
     } catch (error) {
@@ -28,7 +26,6 @@ export function middleware(request) {
   // 2. User Route Protection
   if (pathname.startsWith("/user")) {
     const token = request.cookies.get("auth_token")?.value;
-
     if (!token) {
       return NextResponse.redirect(new URL("/", request.url));
     }

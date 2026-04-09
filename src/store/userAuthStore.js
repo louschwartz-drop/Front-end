@@ -19,8 +19,8 @@ const userAuthStore = create(
         try {
           const response = await authService.loginWithGoogle(idToken);
 
-          // Set cookie (better to use a cookie library like 'js-cookie')
-          document.cookie = `auth_token=${response.token}; path=/; max-age=604800; SameSite=Lax; Secure`;
+          // Set cookie (30 days expiry)
+          document.cookie = `auth_token=${response.token}; path=/; max-age=2592000; SameSite=Lax; Secure`;
 
           set({
             user: response.data,
@@ -63,12 +63,22 @@ const userAuthStore = create(
         set({ error: null });
       },
 
-      // Initialize auth from token (call this on app load)
-      initializeAuth: () => {
-        const token = get().token;
-        if (token) {
-          set({ isAuthenticated: true });
+      // Sync auth state with cookie
+      checkAuthSync: () => {
+        const hasCookie = document.cookie.split(';').some(c => c.trim().startsWith('auth_token='));
+        const { token, isAuthenticated } = get();
+
+        if (isAuthenticated && !hasCookie) {
+          console.warn("Auth cookie missing, logging out...");
+          get().logout();
+          return false;
         }
+        
+        if (!isAuthenticated && hasCookie && token) {
+           set({ isAuthenticated: true });
+        }
+
+        return hasCookie;
       },
 
       // Update user data in store

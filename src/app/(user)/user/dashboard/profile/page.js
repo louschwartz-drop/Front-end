@@ -243,10 +243,34 @@ function ProfilePageContent() {
   };
 
   const handleCropComplete = async (croppedBlob) => {
-    setAvatarFile(croppedBlob);
-    setPreviewUrl(URL.createObjectURL(croppedBlob));
     setShowCropper(false);
     setTempImage(null);
+    setUploading(true);
+
+    try {
+      const { uploadFileToS3 } = await import("@/utils/awsService");
+      const avatarUrl = await uploadFileToS3(croppedBlob);
+
+      const userId = user._id || user.id;
+      const { profileService } = await import("@/lib/api/user/profile");
+      const response = await profileService.updateProfile(userId, {
+        avatar: avatarUrl,
+      });
+
+      if (response.success) {
+        updateUser(response.data);
+        setPreviewUrl(avatarUrl);
+        setAvatarFile(null);
+        toast.success("Profile picture updated!");
+      } else {
+        toast.error("Failed to save profile picture");
+      }
+    } catch (error) {
+      console.error("Avatar auto-save failed:", error);
+      toast.error("Failed to upload profile picture");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleCancelCrop = () => {
@@ -286,20 +310,11 @@ function ProfilePageContent() {
 
     try {
       const userId = user._id || user.id;
-      let avatarUrl = user.avatar;
-
-      // If there's a new avatar file selected (cropped blob), upload it to AWS
-      if (avatarFile) {
-        const { uploadFileToS3 } = await import("@/utils/awsService");
-        avatarUrl = await uploadFileToS3(avatarFile);
-      }
-
       // Save to Backend Database
       const { profileService } = await import("@/lib/api/user/profile");
       const response = await profileService.updateProfile(userId, {
         name: formData.name,
         phone: formData.phone,
-        avatar: avatarUrl,
       });
 
       if (response.success) {
@@ -332,11 +347,11 @@ function ProfilePageContent() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className=" mx-auto">
+    <div className="w-full">
       {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="text-gray-600 mt-2">
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Profile Settings</h1>
+        <p className="text-xs sm:text-sm text-gray-500 mt-1">
           Manage your account information and preferences
         </p>
       </div>
@@ -443,22 +458,6 @@ function ProfilePageContent() {
                 <span className="text-gray-600">
                   Member since {user?.createdAt ? new Date(user.createdAt).getFullYear() : '2025'}
                 </span>
-              </div>
-              <div className="flex items-center text-sm">
-                <svg
-                  className="w-5 h-5 text-gray-400 mr-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <span className="text-gray-600">Verified Account</span>
               </div>
             </div>
           </div>

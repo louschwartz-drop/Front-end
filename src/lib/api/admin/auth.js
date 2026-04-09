@@ -1,8 +1,8 @@
-import apiClient from "../axios";
+import apiAdmin from "./apiAdmin";
 
 export const adminAuthService = {
     login: async (email, password) => {
-        const response = await apiClient.post("/admin/auth/login", {
+        const response = await apiAdmin.post("/admin/auth/login", {
             email,
             password,
         });
@@ -10,7 +10,7 @@ export const adminAuthService = {
     },
 
     getProfile: async () => {
-        const response = await apiClient.get("/admin/auth/me");
+        const response = await apiAdmin.get("/admin/auth/me");
         return response.data;
     },
 };

@@ -66,7 +66,18 @@ export default function Home() {
     };
   }, []);
   const router = useRouter();
-  const { isAuthenticated } = userAuthStore();
+  const { isAuthenticated, checkAuthSync } = userAuthStore();
+
+  useEffect(() => {
+    checkAuthSync();
+  }, [checkAuthSync]);
+
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     router.push("/user/dashboard");
+  //   }
+  // }, [isAuthenticated, router]);
+
   const testimonialIntervalRef = useRef(null);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
@@ -113,7 +124,7 @@ export default function Home() {
             />
           </div>
 
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-12 md:py-16">
+          <div className="container mx-auto px-4 sm:px-1 lg:px-8 relative z-10 py-12 md:py-16">
             <div className="max-w-6xl mx-auto">
               <div className="grid lg:grid-cols-2 gap-12 items-center">
                 <motion.div

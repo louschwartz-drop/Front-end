@@ -81,11 +81,11 @@ export default function PaymentHistoryPage() {
     };
 
     return (
-        <div className="space-y-4 md:space-y-8 max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="w-full">
+            <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Payment History</h1>
-                    <p className="text-xs md:text-sm text-gray-500 font-medium tracking-tight">Track your distribution plan purchases.</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Payment History</h1>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">Track your distribution plan purchases.</p>
                 </div>
 
                 <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -12,15 +12,16 @@ import {
   Home,
   LogOut,
   X,
-  Smartphone,
   CreditCard,
   LifeBuoy,
   UserCircle,
   MessageSquare,
+  Headset,
 } from "lucide-react";
 import adminAuthStore from "@/store/adminAuthStore";
 import Image from "next/image";
 import ConfirmationModal from "../ui/ConfirmationModal";
+import { useAdminSocket } from "@/context/AdminSocketContext";
 
 export const ADMIN_MENU_ITEMS = [
   {
@@ -59,6 +60,12 @@ export const ADMIN_MENU_ITEMS = [
     icon: MessageSquare,
   },
   {
+    href: "/admin/chat",
+    label: "Live Chat",
+    icon: Headset,
+  },
+
+  {
     href: "/admin/profile",
     label: "Profile",
     icon: UserCircle,
@@ -71,6 +78,26 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
   const { logout } = adminAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [waitingCount, setWaitingCount] = useState(0);
+  const adminSocket = useAdminSocket();
+
+  // Track real-time waiting-agent requests
+  useEffect(() => {
+    if (!adminSocket) return;
+
+    const onNewRequest = () => setWaitingCount((n) => n + 1);
+    const onListUpdate = (chat) => {
+      if (chat.status !== "WAITING") setWaitingCount((n) => Math.max(0, n - 1));
+    };
+
+    adminSocket.on("new_support_request", onNewRequest);
+    adminSocket.on("chat_list_update", onListUpdate);
+
+    return () => {
+      adminSocket.off("new_support_request", onNewRequest);
+      adminSocket.off("chat_list_update", onListUpdate);
+    };
+  }, [adminSocket]);
 
   const handleLogoutClick = useCallback(() => {
     setIsModalOpen(true);
@@ -157,6 +184,7 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
           <ul className="space-y-1 px-2">
             {ADMIN_MENU_ITEMS.map((item) => {
               const Icon = item.icon;
+              const isLiveChat = item.href === "/admin/chat";
               return (
                 <li key={item.href}>
                   <Link
@@ -172,7 +200,12 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
                     `}
                   >
                     <Icon className="w-5 h-5 shrink-0" />
-                    <span className="text-sm font-medium">{item.label}</span>
+                    <span className="text-sm font-medium flex-1">{item.label}</span>
+                    {isLiveChat && waitingCount > 0 && (
+                      <span className="bg-yellow-500 text-white text-[9px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 animate-pulse">
+                        {waitingCount}
+                      </span>
+                    )}
                   </Link>
                 </li>
               );

@@ -32,6 +32,14 @@ export default function Footer() {
             <ul className="space-y-3 text-gray-400 text-sm">
               <li>
                 <Link
+                  href="/"
+                  className="hover:text-white transition-colors"
+                >
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/contact"
                   className="hover:text-white transition-colors"
                 >

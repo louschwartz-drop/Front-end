@@ -24,9 +24,34 @@ export default function ContactPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [showSalesperson, setShowSalesperson] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    let newErrors = {};
+    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    if (!formData.company.trim()) newErrors.company = "Company name is required";
+    if (!formData.howFound) newErrors.howFound = "Please tell us how you found us";
+    if (formData.howFound === "Salesperson" && !formData.salesperson.trim()) {
+      newErrors.salesperson = "Please specify the salesperson's name";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      toast.warn("Please fix the validation errors before submitting.", {
+        position: "top-right",
+      });
+      return;
+    }
     setSubmitting(true);
 
     try {
@@ -181,7 +206,7 @@ export default function ContactPage() {
 
             {/* Right Section - Form */}
             <div className="lg:col-span-3">
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 md:p-10">
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 px-3 py-6 md:p-10">
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
                   Contact Sales
                 </h2>
@@ -197,15 +222,15 @@ export default function ContactPage() {
                         type="text"
                         required
                         value={formData.firstName}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            firstName: e.target.value,
-                          })
-                        }
+                        onChange={(e) => {
+                          setFormData({ ...formData, firstName: e.target.value });
+                          if (errors.firstName) setErrors(prev => ({ ...prev, firstName: "" }));
+                        }}
                         placeholder="Your Name"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all"
+                        maxLength={50}
+                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all ${errors.firstName ? 'border-red-500' : 'border-gray-300'}`}
                       />
+                      {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -215,12 +240,15 @@ export default function ContactPage() {
                         type="email"
                         required
                         value={formData.email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
+                        onChange={(e) => {
+                          setFormData({ ...formData, email: e.target.value });
+                          if (errors.email) setErrors(prev => ({ ...prev, email: "" }));
+                        }}
                         placeholder="Your Email"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all"
+                        maxLength={100}
+                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
                       />
+                      {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                     </div>
                   </div>
 
@@ -234,12 +262,15 @@ export default function ContactPage() {
                         type="text"
                         required
                         value={formData.company}
-                        onChange={(e) =>
-                          setFormData({ ...formData, company: e.target.value })
-                        }
+                        onChange={(e) => {
+                          setFormData({ ...formData, company: e.target.value });
+                          if (errors.company) setErrors(prev => ({ ...prev, company: "" }));
+                        }}
                         placeholder="Your Company"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all"
+                        maxLength={100}
+                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all ${errors.company ? 'border-red-500' : 'border-gray-300'}`}
                       />
+                      {errors.company && <p className="text-red-500 text-xs mt-1">{errors.company}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -252,6 +283,7 @@ export default function ContactPage() {
                           setFormData({ ...formData, jobTitle: e.target.value })
                         }
                         placeholder="Your position/job title"
+                        maxLength={100}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all"
                       />
                     </div>
@@ -276,8 +308,9 @@ export default function ContactPage() {
                             setShowSalesperson(
                               e.target.value === "Salesperson",
                             );
+                            if (errors.howFound) setErrors(prev => ({ ...prev, howFound: "" }));
                           }}
-                          className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all appearance-none bg-white cursor-pointer"
+                          className={`w-full px-4 py-3 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all appearance-none bg-white cursor-pointer ${errors.howFound ? 'border-red-500' : 'border-gray-300'}`}
                           style={{
                             color: formData.howFound
                               ? "#000"
@@ -312,20 +345,26 @@ export default function ContactPage() {
                         </div>
                       </div>
                       {showSalesperson && (
-                        <input
-                          type="text"
-                          value={formData.salesperson}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              salesperson: e.target.value,
-                            })
-                          }
-                          placeholder="Name of salesperson"
-                          className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all"
-                        />
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            value={formData.salesperson}
+                            onChange={(e) => {
+                              setFormData({
+                                ...formData,
+                                salesperson: e.target.value,
+                              });
+                              if (errors.salesperson) setErrors(prev => ({ ...prev, salesperson: "" }));
+                            }}
+                            placeholder="Name of salesperson"
+                            maxLength={100}
+                            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all ${errors.salesperson ? 'border-red-500' : 'border-gray-300'}`}
+                          />
+                          {errors.salesperson && <p className="text-red-500 text-xs mt-1">{errors.salesperson}</p>}
+                        </div>
                       )}
                     </div>
+                    {errors.howFound && <p className="text-red-500 text-xs mt-1">{errors.howFound}</p>}
                   </div>
 
                   {/* Divider */}
@@ -336,77 +375,81 @@ export default function ContactPage() {
                     <label className="block text-sm font-medium text-brand-blue mb-3">
                       What's your expected volume?
                     </label>
-                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-wrap">
-                      <span className="text-gray-700 text-sm">
-                        On average, I need
-                      </span>
-                      <div className="relative">
-                        <select
-                          value={formData.pressReleaseVolume}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              pressReleaseVolume: e.target.value,
-                            })
-                          }
-                          className="px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all appearance-none bg-white cursor-pointer"
-                        >
-                          <option value="below 5">below 5</option>
-                          <option value="5">5</option>
-                          <option value="10">10</option>
-                          <option value="20">20</option>
-                          <option value="30">30</option>
-                          <option value="50">50</option>
-                          <option value="100">100</option>
-                          <option value="200">200</option>
-                          <option value="300">300</option>
-                          <option value="1500+">1500+</option>
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                          <svg
-                            className="w-4 h-4 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                    <div className="space-y-4">
+                      <div className="flex flex-col gap-3">
+                        <span className="text-gray-700 text-sm">
+                          On average, I need:
+                        </span>
+                        <div className="relative w-full">
+                          <select
+                            value={formData.pressReleaseVolume}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                pressReleaseVolume: e.target.value,
+                              })
+                            }
+                            className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all appearance-none bg-white cursor-pointer"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
+                            <option value="below 5">below 5</option>
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="30">30</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                            <option value="300">300</option>
+                            <option value="1500+">1500+</option>
+                          </select>
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <svg
+                              className="w-5 h-5 text-gray-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 9l-7 7-7-7"
+                              />
+                            </svg>
+                          </div>
                         </div>
                       </div>
-                      <span className="text-gray-700 text-sm">services</span>
-                      <div className="relative">
-                        <select
-                          value={formData.pressPer}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              pressPer: e.target.value,
-                            })
-                          }
-                          className="px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all appearance-none bg-white cursor-pointer"
-                        >
-                          <option value="per month">per month</option>
-                          <option value="per year">per year</option>
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                          <svg
-                            className="w-4 h-4 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                      <div className="flex flex-col gap-3">
+                        <span className="text-gray-700 text-sm">per period:</span>
+                        <div className="relative w-full">
+                          <select
+                            value={formData.pressPer}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                pressPer: e.target.value,
+                              })
+                            }
+                            className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all appearance-none bg-white cursor-pointer"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
+                            <option value="per month">per month</option>
+                            <option value="per year">per year</option>
+                          </select>
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <svg
+                              className="w-5 h-5 text-gray-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 9l-7 7-7-7"
+                              />
+                            </svg>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -414,9 +457,14 @@ export default function ContactPage() {
 
                   {/* Looking For */}
                   <div>
-                    <label className="block text-sm font-medium text-brand-blue mb-2">
-                      What are you looking for?
-                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                       <label className="block text-sm font-medium text-brand-blue">
+                        What are you looking for?
+                      </label>
+                      <span className="text-[10px] text-gray-400">
+                        {formData.lookingFor.length}/1000
+                      </span>
+                    </div>
                     <textarea
                       value={formData.lookingFor}
                       onChange={(e) =>
@@ -424,15 +472,21 @@ export default function ContactPage() {
                       }
                       rows="3"
                       placeholder="I'm looking for..."
+                      maxLength={1000}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all resize-none"
                     />
                   </div>
 
                   {/* Measure Success */}
                   <div>
-                    <label className="block text-sm font-medium text-brand-blue mb-2">
-                      How do you measure success?
-                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-medium text-brand-blue">
+                        How do you measure success?
+                      </label>
+                      <span className="text-[10px] text-gray-400">
+                        {formData.measureSuccess.length}/1000
+                      </span>
+                    </div>
                     <textarea
                       value={formData.measureSuccess}
                       onChange={(e) =>
@@ -443,18 +497,24 @@ export default function ContactPage() {
                       }
                       rows="3"
                       placeholder="Tell us more..."
+                      maxLength={1000}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all resize-none"
                     />
                   </div>
 
                   {/* Other Comments */}
                   <div>
-                    <label className="block text-sm font-medium text-brand-blue mb-2">
-                      Other comments to us{" "}
-                      <span className="text-gray-500 font-normal">
-                        (Keep it short & simple)
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-medium text-brand-blue">
+                        Other comments to us{" "}
+                        <span className="text-gray-500 font-normal">
+                          (Keep it short & simple)
+                        </span>
+                      </label>
+                      <span className="text-[10px] text-gray-400">
+                        {formData.otherComments.length}/500
                       </span>
-                    </label>
+                    </div>
                     <textarea
                       value={formData.otherComments}
                       onChange={(e) =>
@@ -465,6 +525,7 @@ export default function ContactPage() {
                       }
                       rows="3"
                       placeholder="Tell us more..."
+                      maxLength={500}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all resize-none"
                     />
                   </div>

@@ -6,9 +6,11 @@ import userAuthStore from "@/store/userAuthStore";
 
 import Link from "next/link";
 import Button from "@/components/ui/Button";
+import { useSocket } from "@/context/SocketContext";
 
 function DashboardContent() {
   const router = useRouter();
+  const socket = useSocket();
 
   const { user, isAuthenticated, isLoading: authLoading } = userAuthStore();
   const [campaigns, setCampaigns] = useState([]);
@@ -24,10 +26,22 @@ function DashboardContent() {
   useEffect(() => {
     if (isAuthenticated && user) {
       loadDashboardData();
-      const interval = setInterval(loadDashboardData, 30000);
-      return () => clearInterval(interval);
     }
   }, [isAuthenticated, user]);
+
+  // Listen for real-time updates via Socket
+  useEffect(() => {
+    if (socket) {
+      socket.on("campaign_updated", (data) => {
+        console.log("🔄 Dashboard updated via socket:", data);
+        loadDashboardData();
+      });
+
+      return () => {
+        socket.off("campaign_updated");
+      };
+    }
+  }, [socket]);
 
   const loadDashboardData = async () => {
     try {

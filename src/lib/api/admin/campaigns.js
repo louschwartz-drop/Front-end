@@ -1,4 +1,4 @@
-import api from "../axios";
+import apiAdmin from "./apiAdmin";
 
 export const adminCampaignService = {
     getCampaigns: async (filters = {}) => {
@@ -8,11 +8,11 @@ export const adminCampaignService = {
         if (filters.status) params.append("status", filters.status);
         if (filters.search) params.append("search", filters.search);
 
-        const response = await api.get(`/admin/campaigns?${params.toString()}`);
+        const response = await apiAdmin.get(`/admin/campaigns?${params.toString()}`);
         return response.data;
     },
     getCampaignById: async (id) => {
-        const response = await api.get(`/admin/campaigns/${id}`);
+        const response = await apiAdmin.get(`/admin/campaigns/${id}`);
         return response.data;
     },
 };

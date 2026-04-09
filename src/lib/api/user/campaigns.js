@@ -60,8 +60,8 @@ export const campaignService = {
     },
 
     // AI Edits
-    performAiEdit: async (campaignId, actionId) => {
-        const response = await api.post(`/user/campaigns/${campaignId}/ai-edit`, { actionId });
+    performAiEdit: async (campaignId, actionId, feedback = null) => {
+        const response = await api.post(`/user/campaigns/${campaignId}/ai-edit`, { actionId, feedback });
         return response.data;
     },
 

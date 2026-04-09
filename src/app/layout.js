@@ -38,9 +38,10 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
-  // Get Google Client ID from validated environment configuration
+import { SocketProvider } from "@/context/SocketContext";
+import ChatWidgetWrapper from "@/components/chat/ChatWidgetWrapper";
 
+export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -48,21 +49,25 @@ export default function RootLayout({ children }) {
         suppressHydrationWarning
       >
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
-          {children}
-          <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light"
-          />
+          <SocketProvider>
+            {children}
+            <ChatWidgetWrapper />
+            <ToastContainer
+              position="top-right"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="light"
+            />
+          </SocketProvider>
         </GoogleOAuthProvider>
       </body>
     </html >
   );
 }
+

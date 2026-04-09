@@ -11,11 +11,13 @@ import PreviewPublishModal from "@/components/user/PreviewPublishModal";
 import FullArticlePreview from "@/components/user/FullArticlePreview";
 import userAuthStore from "@/store/userAuthStore";
 import Button from "@/components/ui/Button";
+import { useSocket } from "@/context/SocketContext";
 
 const VideoModal = dynamic(() => import("@/components/ui/VideoModal"), { ssr: false });
 
 export default function CampaignsPage() {
     const router = useRouter();
+    const socket = useSocket();
     const [campaigns, setCampaigns] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("all");
@@ -53,21 +55,27 @@ export default function CampaignsPage() {
     const { user } = userAuthStore();
 
     useEffect(() => {
+        // Listen for real-time updates via Socket
+        if (socket) {
+            socket.on("campaign_updated", (data) => {
+                console.log("🔄 Campaigns List updated via socket:", data);
+                fetchCampaigns(true); // Silent refresh
+            });
+
+            return () => {
+                socket.off("campaign_updated");
+            };
+        }
+    }, [socket]);
+    
+    // Original effect for initial load and filter changes
+    useEffect(() => {
         const timeoutId = setTimeout(() => {
             fetchCampaigns();
         }, searchTerm ? 500 : 0);
 
         return () => clearTimeout(timeoutId);
     }, [searchTerm, currentPage, filter]);
-
-    useEffect(() => {
-        // Poll for active campaigns every 3 seconds
-        const pollInterval = setInterval(() => {
-            fetchCampaigns(true); // Silent refresh
-        }, 3000);
-
-        return () => clearInterval(pollInterval);
-    }, [searchTerm, currentPage, filter]); // Re-start interval when params change if needed
 
     const fetchCampaigns = async (silent = false) => {
         try {
@@ -166,16 +174,17 @@ export default function CampaignsPage() {
         const isLanguageError = campaign.errorMessage?.toLowerCase().includes("language");
         
         const statusConfig = {
-            uploading: { color: "bg-blue-500", label: "Uploading" },
-            uploaded: { color: "bg-blue-500", label: "Uploaded" },
-            transcribing: { color: "bg-yellow-500", label: "Transcribing" },
-            generating: { color: "bg-purple-500", label: "Generating" },
-            finished: { color: "bg-green-500", label: "Ready for Publish" },
-            published: { color: "bg-green-600", label: "Published" },
-            submitted_successfully: { color: "bg-green-600", label: "Submitted Successfully" },
+            uploading: { color: "bg-blue-500", label: "Uploading", mobileLabel: "Uploading" },
+            uploaded: { color: "bg-blue-500", label: "Uploaded", mobileLabel: "Uploaded" },
+            transcribing: { color: "bg-yellow-500", label: "Transcribing", mobileLabel: "Trans" },
+            generating: { color: "bg-purple-500", label: "Generating", mobileLabel: "Gen" },
+            finished: { color: "bg-green-500", label: "Ready for Publish", mobileLabel: "Ready" },
+            published: { color: "bg-green-600", label: "Published", mobileLabel: "Pub" },
+            submitted_successfully: { color: "bg-green-600", label: "Submitted Successfully", mobileLabel: "Success" },
             failed: { 
                 color: "bg-red-500", 
-                label: isLanguageError ? "Language Not Supported" : (isIrrelevant ? "Content Irrelevant" : "Failed") 
+                label: isLanguageError ? "Language Not Supported" : (isIrrelevant ? "Content Irrelevant" : "Failed"),
+                mobileLabel: "Failed"
             },
         };
 
@@ -185,7 +194,8 @@ export default function CampaignsPage() {
             <span
                 className={`px-3 py-1 rounded-full text-[10px] md:text-xs font-semibold text-white shadow-sm ${config.color}`}
             >
-                {config.label}
+                <span className="hidden sm:inline">{config.label}</span>
+                <span className="sm:hidden">{config.mobileLabel}</span>
             </span>
         );
     };
@@ -258,14 +268,14 @@ export default function CampaignsPage() {
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between">
                     <div>
-                        <h1 className="md:text-3xl text-xl font-bold text-gray-900">My Campaigns</h1>
-                        <p className="text-gray-600 mt-2 md:text-base text-sm">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">My Campaigns</h1>
+                        <p className="text-xs sm:text-sm text-gray-500 mt-1">
                             Manage and track your video campaigns
                         </p>
                     </div>
                     <button
                         onClick={() => router.push("/user/dashboard/create")}
-                        className="md:px-6 md:py-3 px-3 py-2 bg-primary text-white rounded-lg hover:bg-brand-blue text-sm md:text-base font-semibold shadow-sm"
+                        className="md:px-6 md:py-3 px-2.5 py-1.5 bg-primary text-white rounded-lg hover:bg-brand-blue text-[10px] xs:text-xs md:text-base font-semibold shadow-sm shrink-0 whitespace-nowrap"
                     >
                         + Create Campaign
                     </button>
@@ -301,11 +311,11 @@ export default function CampaignsPage() {
 
                     <div className="flex gap-1 md:gap-2 border-b border-gray-200">
                         {[
-                            { key: "all", label: "All" },
-                            { key: "active", label: "Active" },
-                            { key: "finished", label: "Ready for Publish" },
-                            { key: "published", label: "Published" },
-                            { key: "failed", label: "Failed" },
+                            { key: "all", label: "All", mobileLabel: "All" },
+                            { key: "active", label: "Active", mobileLabel: "Active" },
+                            { key: "finished", label: "Ready for Publish", mobileLabel: "Ready" },
+                            { key: "published", label: "Published", mobileLabel: "Pub" },
+                            { key: "failed", label: "Failed", mobileLabel: "Failed" },
                         ].map((tab) => (
                             <button
                                 key={tab.key}
@@ -318,7 +328,8 @@ export default function CampaignsPage() {
                                     : "text-gray-600 hover:text-gray-900"
                                     }`}
                             >
-                                {tab.label}
+                                <span className="hidden md:inline">{tab.label}</span>
+                                <span className="md:hidden text-xs">{tab.mobileLabel}</span>
                             </button>
                         ))}
                     </div>

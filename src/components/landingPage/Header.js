@@ -11,12 +11,16 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const { isAuthenticated, user, logout } = userAuthStore();
+  const { isAuthenticated, user, logout, checkAuthSync } = userAuthStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    checkAuthSync();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -78,7 +82,7 @@ export default function Header() {
   return (
     <>
       <header className="bg-white border-b border-neutral-border fixed top-0 inset-x-0 z-[100] shadow-sm !transform-none !transition-none">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto px-4 sm:px-0 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo */}
             <Link
@@ -90,16 +94,16 @@ export default function Header() {
                 alt="DropPR.ai"
                 width={160}
                 height={60}
-                className="h-10 md:h-14 w-auto object-contain"
+                className="h-10 md:h-11 lg:h-14 w-auto object-contain"
                 priority
               />
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
+            <nav className="hidden md:flex items-center gap-2 lg:gap-8 overflow-hidden">
               <Link
                 href="/"
-                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm relative ${isActive("/")
+                className={`px-3 md:px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-[13px] lg:text-sm relative ${isActive("/")
                   ? "text-brand-blue"
                   : "text-gray-700 hover:text-brand-blue"
                   }`}
@@ -295,7 +299,7 @@ export default function Header() {
               ) : (
                 <button
                   onClick={() => setShowLoginPopup(true)}
-                  className="bg-brand-blue text-white hover:bg-blue-700 px-6 py-2 rounded-lg font-medium text-sm transition-all duration-200"
+                  className="bg-brand-blue text-white hover:bg-blue-700 px-4 lg:px-6 py-2 rounded-lg font-medium text-xs lg:text-sm transition-all duration-200"
                 >
                   Get Started Now
                 </button>
