@@ -13,6 +13,7 @@ import {
   LogOut,
   X,
   CreditCard,
+  Tag,
   LifeBuoy,
   UserCircle,
   MessageSquare,
@@ -48,6 +49,11 @@ export const ADMIN_MENU_ITEMS = [
     href: "/admin/pricing",
     label: "Pricing Plans",
     icon: CreditCard,
+  },
+  {
+    href: "/admin/promo-codes",
+    label: "Promo Codes",
+    icon: Tag,
   },
   {
     href: "/admin/support",

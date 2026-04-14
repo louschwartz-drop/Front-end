@@ -12,6 +12,7 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
 
 import { pricingService } from "@/lib/api/user/pricing";
 import { paymentService } from "@/lib/api/user/payments";
+import { Check, X, Tag } from "lucide-react";
 import userAuthStore from "@/store/userAuthStore";
 
 export default function PaymentPage() {
@@ -25,6 +26,10 @@ export default function PaymentPage() {
   const [processing, setProcessing] = useState(false);
   const [plan, setPlan] = useState(null);
   const [clientSecret, setClientSecret] = useState("");
+  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [promoError, setPromoError] = useState("");
 
   const { user } = userAuthStore();
   const userId = user?._id || user?.id;
@@ -97,6 +102,48 @@ export default function PaymentPage() {
       console.error("Error loading plan:", error?.response?.data || error.message || error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApplyPromo = async () => {
+    if (!promoCodeInput.trim()) return;
+
+    try {
+      setIsApplyingPromo(true);
+      setPromoError("");
+      
+      const res = await paymentService.validatePromo(promoCodeInput.trim(), planId);
+      
+      if (res.success) {
+        setAppliedPromo(res.data);
+        toast.success(`Promo code applied! Saved $${res.data.discountAmount.toFixed(2)}`);
+        
+        // RE-CREATE payment intent with the promo code to get discounted amount
+        const piRes = await paymentService.createPaymentIntent(campaignId, planId, userId, saveCard, promoCodeInput.trim());
+        if (piRes.success) {
+          setClientSecret(piRes.data.clientSecret);
+        } else {
+          toast.error("Failed to update payment amount with promo");
+        }
+      } else {
+        setPromoError(res.message || "Invalid promo code");
+      }
+    } catch (error) {
+      setPromoError(error.response?.data?.message || "Failed to validate promo code");
+    } finally {
+      setIsApplyingPromo(false);
+    }
+  };
+
+  const handleRemovePromo = async () => {
+    setAppliedPromo(null);
+    setPromoCodeInput("");
+    setPromoError("");
+    
+    // Reset payment intent to original amount
+    const piRes = await paymentService.createPaymentIntent(campaignId, planId, userId, saveCard);
+    if (piRes.success) {
+      setClientSecret(piRes.data.clientSecret);
     }
   };
 
@@ -196,21 +243,83 @@ export default function PaymentPage() {
               </div>
             </div>
 
-            <div className="space-y-3 pt-6 border-t border-gray-100">
-              <div className="flex justify-between text-gray-500 text-sm">
-                <span>Subtotal</span>
-                <span>${plan.price.toFixed(2)}</span>
-              </div>
+              <div className="space-y-3 pt-6 border-t border-gray-100">
+                <div className="flex justify-between text-gray-500 text-sm">
+                  <span>Subtotal</span>
+                  <span>${plan.price.toFixed(2)}</span>
+                </div>
 
-              <div className="flex justify-between items-center pt-3 mt-3 border-t-2 border-dashed border-gray-100">
-                <span className="text-lg font-bold text-gray-900">Total Amount</span>
-                <div className="text-right">
-                  <div className="text-md sm:text-3xl font-black text-primary leading-none">${plan.price.toFixed(2)}</div>
-                  <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-tighter">One-time payment</p>
+                {appliedPromo && (
+                  <div className="flex justify-between text-green-600 text-sm font-medium animate-in fade-in slide-in-from-top-1">
+                    <div className="flex items-center gap-1.5">
+                      <button onClick={handleRemovePromo} className="hover:text-red-500 transition-colors">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                      <span>Discount ({appliedPromo.code})</span>
+                    </div>
+                    <span>-${appliedPromo.discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+
+                <div className="pt-2">
+                  {!appliedPromo ? (
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Promo Code"
+                          value={promoCodeInput}
+                          onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                          className={`flex-1 px-3 py-2 bg-gray-50 border ${promoError ? 'border-red-300 ring-4 ring-red-50' : 'border-gray-200'} rounded-xl text-sm font-bold uppercase transition-all outline-none focus:border-primary`}
+                        />
+                        <button
+                          onClick={handleApplyPromo}
+                          disabled={isApplyingPromo || !promoCodeInput.trim()}
+                          className="px-4 py-2 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-all disabled:opacity-50"
+                        >
+                          {isApplyingPromo ? "..." : "Apply"}
+                        </button>
+                      </div>
+                      {promoError && <p className="text-[10px] text-red-500 font-bold ml-1">{promoError}</p>}
+                    </div>
+                  ) : (
+                  <div className="group relative flex items-center justify-between bg-green-50/50 border-2 border-dashed border-green-200 p-3 rounded-xl animate-in zoom-in-95 duration-200">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 rounded-lg text-green-600">
+                        <Tag className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-green-700 uppercase tracking-wider">{appliedPromo.code}</span>
+                          <span className="text-[10px] font-bold bg-green-600 text-white px-1.5 py-0.5 rounded">
+                            {appliedPromo.discountType === 'percentage' ? `${appliedPromo.discountValue}%` : `$${appliedPromo.discountValue}`} OFF
+                          </span>
+                        </div>
+                        <p className="text-[9px] text-green-600/70 font-bold uppercase tracking-tighter mt-0.5">Discount applied successfully</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleRemovePromo}
+                      className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all rounded-lg"
+                      title="Remove promo code"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+                </div>
+
+                <div className="flex justify-between items-center pt-3 mt-3 border-t-2 border-dashed border-gray-100">
+                  <span className="text-lg font-bold text-gray-900">Total Amount</span>
+                  <div className="text-right">
+                    <div className="text-md sm:text-3xl font-black text-primary leading-none">
+                      ${(appliedPromo ? appliedPromo.finalPrice : plan.price).toFixed(2)}
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-tighter">One-time payment</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
           <div className="bg-primary/5 rounded-2xl p-2 sm:p-6 border border-primary/10">
             <div className="flex gap-4">
@@ -318,12 +427,13 @@ export default function PaymentPage() {
                     stripe={stripePromise}
                   >
                     <CheckoutForm
-                      amount={plan.price}
+                      amount={appliedPromo ? appliedPromo.finalPrice : plan.price}
                       campaignId={campaignId}
                       onSuccess={handlePaymentSuccess}
                       saveCard={saveCard}
                       setSaveCard={setSaveCard}
                       userEmail={user?.email}
+                      promoCode={appliedPromo ? appliedPromo.code : null}
                     />
                   </Elements>
                 </div>
@@ -331,7 +441,7 @@ export default function PaymentPage() {
                 <div className="pt-6">
                   <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
                     <CheckoutForm
-                      amount={plan.price}
+                      amount={appliedPromo ? appliedPromo.finalPrice : plan.price}
                       campaignId={campaignId}
                       onSuccess={handlePaymentSuccess}
                       saveCard={false}
@@ -339,6 +449,7 @@ export default function PaymentPage() {
                       userEmail={user?.email}
                       paymentMethodId={selectedCardId}
                       clientSecret={clientSecret}
+                      promoCode={appliedPromo ? appliedPromo.code : null}
                     />
                   </Elements>
                 </div>

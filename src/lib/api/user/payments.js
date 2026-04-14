@@ -9,8 +9,18 @@ export const paymentService = {
         const response = await api.delete(`/user/payments/cards/${cardId}`);
         return response.data;
     },
-    createPaymentIntent: async (campaignId, planId, userId, saveCard) => {
-        const response = await api.post("/user/payments/create-payment-intent", { campaignId, planId, userId, saveCard });
+    createPaymentIntent: async (campaignId, planId, userId, saveCard, promoCode) => {
+        const response = await api.post("/user/payments/create-payment-intent", { 
+            campaignId, 
+            planId, 
+            userId, 
+            saveCard,
+            promoCode 
+        });
+        return response.data;
+    },
+    validatePromo: async (code, planId) => {
+        const response = await api.post("/user/payments/validate-promo", { code, planId });
         return response.data;
     },
     getHistory: async (params) => {
