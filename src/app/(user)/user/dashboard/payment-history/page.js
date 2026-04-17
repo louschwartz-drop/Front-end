@@ -18,6 +18,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import Button from "@/components/ui/Button";
+import Pagination from "@/components/ui/Pagination";
 
 export default function PaymentHistoryPage() {
     const { user } = userAuthStore();
@@ -30,13 +31,34 @@ export default function PaymentHistoryPage() {
         startDate: "",
         endDate: ""
     });
+    const [tempDateRange, setTempDateRange] = useState({
+        startDate: "",
+        endDate: ""
+    });
+    const [isDateModalOpen, setIsDateModalOpen] = useState(false);
     const [totalResults, setTotalResults] = useState(0);
     const today = new Date().toISOString().split('T')[0];
 
     const clearFilters = () => {
         setSearchTerm("");
         setDateRange({ startDate: "", endDate: "" });
+        setTempDateRange({ startDate: "", endDate: "" });
         setCurrentPage(1);
+    };
+
+    const handleApplyDateFilter = () => {
+        setDateRange(tempDateRange);
+        setIsDateModalOpen(false);
+        setCurrentPage(1);
+    };
+
+    const openDateModal = () => {
+        setTempDateRange(dateRange);
+        setIsDateModalOpen(true);
+    };
+    
+    const closeDateModal = () => {
+        setIsDateModalOpen(false);
     };
 
     const fetchHistory = async () => {
@@ -88,9 +110,9 @@ export default function PaymentHistoryPage() {
                     <p className="text-xs sm:text-sm text-gray-500 mt-1">Track your distribution plan purchases.</p>
                 </div>
 
-                <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+                <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
                     {/* Search Bar */}
-                    <div className="relative w-full md:w-64">
+                    <div className="relative flex-1 md:w-64">
                         <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                         <input
                             type="text"
@@ -104,43 +126,52 @@ export default function PaymentHistoryPage() {
                         />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 md:gap-4">
-                        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl shadow-sm">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <div className="flex items-center gap-2">
-                                <div className="flex flex-col">
-                                    <input
-                                        type="date"
-                                        max={dateRange.endDate || today}
-                                        className="text-xs font-bold text-gray-700 outline-none w-24 md:w-32"
-                                        value={dateRange.startDate}
-                                        onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                                    />
-                                </div>
-                                <span className="text-gray-300 mt-1">to</span>
-                                <div className="flex flex-col">
-                                    <input
-                                        type="date"
-                                        min={dateRange.startDate}
-                                        max={today}
-                                        className="text-xs font-bold text-gray-700 outline-none w-24 md:w-32"
-                                        value={dateRange.endDate}
-                                        onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                                    />
-                                </div>
-                            </div>
+                    {/* Desktop Date Filter */}
+                    <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl shadow-sm">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="date"
+                                max={dateRange.endDate || today}
+                                className="text-xs font-bold text-gray-700 outline-none w-32"
+                                value={dateRange.startDate}
+                                onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                            />
+                            <span className="text-gray-300">to</span>
+                            <input
+                                type="date"
+                                min={dateRange.startDate}
+                                max={today}
+                                className="text-xs font-bold text-gray-700 outline-none w-32"
+                                value={dateRange.endDate}
+                                onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                            />
                         </div>
-
-                        {(searchTerm || dateRange.startDate || dateRange.endDate) && (
-                            <button
-                                onClick={clearFilters}
-                                className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
-                            >
-                                <X className="w-3.5 h-3.5" />
-                                Clear
-                            </button>
-                        )}
                     </div>
+
+                    <button
+                        onClick={openDateModal}
+                        className={`md:hidden flex items-center justify-center p-1.5 rounded-md border transition-all shadow-sm ${
+                            dateRange.startDate || dateRange.endDate 
+                            ? "bg-blue-50 border-blue-200 text-blue-600" 
+                            : "bg-white border-gray-200 text-gray-400"
+                        }`}
+                    >
+                        <Calendar className="w-4 h-4" />
+                        {(dateRange.startDate || dateRange.endDate) && (
+                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-600 rounded-full border border-white" />
+                        )}
+                    </button>
+
+                    {(searchTerm || dateRange.startDate || dateRange.endDate) && (
+                        <button
+                            onClick={clearFilters}
+                            className="hidden xs:flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-red-500 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100 shrink-0"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                            Clear
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -169,10 +200,10 @@ export default function PaymentHistoryPage() {
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-gray-50/50">
                                 <tr>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Date</th>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Plan Name</th>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Releases</th>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Amount Paid</th>
+                                    <th className="px-6 py-4 text-[10px] font-semibold text-gray-400">Date</th>
+                                    <th className="px-6 py-4 text-[10px] font-semibold text-gray-400">Plan Name</th>
+                                    <th className="px-6 py-4 text-[10px] font-semibold text-gray-400">Releases</th>
+                                    <th className="px-6 py-4 text-[10px] font-semibold text-gray-400 text-right">Amount Paid</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -215,7 +246,7 @@ export default function PaymentHistoryPage() {
                             <div key={payment._id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-3">
                                 <div className="flex justify-between items-start">
                                     <div className="space-y-1">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                        <p className="text-[10px] font-semibold text-gray-400">
                                             {new Date(payment.createdAt).toLocaleDateString()}
                                         </p>
                                         <h3 className="text-sm font-bold text-gray-900 capitalize leading-tight">
@@ -240,41 +271,100 @@ export default function PaymentHistoryPage() {
                     </div>
 
                     {/* Pagination */}
-                    {true && (
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 md:pt-10 border-t border-gray-100">
-                            <p className="text-xs md:text-sm text-gray-500 font-medium tracking-tight">
-                                Showing <span className="text-gray-900 font-bold">{(currentPage - 1) * 10 + 1}</span> to{" "}
-                                <span className="text-gray-900 font-bold">
-                                    {Math.min(currentPage * 10, totalResults)}
-                                </span>{" "}
-                                of <span className="text-gray-900 font-bold">{totalResults}</span> transactions
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    onClick={() => {
-                                        setCurrentPage(prev => Math.max(1, prev - 1));
-                                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                                    }}
-                                    disabled={currentPage === 1}
-                                    variant="outline"
-                                >
-                                    Previous
-                                </Button>
-                                <Button
-                                    onClick={() => {
-                                        setCurrentPage(prev => Math.min(totalPages, prev + 1));
-                                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                                    }}
-                                    disabled={currentPage >= totalPages}
-                                    variant="outline"
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                        </div>
-                    )}
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                        totalResults={totalResults}
+                        itemsPerPage={10}
+                        className="mt-0"
+                    />
                 </div>
             )}
+
+            {/* Mobile Date Filter Modal */}
+            <AnimatePresence>
+                {isDateModalOpen && (
+                    <div className="fixed inset-0 z-[70] overflow-y-auto">
+                        <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm"
+                                onClick={closeDateModal}
+                            />
+
+                            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">
+                                &#8203;
+                            </span>
+
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                className="relative z-[80] inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-6 text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full sm:p-8"
+                            >
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-lg font-bold text-gray-900">Filter by Date</h3>
+                                    <button 
+                                        onClick={closeDateModal}
+                                        className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                                    >
+                                        <X className="w-5 h-5 text-gray-400" />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-gray-500 flex items-center gap-2">
+                                            <Calendar className="w-3 h-3" />
+                                            Start Date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            max={tempDateRange.endDate || today}
+                                            value={tempDateRange.startDate}
+                                            onChange={(e) => setTempDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-md text-sm font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-gray-500 flex items-center gap-2">
+                                            <Calendar className="w-3 h-3" />
+                                            End Date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            min={tempDateRange.startDate}
+                                            max={today}
+                                            value={tempDateRange.endDate}
+                                            onChange={(e) => setTempDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-md text-sm font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                        />
+                                    </div>
+
+                                    <div className="pt-2 flex gap-3">
+                                        <button
+                                            onClick={clearFilters}
+                                            className="flex-1 px-4 py-2 border border-gray-100 text-gray-500 text-xs font-semibold rounded-md hover:bg-gray-50 transition-all"
+                                        >
+                                            Reset
+                                        </button>
+                                        <button
+                                            onClick={handleApplyDateFilter}
+                                            className="flex-2 px-6 py-2 bg-blue-600 text-white text-xs font-semibold rounded-md hover:bg-blue-700 shadow-md shadow-blue-500/10 transition-all"
+                                        >
+                                            Apply Filter
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

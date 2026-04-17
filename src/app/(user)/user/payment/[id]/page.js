@@ -270,12 +270,12 @@ export default function PaymentPage() {
                           placeholder="Promo Code"
                           value={promoCodeInput}
                           onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
-                          className={`flex-1 px-3 py-2 bg-gray-50 border ${promoError ? 'border-red-300 ring-4 ring-red-50' : 'border-gray-200'} rounded-xl text-sm font-bold uppercase transition-all outline-none focus:border-primary`}
+                          className={`w-full min-w-0 flex-1 px-3 py-2 bg-gray-50 border ${promoError ? 'border-red-300 ring-4 ring-red-50' : 'border-gray-200'} rounded-xl text-sm font-bold uppercase transition-all outline-none focus:border-primary`}
                         />
                         <button
                           onClick={handleApplyPromo}
                           disabled={isApplyingPromo || !promoCodeInput.trim()}
-                          className="px-4 py-2 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-all disabled:opacity-50"
+                          className="px-4 py-2 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-all disabled:opacity-50 whitespace-nowrap flex-shrink-0"
                         >
                           {isApplyingPromo ? "..." : "Apply"}
                         </button>
@@ -283,27 +283,27 @@ export default function PaymentPage() {
                       {promoError && <p className="text-[10px] text-red-500 font-bold ml-1">{promoError}</p>}
                     </div>
                   ) : (
-                  <div className="group relative flex items-center justify-between bg-green-50/50 border-2 border-dashed border-green-200 p-3 rounded-xl animate-in zoom-in-95 duration-200">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-green-100 rounded-lg text-green-600">
-                        <Tag className="w-4 h-4" />
+                  <div className="group relative flex items-center justify-between bg-green-50/50 border-2 border-dashed border-green-200 p-2 sm:p-3 rounded-xl animate-in zoom-in-95 duration-200 min-w-0">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 overflow-hidden">
+                      <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg text-green-600 flex-shrink-0">
+                        <Tag className="w-3 h-3 sm:w-4 sm:h-4" />
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-black text-green-700 uppercase tracking-wider">{appliedPromo.code}</span>
-                          <span className="text-[10px] font-bold bg-green-600 text-white px-1.5 py-0.5 rounded">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                          <span className="text-[10px] sm:text-xs font-black text-green-700 uppercase tracking-wider truncate max-w-[80px] sm:max-w-[200px]">{appliedPromo.code}</span>
+                          <span className="text-[9px] sm:text-[10px] font-bold bg-green-600 text-white px-1 sm:px-1.5 py-0.5 rounded whitespace-nowrap">
                             {appliedPromo.discountType === 'percentage' ? `${appliedPromo.discountValue}%` : `$${appliedPromo.discountValue}`} OFF
                           </span>
                         </div>
-                        <p className="text-[9px] text-green-600/70 font-bold uppercase tracking-tighter mt-0.5">Discount applied successfully</p>
+                        <p className="text-[8px] sm:text-[9px] text-green-600/70 font-bold uppercase tracking-tighter mt-0.5 truncate">Discount applied successfully</p>
                       </div>
                     </div>
                     <button
                       onClick={handleRemovePromo}
-                      className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all rounded-lg"
+                      className="p-1.5 sm:p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all rounded-lg flex-shrink-0"
                       title="Remove promo code"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-3 h-3 sm:w-4 sm:h-4" />
                     </button>
                   </div>
                 )}
@@ -338,10 +338,9 @@ export default function PaymentPage() {
           </div>
         </div>
 
-        {/* Right Column: Stripe Component */}
         <div className="lg:col-span-7">
-          <div className="bg-white rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.06)] border border-gray-100/50 p-4 sm:p-8 h-full flex flex-col">
-            <div className="mb-8">
+          <div className="bg-white rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.06)] border border-gray-100/50 p-2 sm:p-8 h-full flex flex-col">
+            <div className="mb-8 px-2 sm:px-0">
               <h1 className="text-lg sm:text-3xl font-black text-gray-900">Payment Details</h1>
               <p className="text-gray-500 mt-2 font-medium text-sm sm:text-base">
                 {savedCards.length > 0 ? "Choose a saved card or use a new one." : "Enter your card information below to proceed."}

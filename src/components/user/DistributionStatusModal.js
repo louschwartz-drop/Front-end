@@ -17,7 +17,7 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
         try {
             // Using campaignId as guid
             const res = await xprArticleRelease.checkStatus({ guid: campaignId });
-            
+
             // Handle 202 (Processing) - The backend returns { success: true, message: "..." } with 202 status
             // If the message contains "processed", or if data is missing, it's likely a processing state
             if (res.success && (!res.data || (res.message && res.message.toLowerCase().includes("processed")))) {
@@ -163,7 +163,7 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
                     initial={{ opacity: 0, scale: 0.95, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                    className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col pointer-events-auto"
+                    className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col pointer-events-auto"
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 bg-white">
@@ -197,7 +197,7 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
                     </div>
 
                     {/* Content */}
-                    <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-gray-50/50">
+                    <div className="p-1 md:p-4 sm:p-6 overflow-y-auto flex-1 bg-gray-50/50">
                         {loading && !statusData ? (
                             <div className="flex flex-col items-center justify-center py-12">
                                 <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>

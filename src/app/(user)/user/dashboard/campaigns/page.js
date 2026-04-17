@@ -11,6 +11,7 @@ import PreviewPublishModal from "@/components/user/PreviewPublishModal";
 import FullArticlePreview from "@/components/user/FullArticlePreview";
 import userAuthStore from "@/store/userAuthStore";
 import Button from "@/components/ui/Button";
+import Pagination from "@/components/ui/Pagination";
 import { useSocket } from "@/context/SocketContext";
 
 const VideoModal = dynamic(() => import("@/components/ui/VideoModal"), { ssr: false });
@@ -187,15 +188,15 @@ export default function CampaignsPage() {
         const statusConfig = {
             uploading: { color: "bg-blue-500", label: "Uploading", mobileLabel: "Uploading" },
             uploaded: { color: "bg-blue-500", label: "Uploaded", mobileLabel: "Uploaded" },
-            transcribing: { color: "bg-yellow-500", label: "Transcribing", mobileLabel: "Trans" },
-            generating: { color: "bg-purple-500", label: "Generating", mobileLabel: "Gen" },
-            finished: { color: "bg-green-500", label: "Ready for Publish", mobileLabel: "Ready" },
-            published: { color: "bg-green-600", label: "Published", mobileLabel: "Pub" },
-            submitted_successfully: { color: "bg-green-600", label: "Submitted Successfully", mobileLabel: "Success" },
+            transcribing: { color: "bg-yellow-500", label: "Transcribing", mobileLabel: "Transcribing" },
+            generating: { color: "bg-purple-500", label: "Generating", mobileLabel: "Generating" },
+            finished: { color: "bg-green-500", label: "Ready for Publish", mobileLabel: "Ready for Publish" },
+            published: { color: "bg-green-600", label: "Published", mobileLabel: "Published" },
+            submitted_successfully: { color: "bg-green-600", label: "Submitted Successfully", mobileLabel: "Submitted Successfully" },
             failed: { 
                 color: "bg-red-500", 
                 label: isLanguageError ? "Language Not Supported" : (isIrrelevant ? "Content Irrelevant" : "Failed"),
-                mobileLabel: "Failed"
+                mobileLabel: isLanguageError ? "Language Not Supported" : (isIrrelevant ? "Irrelevant" : "Failed")
             },
         };
 
@@ -277,7 +278,7 @@ export default function CampaignsPage() {
                 className="w-full"
             >
                 {/* Header */}
-                <div className="mb-6 flex items-center justify-between">
+                <div className="mb-4 sm:mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">My Campaigns</h1>
                         <p className="text-xs sm:text-sm text-gray-500 mt-1">
@@ -293,7 +294,7 @@ export default function CampaignsPage() {
                 </div>
 
                 {/* Search and Filter */}
-                <div className="mb-6 space-y-4">
+                <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
                     <div className="relative">
                         <input
                             type="text"
@@ -324,8 +325,8 @@ export default function CampaignsPage() {
                         {[
                             { key: "all", label: "All", mobileLabel: "All" },
                             { key: "active", label: "Active", mobileLabel: "Active" },
-                            { key: "finished", label: "Ready for Publish", mobileLabel: "Ready" },
-                            { key: "published", label: "Published", mobileLabel: "Pub" },
+                            { key: "finished", label: "Ready for Publish", mobileLabel: "Ready for Publish" },
+                            { key: "published", label: "Published", mobileLabel: "Published" },
                             { key: "failed", label: "Failed", mobileLabel: "Failed" },
                         ].map((tab) => (
                             <button
@@ -340,7 +341,7 @@ export default function CampaignsPage() {
                                     }`}
                             >
                                 <span className="hidden md:inline">{tab.label}</span>
-                                <span className="md:hidden text-xs">{tab.mobileLabel}</span>
+                                <span className="md:hidden text-[10px] sm:text-xs">{tab.mobileLabel}</span>
                             </button>
                         ))}
                     </div>
@@ -376,7 +377,7 @@ export default function CampaignsPage() {
                         </button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                         {displayedCampaigns.map((campaign) => (
                             <motion.div
                                 key={campaign._id}
@@ -385,7 +386,7 @@ export default function CampaignsPage() {
                                 className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 overflow-hidden"
                             >
                                 {/* Card Header */}
-                                <div className="p-5 border-b border-gray-100">
+                                <div className="p-4 md:p-5 border-b border-gray-100">
                                     <div className="flex items-start justify-between mb-3">
                                         {getStatusBadge(campaign)}
                                         <span className="text-xs text-gray-500">
@@ -402,7 +403,7 @@ export default function CampaignsPage() {
 
                                     {/* Headline */}
                                     <div className="mb-2">
-                                        <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                                        <h3 className="text-[10px] md:text-xs font-medium text-gray-500 mb-1">
                                             Headline
                                         </h3>
                                         {campaign.article?.headline ? (
@@ -420,7 +421,7 @@ export default function CampaignsPage() {
                                     {campaign.errorMessage && (
                                         <div className="mt-2 bg-red-50 p-2 rounded border border-red-100 flex items-start justify-between gap-2 overflow-hidden">
                                             <p className="text-[10px] text-red-600 leading-tight font-medium" title={campaign.errorMessage.length > 100 ? campaign.errorMessage : ""}>
-                                                <span className="font-bold uppercase mr-1">Error:</span>
+                                                <span className="font-bold mr-1">Error:</span>
                                                 {campaign.errorMessage.length > 80 
                                                     ? `${campaign.errorMessage.substring(0, 80)}...` 
                                                     : campaign.errorMessage}
@@ -440,10 +441,10 @@ export default function CampaignsPage() {
                                 </div>
 
                                 {/* Card Body */}
-                                <div className="p-5 space-y-4">
+                                <div className="p-4 md:p-5 space-y-3 md:space-y-4">
                                     {/* Transcript */}
                                     <div>
-                                        <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                                        <h4 className="text-[10px] md:text-xs font-medium text-gray-500 mb-2">
                                             Transcript
                                         </h4>
                                         {campaign.rawTranscript ? (
@@ -467,7 +468,7 @@ export default function CampaignsPage() {
 
                                     {/* Video URL */}
                                     <div>
-                                        <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                                        <h4 className="text-[10px] md:text-xs font-medium text-gray-500 mb-2">
                                             Video
                                         </h4>
                                         {campaign.videoUrl ? (
@@ -488,7 +489,7 @@ export default function CampaignsPage() {
                                 </div>
 
                                 {/* Card Footer - Actions */}
-                                <div className="px-5 py-4 bg-gray-50 border-t border-gray-100">
+                                <div className="px-4 py-3 md:px-5 md:py-4 bg-gray-50 border-t border-gray-100">
                                     <div className="flex flex-wrap gap-2">
                                         {campaign.status === "finished" && (
                                             <button
@@ -541,39 +542,14 @@ export default function CampaignsPage() {
                 )}
 
                 {/* Pagination */}
-                {displayedCampaigns.length > 0 && (
-                    <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100 pt-8">
-                        <p className="text-sm text-gray-500 font-medium">
-                            Showing <span className="text-gray-900 font-bold">{(currentPage - 1) * 12 + 1}</span> to{" "}
-                            <span className="text-gray-900 font-bold">
-                                {Math.min(currentPage * 12, totalResults)}
-                            </span>{" "}
-                            of <span className="text-gray-900 font-bold">{totalResults}</span> campaigns
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                onClick={() => {
-                                    setCurrentPage((prev) => Math.max(1, prev - 1));
-                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                }}
-                                disabled={currentPage === 1}
-                                variant="outline"
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                onClick={() => {
-                                    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                }}
-                                disabled={currentPage === totalPages}
-                                variant="outline"
-                            >
-                                Next
-                            </Button>
-                        </div>
-                    </div>
-                )}
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    totalResults={totalResults}
+                    itemsPerPage={12}
+                    className="mt-0"
+                />
             </motion.div>
 
             {/* Transcript Modal */}

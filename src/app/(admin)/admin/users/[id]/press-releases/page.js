@@ -11,8 +11,9 @@ import { toast } from "react-toastify";
 import Button from "@/components/ui/Button";
 import debounce from "lodash/debounce";
 import { adminPressReleaseService } from "@/lib/api/admin/press-releases";
-import FullArticlePreview from "@/components/user/FullArticlePreview";
 import DistributionStatusModal from "@/components/user/DistributionStatusModal";
+import Pagination from "@/components/ui/Pagination";
+import FullArticlePreview from "@/components/user/FullArticlePreview";
 
 export default function AdminUserPressReleasesPage() {
     const params = useParams();
@@ -365,33 +366,14 @@ export default function AdminUserPressReleasesPage() {
                     </div>
 
                     {/* Pagination */}
-                    {totalPages > 1 && (
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 md:pt-6 border-t border-gray-100">
-                            <p className="text-[10px] md:text-sm text-gray-500 font-medium">
-                                Showing <span className="text-gray-900 font-bold">{(currentPage - 1) * 10 + 1}</span> to{" "}
-                                <span className="text-gray-900 font-bold">
-                                    {Math.min(currentPage * 10, totalResults)}
-                                </span>{" "}
-                                of <span className="text-gray-900 font-bold">{totalResults}</span> releases
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                    disabled={currentPage === 1}
-                                    variant="outline"
-                                >
-                                    Previous
-                                </Button>
-                                <Button
-                                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                    disabled={currentPage >= totalPages}
-                                    variant="outline"
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                        </div>
-                    )}
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                        totalResults={totalResults}
+                        itemsPerPage={10}
+                        className="mt-0"
+                    />
                 </div>
             )}
 

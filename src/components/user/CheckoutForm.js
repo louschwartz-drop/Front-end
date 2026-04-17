@@ -95,7 +95,7 @@ export default function CheckoutForm({ amount, campaignId, onSuccess, saveCard, 
     return (
         <form id="payment-form" onSubmit={handleSubmit} className="space-y-6">
             {!paymentMethodId && (
-                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <div className="bg-white md:p-2 sm:p-4 rounded-xl border border-gray-100 shadow-sm">
                     <PaymentElement id="payment-element" options={paymentElementOptions} />
                 </div>
             )}

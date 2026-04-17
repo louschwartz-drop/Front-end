@@ -7,6 +7,7 @@ import { adminCampaignService } from "@/lib/api/admin/campaigns";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
 import ArticlePreviewModal from "./ArticlePreviewModal";
+import Pagination from "@/components/ui/Pagination";
 import VideoModal from "@/components/ui/VideoModal";
 import { 
     Play, Eye, AlertCircle, X, FileText, ExternalLink, 
@@ -348,35 +349,14 @@ export default function AdminCampaignsPage() {
             </div>
 
             {/* Pagination */}
-            {pagination.totalPages > 1 && (
-                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-100">
-                    <p className="text-xs font-medium text-gray-500">
-                        Showing <span className="text-gray-900 font-bold">{(pagination.page - 1) * pagination.limit + 1}</span> to{" "}
-                        <span className="text-gray-900 font-bold">
-                            {Math.min(pagination.page * pagination.limit, pagination.total)}
-                        </span>{" "}
-                        of <span className="text-gray-900 font-bold">{pagination.total}</span> campaigns
-                    </p>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
-                            disabled={pagination.page === 1}
-                            variant="outline"
-                            className="text-xs font-bold uppercase tracking-widest px-4 py-2"
-                        >
-                            Previous
-                        </Button>
-                        <Button
-                            onClick={() => setPagination(prev => ({ ...prev, page: Math.min(prev.totalPages, prev.page + 1) }))}
-                            disabled={pagination.page >= pagination.totalPages}
-                            variant="outline"
-                            className="text-xs font-bold uppercase tracking-widest px-4 py-2"
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </div>
-            )}
+            <Pagination
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
+                onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
+                totalResults={pagination.total}
+                itemsPerPage={pagination.limit}
+                className="mt-0"
+            />
 
             <ArticlePreviewModal
                 isOpen={isModalOpen}

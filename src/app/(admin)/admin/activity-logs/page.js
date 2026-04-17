@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 // import { adminService } from '../../../services/adminService';
 import Button from "@/components/ui/Button";
+import Pagination from "@/components/ui/Pagination";
 
 export default function AdminActivityLogsPage() {
   const [logs, setLogs] = useState([]);
@@ -147,35 +148,15 @@ export default function AdminActivityLogsPage() {
             </div>
           </div>
 
-          {pagination.totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-                {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
-                of {pagination.total} logs
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() =>
-                    setFilters({ ...filters, page: filters.page - 1 })
-                  }
-                  disabled={filters.page === 1}
-                  variant="outline"
-                >
-                  Previous
-                </Button>
-                <Button
-                  onClick={() =>
-                    setFilters({ ...filters, page: filters.page + 1 })
-                  }
-                  disabled={filters.page >= pagination.totalPages}
-                  variant="outline"
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
+          {/* Pagination */}
+          <Pagination
+            currentPage={filters.page}
+            totalPages={pagination.totalPages}
+            onPageChange={(page) => setFilters({ ...filters, page })}
+            totalResults={pagination.total}
+            itemsPerPage={filters.limit}
+            className="mt-0"
+          />
         </>
       )}
     </div>

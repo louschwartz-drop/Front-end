@@ -19,7 +19,7 @@ import {
   ShieldCheck,
   Loader2,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { toast } from 'react-toastify';
 import LoginModal from '../landingPage/LoginModal';
 
@@ -107,12 +107,31 @@ function MessageBubble({ msg }) {
 
   const formatContent = (content) => {
     if (!content) return null;
-    // Simple regex for URLs
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    // Regex that catches Markdown links [text](url) OR raw URLs (excluding trailing punctuation)
+    const urlRegex = /(\[[^\]]+\]\(https?:\/\/[^\s)]+\)|https?:\/\/[^\s]+?[^.,;?!()\]}\s](?=[.,;?!()\]}\s]|$))/g;
     const parts = content.split(urlRegex);
 
     return parts.map((part, i) => {
-      if (part.match(urlRegex)) {
+      if (!part) return null;
+
+      // Check for Markdown link first
+      const mdMatch = part.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
+      if (mdMatch) {
+        return (
+          <a
+            key={i}
+            href={mdMatch[2]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`underline font-medium ${isUser ? 'text-blue-100' : 'text-primary'}`}
+          >
+            {mdMatch[1]}
+          </a>
+        );
+      }
+
+      // Check for raw URL
+      if (/^https?:\/\//.test(part)) {
         return (
           <a
             key={i}
@@ -125,6 +144,7 @@ function MessageBubble({ msg }) {
           </a>
         );
       }
+
       return part;
     });
   };
@@ -160,6 +180,8 @@ function MessageBubble({ msg }) {
 export default function ChatWidget() {
   const socket = useSocket();
   const router = useRouter();
+  const dragControls = useDragControls();
+  const [isDraggingIcon, setIsDraggingIcon] = useState(false);
 
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -565,6 +587,8 @@ export default function ChatWidget() {
             ref={containerRef}
             key="chat-window"
             drag={!isMobile}
+            dragControls={dragControls}
+            dragListener={false}
             dragMomentum={false}
             initial={isMobile ? { opacity: 0, y: 100 } : { opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -576,7 +600,10 @@ export default function ChatWidget() {
             style={{ height: isMobile ? 'calc(100vh - 64px)' : '520px' }}
           >
             {/* Header */}
-            <div className={`p-4 flex items-center justify-between text-white shrink-0 transition-colors ${!isMobile ? 'cursor-move' : ''} ${view === 'history-detail' ? 'bg-blue-600' : 'bg-primary'}`}>
+            <div 
+              onPointerDown={(e) => !isMobile && dragControls.start(e)}
+              className={`p-4 flex items-center justify-between text-white shrink-0 transition-colors ${!isMobile ? 'cursor-move' : ''} ${view === 'history-detail' ? 'bg-blue-600' : 'bg-primary'}`}
+            >
               <div className="flex items-center gap-2">
                 {view !== 'chat' ? (
                   <button
@@ -822,11 +849,16 @@ export default function ChatWidget() {
           /* Toggle button — Refined for Desktop and Mobile */
           <motion.button
             key="chat-toggle"
+            drag={!isMobile}
+            dragMomentum={false}
+            dragElastic={0.1}
+            onDragStart={() => setIsDraggingIcon(true)}
+            onDragEnd={() => setTimeout(() => setIsDraggingIcon(false), 100)}
             initial={{ scale: 0, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0, opacity: 0, y: 20 }}
-            onClick={() => setIsOpen(true)}
-            className={`flex items-center bg-primary text-white rounded-full shadow-lg hover:shadow-xl transition-all group ${isMobile ? 'p-2' : 'p-1 pr-4 gap-2'}`}
+            onClick={() => !isDraggingIcon && setIsOpen(true)}
+            className={`flex items-center bg-primary text-white rounded-full shadow-lg hover:shadow-xl transition-all group ${isMobile ? 'p-2' : 'p-1 pr-4 gap-2'} ${isOpen ? 'hidden' : 'flex'}`}
             aria-label="Open Support Chat"
           >
             <div className={`bg-white/10 rounded-full group-hover:bg-white/20 transition-colors ${isMobile ? 'p-1.5' : 'p-2'}`}>

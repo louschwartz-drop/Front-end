@@ -645,89 +645,88 @@ export default function EditPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-white sm:bg-gray-50 pb-20">
       {/* Top Navigation Bar */}
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 px-0 sm:px-3 md:px-4 py-3 flex items-center justify-around sm:justify-between shadow-sm">
-        <div className="flex items-center sm:gap-2 md:gap-4">
-          <button onClick={() => router.back()} className="text-gray-500 hover:text-gray-700 p-1 md:p-0">
-            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 px-3 md:px-6 py-2 md:py-3 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-2 md:gap-4 max-w-[40%] sm:max-w-none">
+          <button onClick={() => router.back()} className="text-gray-500 hover:text-gray-700 p-1">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-lg md:text-xl font-bold text-gray-900 hidden sm:block">Editor</h1>
-          <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
-          <div className="text-[10px] md:text-xs text-gray-500 max-w-[120px] sm:max-w-none truncate">
-            {lastSaved ? `Auto-saved at ${lastSaved.toLocaleTimeString()}` : "Ready to edit"}
+          <h1 className="text-base md:text-xl font-bold text-gray-900 hidden xs:block">Editor</h1>
+          <div className="h-4 w-px bg-gray-200 hidden xs:block"></div>
+          <div className="text-[10px] md:text-xs text-gray-500 truncate">
+            {lastSaved ? `${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : "Ready"}
           </div>
         </div>
 
-        <div className="flex items-center sm:gap-2 md:gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           <button
             onClick={() => setShowVersions(true)}
-            className="p-1 sm:p-2 md:px-4 md:py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-2"
+            className="p-1.5 sm:px-3 sm:py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg flex items-center gap-1.5 transition-colors"
             title="History"
           >
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="hidden sm:inline">Versions ({versions.length})</span>
-            <span className="sm:hidden text-xs font-bold text-gray-500">({versions.length})</span>
+            <span className="sm:hidden">({versions.length})</span>
           </button>
           <button
             onClick={() => setShowPreview(true)}
-            className="p-1 sm:p-2 md:px-4 md:py-2 text-sm font-medium text-primary hover:bg-blue-50 rounded-lg flex items-center gap-2"
+            className="p-1.5 sm:px-4 sm:py-1.5 text-xs font-semibold text-primary hover:bg-blue-50 rounded-lg flex items-center gap-1.5 transition-colors"
             title="Preview"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            <span className="hidden sm:inline">Preview Look</span>
+            <span className="hidden sm:inline">Preview</span>
           </button>
         </div>
       </nav>
 
-      <div className="container mx-auto px-2 sm:px-4 py-8">
+      <div className="w-full px-0 sm:px-4 py-3 md:py-8">
         {/* Limit Warning Banner */}
         {isLimitReached && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-4 shadow-sm"
+            className="mb-4 bg-red-50 border border-red-100 rounded-lg p-3 flex items-center gap-3 shadow-sm"
           >
-            <div className="bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold">!</div>
+            <div className="bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold text-xs">!</div>
             <div>
-              <h4 className="text-red-800 font-bold text-sm">You have reached your maximum edits limit.</h4>
-              <p className="text-red-600 text-[11px]">The main article content is now locked. You can still update the Product Mandatory Card below.</p>
+              <h4 className="text-red-800 font-bold text-xs">Maximum edits limit reached.</h4>
+              <p className="text-red-600 text-[10px]">Article content is locked. You can still update the Product Card.</p>
             </div>
           </motion.div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
 
           {/* Main Editor Section */}
-          <div className={`lg:col-span-8 space-y-6 ${isLimitReached ? "pointer-events-none" : ""}`}>
+          <div className={`lg:col-span-8 space-y-4 md:space-y-6 ${isLimitReached ? "pointer-events-none" : ""}`}>
 
             {/* Campaign Context Chips */}
-            <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4">
+            <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Campaign-Aware Edits</span>
+                <span className="text-[10px] sm:text-xs font-bold text-blue-600 tracking-tight">Campaign-Aware Edits</span>
                 <div className="h-1 w-1 bg-blue-300 rounded-full"></div>
-                <span className="text-[10px] text-blue-400">Context active</span>
+                <span className="text-[9px] text-blue-400">Context active</span>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {Object.entries(context).map(([key, value]) => (
-                  <div key={key} className="flex items-center bg-white border border-blue-200 rounded-full px-3 py-1 gap-2 shadow-sm relative group/chip">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase">{key.replace(/([A-Z])/g, ' $1')}</span>
+                  <div key={key} className="flex items-center bg-white border border-blue-200 rounded-lg px-2.5 py-1 sm:px-3 sm:py-1 gap-1.5 shadow-sm relative group/chip transition-all hover:border-blue-300 hover:shadow-md focus-within:ring-2 focus-within:ring-blue-100 min-w-[120px] sm:min-w-[140px]">
                     <select
                       value={value}
                       onChange={(e) => setContext({ ...context, [key]: e.target.value })}
-                      className="text-xs font-semibold text-blue-600 bg-transparent border-none focus:ring-0 p-0 pr-6 appearance-none cursor-pointer"
+                      className="w-full text-[11px] sm:text-xs font-bold text-blue-600 bg-transparent border-none focus:ring-0 p-0 pr-6 appearance-none cursor-pointer outline-none"
                       disabled={isLimitReached || regenerating}
                     >
-                      {contextOptions[key].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      {contextOptions[key].map(opt => <option key={opt} value={opt} className="text-gray-900 font-medium">{opt}</option>)}
                     </select>
-                    <svg className="w-2.5 h-2.5 text-blue-300 absolute right-2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3 h-3 text-blue-400 absolute right-2.5 pointer-events-none transition-transform group-focus-within/chip:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -735,7 +734,7 @@ export default function EditPage() {
                 <button
                   onClick={() => setShowRegenConfirm(true)}
                   disabled={regenerating || isLimitReached}
-                  className="ml-auto bg-primary text-white text-[10px] font-bold px-4 py-1.5 rounded-full hover:bg-blue-600 shadow-md shadow-blue-100 disabled:bg-gray-400"
+                  className="ml-auto bg-primary text-white text-[10px] font-bold px-4 py-1.5 rounded-lg hover:bg-blue-600 shadow-sm disabled:bg-gray-400 transition-all"
                 >
                   {regenerating && regeneratingAction === "REWRITE_WITH_CONTEXT" ? "Rewriting..." : "Apply All"}
                 </button>
@@ -754,12 +753,12 @@ export default function EditPage() {
                 onSpeak={() => toggleSpeech(editData.headline, 'headline')}
                 isSpeaking={currentlySpeaking === 'headline'}
               >
-                <input
+                <AutoGrowingTextarea
                   value={editData.headline}
                   disabled={isLimitReached}
                   onChange={(e) => setEditData({ ...editData, headline: e.target.value })}
-                  className="w-full text-2xl font-bold text-gray-900 border-none focus:ring-0 p-0 placeholder-gray-300 disabled:text-gray-400"
-                  placeholder="Newsworthy headline..."
+                  className="w-full text-base sm:text-xl font-bold text-gray-900 border-none focus:ring-0 p-0 placeholder-gray-300 disabled:text-gray-400 outline-none leading-tight selection:bg-blue-100 overflow-hidden"
+                  placeholder="Headline..."
                 />
               </SectionCard>
 
@@ -775,13 +774,12 @@ export default function EditPage() {
                 onSpeak={() => toggleSpeech(editData.introduction, 'introduction')}
                 isSpeaking={currentlySpeaking === 'introduction'}
               >
-                <textarea
+                <AutoGrowingTextarea
                   value={editData.introduction}
                   disabled={isLimitReached}
                   onChange={(e) => setEditData({ ...editData, introduction: e.target.value })}
-                  rows={3}
-                  className="w-full text-gray-700 leading-relaxed border-none focus:ring-0 p-0 resize-none disabled:text-gray-400"
-                  placeholder="The hook that draws readers in..."
+                  className="w-full text-[11px] sm:text-sm text-gray-700 leading-snug border-none focus:ring-0 p-0 resize-none disabled:text-gray-400 overflow-hidden outline-none"
+                  placeholder="Introduction..."
                 />
               </SectionCard>
 
@@ -792,14 +790,13 @@ export default function EditPage() {
                 onSpeak={() => toggleSpeech(editData.summary, 'summary')}
                 isSpeaking={currentlySpeaking === 'summary'}
               >
-                <textarea
+                <AutoGrowingTextarea
                   value={editData.summary}
                   disabled={isLimitReached}
                   onChange={(e) => setEditData({ ...editData, summary: e.target.value })}
-                  rows={2}
                   maxLength={250}
-                  className="w-full text-gray-700 leading-relaxed border-none focus:ring-0 p-0 resize-none disabled:text-gray-400"
-                  placeholder="A concise summary of the article (max 200-250 chars). Requires for XPR Media..."
+                  className="w-full text-[11px] sm:text-sm text-gray-700 leading-snug border-none focus:ring-0 p-0 resize-none disabled:text-gray-400 overflow-hidden outline-none"
+                  placeholder="Concise summary..."
                 />
                 <div className="flex justify-end mt-1">
                   <span className={`text-[10px] ${editData.summary?.length > 200 ? 'text-amber-500' : 'text-gray-400'}`}>
@@ -815,13 +812,12 @@ export default function EditPage() {
                 isSpeaking={currentlySpeaking === 'quote'}
               >
                 <div className="space-y-3">
-                  <textarea
+                  <AutoGrowingTextarea
                     value={editData.creatorQuote}
                     disabled={isLimitReached}
                     onChange={(e) => setEditData({ ...editData, creatorQuote: e.target.value })}
-                    rows={2}
-                    className="w-full text-gray-700 border-none focus:ring-0 p-0 resize-none italic font-serif disabled:text-gray-400"
-                    placeholder="An authentic quote from the video..."
+                    className="w-full text-[11px] sm:text-sm text-gray-700 border-none focus:ring-0 p-0 resize-none italic font-serif disabled:text-gray-400 leading-snug overflow-hidden outline-none"
+                    placeholder="Authentic quote..."
                   />
                   <div className="flex items-center gap-2 pt-2 border-t border-gray-50">
                     <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Attributed to:</span>
@@ -870,8 +866,8 @@ export default function EditPage() {
                   disabled={isLimitReached}
                   onChange={(e) => setEditData({ ...editData, body: e.target.value })}
                   rows={10}
-                  className="w-full text-gray-700 leading-7 border-none focus:ring-0 p-0 resize-none disabled:text-gray-400"
-                  placeholder="The core narrative using the creator's voice..."
+                  className="w-full text-[11px] sm:text-sm text-gray-700 leading-6 border-none focus:ring-0 p-0 resize-none disabled:text-gray-400 outline-none"
+                  placeholder="Core narrative..."
                 />
               </SectionCard>
 
@@ -882,13 +878,12 @@ export default function EditPage() {
                 onSpeak={() => toggleSpeech(editData.conclusion, 'conclusion')}
                 isSpeaking={currentlySpeaking === 'conclusion'}
               >
-                <textarea
+                <AutoGrowingTextarea
                   value={editData.conclusion}
                   disabled={isLimitReached}
                   onChange={(e) => setEditData({ ...editData, conclusion: e.target.value })}
-                  rows={2}
-                  className="w-full text-gray-700 border-none focus:ring-0 p-0 resize-none italic disabled:text-gray-400"
-                  placeholder="Final thoughts..."
+                  className="w-full text-[11px] sm:text-sm text-gray-700 border-none focus:ring-0 p-0 resize-none italic disabled:text-gray-400 leading-snug overflow-hidden outline-none"
+                  placeholder="Conclusion..."
                 />
               </SectionCard>
 
@@ -902,36 +897,32 @@ export default function EditPage() {
                 onSpeak={() => toggleSpeech(editData.ctaText, 'cta')}
                 isSpeaking={currentlySpeaking === 'cta'}
               >
-                <div className="flex flex-col gap-4">
-                  <input
+                <div className="flex flex-col gap-2">
+                  <AutoGrowingTextarea
                     value={editData.ctaText}
                     disabled={isLimitReached}
                     onChange={(e) => setEditData({ ...editData, ctaText: e.target.value })}
-                    className="w-full text-[12px] sm:text-[15px] font-bold text-primary border border-blue-100 rounded-lg p-2 sm:p-3 bg-blue-50/20 disabled:text-blue-300 disabled:border-gray-100 disabled:bg-gray-50"
-                    placeholder="Buy [Product Name] Today..."
+                    className="w-full text-xs sm:text-sm font-bold text-primary border border-blue-100 rounded-lg px-3 py-2 bg-blue-50/20 disabled:text-blue-300 disabled:border-gray-100 disabled:bg-gray-50 outline-none focus:ring-1 focus:ring-blue-400/30 overflow-hidden"
+                    placeholder="Enter CTA text (e.g., Buy Now)..."
                   />
-                  <div className="p-2 sm:p-4 text-[15px] sm:text-normal rounded-xl border-2 border-dashed border-gray-100 bg-gray-50 flex items-center justify-center">
-                    <button className="px-6 py-2 bg-primary text-white font-bold rounded shadow-md pointer-events-none opacity-50">
-                      {editData.ctaText || "CTA Button Preview"}
-                    </button>
-                  </div>
+                  <p className="text-[10px] text-gray-400 font-medium px-1">This text will appear on the primary action button.</p>
                 </div>
               </SectionCard>
             </div>
           </div>
 
           {/* Sidebar / Sidebar Cards */}
-          <div className="lg:col-span-4 space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="bg-gray-900 px-4 py-3">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+          <div className="lg:col-span-4 space-y-4 md:space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="bg-gray-900 px-4 py-2.5">
+                <h3 className="text-xs font-bold text-white flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
                   </svg>
                   Mandatory Product Card
                 </h3>
               </div>
-              <div className="p-5 space-y-4">
+              <div className="p-4 sm:p-5 space-y-4">
                 <SidebarField
                   label="Product Name"
                   value={productCard.productName}
@@ -1063,57 +1054,57 @@ export default function EditPage() {
             />
             <motion.div
               initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
-              className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-100"
+              className="relative bg-white w-full max-w-lg rounded-lg shadow-2xl overflow-hidden border border-gray-100"
             >
-              <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-blue-50/30">
+              <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-100 flex items-center justify-between bg-blue-50/30">
                 <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-xl border-4 ${aiAnalysis.score >= 90 ? "bg-green-100 text-green-600 border-green-200" :
+                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-lg border-2 sm:border-4 ${aiAnalysis.score >= 90 ? "bg-green-100 text-green-600 border-green-200" :
                     aiAnalysis.score >= 80 ? "bg-blue-100 text-blue-600 border-blue-200" :
                       "bg-amber-100 text-amber-600 border-amber-200"
                     }`}>
                     {aiAnalysis.score}
                   </div>
                   <div>
-                    <h3 className="font-black text-gray-900 text-lg">AI Content Score</h3>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">XPR Media Quality Analysis</p>
+                    <h3 className="font-bold text-gray-900 text-sm sm:text-lg">AI Content Score</h3>
+                    <p className="text-[9px] text-gray-500 font-bold tracking-tight">XPR Media Quality Analysis</p>
                   </div>
                 </div>
                 <button onClick={() => setShowAiScoreSheet(false)} className="text-gray-400 hover:text-gray-600 p-1">✕</button>
               </div>
 
-              <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+              <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-h-[60vh] overflow-y-auto">
                 {/* Score Meaning */}
-                <div className={`rounded-xl p-5 border-2 ${aiAnalysis.score < 70 ? "bg-red-50 border-red-200" : "bg-blue-50/50 border-blue-100"
+                <div className={`rounded-lg p-4 sm:p-5 border-2 ${aiAnalysis.score < 70 ? "bg-red-50 border-red-200" : "bg-blue-50/50 border-blue-100"
                   }`}>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Analysis Summary</span>
-                    {aiAnalysis.score < 70 && <span className="text-[10px] font-black bg-red-600 text-white px-2 py-0.5 rounded shadow-sm">CRITICAL IMPROVEMENT NEEDED</span>}
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[9px] font-bold text-gray-400">Analysis Summary</span>
+                    {aiAnalysis.score < 70 && <span className="text-[9px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded shadow-sm">IMPROVEMENT REQUIRED</span>}
                   </div>
-                  <p className={`text-[15px] leading-relaxed font-bold ${aiAnalysis.score < 70 ? "text-red-900" : "text-blue-900 italic"}`}>
+                  <p className={`text-sm sm:text-[15px] leading-relaxed font-bold ${aiAnalysis.score < 70 ? "text-red-900" : "text-blue-900 italic"}`}>
                     {aiAnalysis.score < 70
-                      ? `Publish Blocked: Your score is ${aiAnalysis.score}/100. XPR Media requires a minimum score of 70. Please use the "Improve with AI" tool to address the issues below.`
+                      ? `Publish Blocked: Your score is ${aiAnalysis.score}/100. XPR Media requires a minimum score of 70.`
                       : `"${aiAnalysis.summary || "Your article meets the quality standards for publication."}"`
                     }
                   </p>
                   {aiAnalysis.summary && aiAnalysis.score < 70 && (
-                    <p className="mt-3 text-sm text-red-700 font-medium leading-relaxed bg-white/50 p-3 rounded-lg border border-red-100">
+                    <p className="mt-3 text-xs sm:text-sm text-red-700 font-medium leading-relaxed bg-white/50 p-3 rounded-lg border border-red-100">
                       <strong>Focus:</strong> {aiAnalysis.summary}
                     </p>
                   )}
                 </div>
 
                 {/* Classification Check */}
-                <div className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl">
-                  <div className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-tighter ${aiAnalysis.classification === 'PRESS_RELEASE' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                <div className="flex items-center gap-2 p-2 sm:p-3 bg-white border border-gray-100 rounded-lg">
+                  <div className={`px-2 py-0.5 rounded text-[9px] font-bold ${aiAnalysis.classification === 'PRESS_RELEASE' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
                     {aiAnalysis.classification?.replace('_', ' ') || 'ANALYZING'}
                   </div>
-                  <span className="text-xs font-bold text-gray-500">Classification</span>
+                  <span className="text-[11px] font-bold text-gray-500">Classification</span>
                 </div>
 
                 {/* Suggested Edits */}
                 {aiAnalysis.suggestedEdits && aiAnalysis.suggestedEdits.length > 0 && (
                   <div className="space-y-3">
-                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <h4 className="text-[10px] font-bold text-gray-400 flex items-center gap-2">
                       <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
@@ -1121,9 +1112,9 @@ export default function EditPage() {
                     </h4>
                     <div className="space-y-2">
                       {aiAnalysis.suggestedEdits.map((edit, idx) => (
-                        <div key={idx} className="flex items-start gap-3 p-3 bg-amber-50/30 border border-amber-100/50 rounded-xl">
+                        <div key={idx} className="flex items-start gap-2 p-2.5 bg-amber-50/30 border border-amber-100/50 rounded-lg">
                           <span className="text-amber-500 font-bold mt-0.5">•</span>
-                          <span className="text-sm text-gray-800 font-medium leading-relaxed">{edit}</span>
+                          <span className="text-xs sm:text-sm text-gray-800 font-medium leading-relaxed">{edit}</span>
                         </div>
                       ))}
                     </div>
@@ -1131,21 +1122,19 @@ export default function EditPage() {
                 )}
               </div>
 
-              <div className="px-6 py-5 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3">
+              <div className="px-5 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3">
                 <button
                   onClick={() => setShowAiScoreSheet(false)}
-                  className="px-6 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors"
+                  className="text-xs sm:text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  Manual Edit
+                  Edit
                 </button>
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3">
                   {aiAnalysis.score < 85 && (
                     <button
                       disabled={regenerating}
                       onClick={async () => {
                         setShowAiScoreSheet(false);
-                        // Call handleAiEdit with a special action for "Improve Score"
-                        // We need to pass the current aiAnalysis as feedback
                         setRegenerating(true);
                         setRegeneratingAction("IMPROVE_AI_SCORE");
                         try {
@@ -1164,7 +1153,7 @@ export default function EditPage() {
                               locationDate: response.data.article.locationDate || prev.locationDate,
                             }));
                             setVersions(response.data.versions);
-                            toast.success("AI significantly improved your content score and depth!");
+                            toast.success("AI significantly improved your content!");
                           }
                         } catch (e) {
                           console.error(e);
@@ -1174,7 +1163,7 @@ export default function EditPage() {
                           setRegeneratingAction(null);
                         }
                       }}
-                      className="bg-primary text-white px-6 py-2.5 rounded-xl text-sm font-black shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center gap-2"
+                      className="bg-primary text-white px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold shadow-md hover:bg-blue-700 transition-all flex items-center gap-1.5"
                     >
                       {regenerating ? "Improving..." : "Improve with AI"}
                     </button>
@@ -1182,9 +1171,9 @@ export default function EditPage() {
                   {aiAnalysis.score >= 70 && (
                     <button
                       onClick={handleInitiatePublish}
-                      className="bg-gray-900 text-white px-6 py-2.5 rounded-xl text-sm font-black hover:bg-gray-800 transition-all shadow-lg"
+                      className="bg-gray-900 text-white px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold hover:bg-gray-800 transition-all shadow-md"
                     >
-                      Publish Now
+                      Publish
                     </button>
                   )}
                 </div>
@@ -1205,31 +1194,31 @@ export default function EditPage() {
             />
             <motion.div
               initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
-              className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-100"
+              className="relative bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden border border-gray-100"
             >
               <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3 bg-red-50/50">
                 <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold">!</div>
                 <h3 className="font-bold text-gray-900 text-lg">Validation Failed</h3>
               </div>
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <p className="text-sm text-gray-600 mb-4">
-                  Please correct the following issues before publishing to XPR Media:
+                  Please correct the following issues:
                 </p>
                 <ul className="space-y-2">
                   {validationErrors.map((err, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-sm text-gray-800 bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                    <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-gray-800 bg-gray-50 p-2.5 rounded-lg border border-gray-100">
                       <span className="text-red-500 mt-0.5">•</span>
                       <span>{err}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+              <div className="px-5 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
                 <button
                   onClick={() => setShowValidationModal(false)}
-                  className="px-5 py-2 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition-colors"
+                  className="px-6 py-2 bg-gray-900 text-white rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors"
                 >
-                  Close & Fix
+                  Close
                 </button>
               </div>
             </motion.div>
@@ -1271,27 +1260,27 @@ export default function EditPage() {
             />
             <motion.div
               initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-              className="relative bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden"
+              className="relative bg-white w-full max-w-sm rounded-lg shadow-xl overflow-hidden"
             >
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-                <h3 className="font-bold text-gray-900">Previous Versions</h3>
-                <button onClick={() => setShowVersions(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+              <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+                <h3 className="font-bold text-gray-900 text-sm">Previous Versions</h3>
+                <button onClick={() => setShowVersions(false)} className="text-gray-400 hover:text-gray-600 p-1">✕</button>
               </div>
-              <div className="max-h-96 overflow-y-auto">
+              <div className="max-h-80 overflow-y-auto">
                 {versions.length === 0 ? (
-                  <div className="p-8 text-center text-gray-400">No versions saved yet</div>
+                  <div className="p-8 text-center text-gray-400 text-xs">No versions saved yet</div>
                 ) : (
                   versions.map((v, i) => (
                     <button
                       key={i}
                       onClick={() => handleRestore(v)}
-                      className="w-full text-left p-4 hover:bg-blue-50 border-b border-gray-50 transition-colors flex items-center justify-between group"
+                      className="w-full text-left px-5 py-3 hover:bg-blue-50 border-b border-gray-50 transition-colors flex items-center justify-between group"
                     >
                       <div>
-                        <p className="text-sm font-bold text-gray-900">Version {versions.length - i}</p>
-                        <p className="text-[10px] text-gray-500 uppercase font-semibold">{new Date(v.createdAt).toLocaleString()}</p>
+                        <p className="text-xs font-bold text-gray-900">Version {versions.length - i}</p>
+                        <p className="text-[10px] text-gray-400 font-semibold">{new Date(v.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</p>
                       </div>
-                      <span className="text-xs text-primary opacity-0 group-hover:opacity-100 font-bold transition-opacity">Restore</span>
+                      <span className="text-[10px] text-primary opacity-0 group-hover:opacity-100 font-bold transition-opacity">Restore</span>
                     </button>
                   ))
                 )}
@@ -1316,18 +1305,18 @@ export default function EditPage() {
 
 function SectionCard({ label, children, onAiAction, aiLabel, aiDisabled, secondaryAction, secondaryLabel, secondaryDisabled, disabled, onSpeak, isSpeaking }) {
   return (
-    <div className={`bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden group transition-opacity ${disabled ? "opacity-75" : ""}`}>
-      <div className="bg-gray-50/50 px-4 py-3 flex items-center justify-between border-b border-gray-100">
+    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden group transition-opacity ${disabled ? "opacity-75" : ""}`}>
+      <div className="bg-gray-50/50 px-3 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between border-b border-gray-100">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{label}</span>
+          <span className="text-[10px] font-bold text-gray-400 tracking-tight">{label}</span>
           {onSpeak && (
             <button
               onClick={onSpeak}
-              className={`p-1 rounded-lg transition-all ${isSpeaking ? "bg-red-100 text-red-500" : "hover:bg-gray-200 text-gray-400 hover:text-gray-600"}`}
+              className={`p-1 rounded-md transition-all ${isSpeaking ? "bg-red-50 text-red-500" : "hover:bg-gray-200 text-gray-400 hover:text-gray-600"}`}
               title={isSpeaking ? "Stop" : "Listen"}
             >
               <motion.div animate={isSpeaking ? { scale: [1, 1.2, 1] } : {}} transition={{ duration: 1.5, repeat: Infinity }}>
-                {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                {isSpeaking ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
               </motion.div>
             </button>
           )}
@@ -1337,7 +1326,7 @@ function SectionCard({ label, children, onAiAction, aiLabel, aiDisabled, seconda
             <button
               onClick={onAiAction}
               disabled={disabled || aiDisabled}
-              className="bg-white border border-blue-200 text-primary text-[9px] sm:text-[10px] font-bold px-1 sm:px-3 py-1 rounded-full hover:bg-blue-50 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-white border border-blue-100 text-primary text-[9px] font-bold px-2.5 py-1 rounded-lg hover:bg-blue-50 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {aiLabel}
             </button>
@@ -1346,14 +1335,14 @@ function SectionCard({ label, children, onAiAction, aiLabel, aiDisabled, seconda
             <button
               onClick={secondaryAction}
               disabled={disabled || secondaryDisabled}
-              className="bg-white border border-gray-200 text-gray-600 text-[9px] sm:text-[10px] font-bold px-1 sm:px-3 py-1 rounded-full hover:bg-gray-50 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-white border border-gray-100 text-gray-600 text-[9px] font-bold px-2.5 py-1 rounded-lg hover:bg-gray-50 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {secondaryLabel}
             </button>
           )}
         </div>
       </div>
-      <div className={`p-6 ${disabled ? "pointer-events-none select-none" : ""}`}>{children}</div>
+      <div className={`px-3 py-2.5 sm:px-5 sm:py-3 ${disabled ? "pointer-events-none select-none" : ""}`}>{children}</div>
     </div>
   );
 }
@@ -1387,29 +1376,27 @@ function CategorySelector({ categories, onChange }) {
   const suggestions = PREDEFINED_CATEGORIES.filter(c => !categoriesList.includes(c));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Campaign Categories</label>
+        <label className="text-[10px] font-bold text-gray-400">Campaign Categories</label>
         <span className="text-[10px] font-bold text-blue-400">Optional</span>
       </div>
 
       {/* Active Tags Display */}
-      <div className="flex flex-wrap gap-2 min-h-[32px] p-2 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+      <div className="flex flex-wrap gap-1.5 min-h-[32px] p-2 bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
         {categoriesList.map(cat => (
           <motion.span
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             key={cat}
-            className="flex items-center gap-1.5 bg-white text-primary text-[10px] font-bold px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm group hover:border-red-200 hover:text-red-500 transition-all cursor-default"
+            className="flex items-center gap-1 bg-white text-primary text-[10px] font-bold px-2 py-1 rounded-md border border-blue-100 shadow-sm group hover:border-red-200 hover:text-red-500 transition-all cursor-default"
           >
             {cat}
             <button
               onClick={() => handleRemoveCategory(cat)}
-              className="text-gray-300 group-hover:text-red-500 transition-colors ml-1"
+              className="text-gray-300 group-hover:text-red-500 transition-colors"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-3 h-3" />
             </button>
           </motion.span>
         ))}
@@ -1420,16 +1407,16 @@ function CategorySelector({ categories, onChange }) {
 
       {/* Suggested Box */}
       {suggestions.length > 0 && (
-        <div className="p-3 bg-blue-50/30 rounded-xl border border-blue-50">
-          <p className="text-[9px] font-black text-blue-400 uppercase mb-2 tracking-widest">Quick Add Suggested</p>
-          <div className="flex flex-wrap gap-1.5">
+        <div className="p-3 bg-blue-50/30 rounded-lg border border-blue-50/50">
+          <p className="text-[9px] font-bold text-blue-400 mb-2 tracking-tight">Suggested</p>
+          <div className="flex flex-wrap gap-1">
             {suggestions.slice(0, 10).map(cat => (
               <button
                 key={cat}
                 onClick={() => handleAddCategory(cat)}
-                className="text-[10px] bg-white border border-gray-200 px-2.5 py-1.5 rounded-lg hover:border-blue-300 hover:text-primary hover:shadow-sm transition-all flex items-center gap-1.5 font-semibold text-gray-600 group"
+                className="text-[10px] bg-white border border-gray-200 px-2 py-1 rounded-md hover:border-blue-300 hover:text-primary hover:shadow-sm transition-all flex items-center gap-1 font-semibold text-gray-600 group"
               >
-                <svg className="w-3 h-3 text-gray-300 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-2.5 h-2.5 text-gray-300 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
                 </svg>
                 {cat}
@@ -1451,12 +1438,9 @@ function CategorySelector({ categories, onChange }) {
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={() => inputValue && handleAddCategory(inputValue)}
-          placeholder="Type custom & press Enter..."
-          className="w-full text-xs font-semibold text-gray-900 bg-white border border-gray-200 rounded-xl px-10 py-3 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
+          placeholder="New category..."
+          className="w-full text-xs font-semibold text-gray-900 bg-white border border-gray-200 rounded-lg px-9 py-2 focus:border-blue-300 focus:ring-4 focus:ring-blue-100/50 transition-all outline-none"
         />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-focus-within:opacity-100 transition-opacity">
-          <kbd className="px-1.5 py-0.5 text-[8px] font-bold text-gray-400 bg-gray-50 border border-gray-200 rounded uppercase">Enter</kbd>
-        </div>
       </div>
     </div>
   );
@@ -1466,11 +1450,11 @@ function SidebarField({ label, value, onChange, error, placeholder, onSpeak, isS
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
-        <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider">{label}</label>
+        <label className="text-[10px] font-bold text-gray-400">{label}</label>
         {onSpeak && (
           <button
             onClick={onSpeak}
-            className={`p-1 rounded-lg transition-all ${isSpeaking ? "text-red-500" : "text-gray-400 hover:text-primary"}`}
+            className={`p-1 rounded-md transition-all ${isSpeaking ? "text-red-500" : "text-gray-400 hover:text-primary"}`}
           >
             <motion.div animate={isSpeaking ? { scale: [1, 1.2, 1] } : {}} transition={{ duration: 1.5, repeat: Infinity }}>
               {isSpeaking ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
@@ -1481,7 +1465,7 @@ function SidebarField({ label, value, onChange, error, placeholder, onSpeak, isS
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full text-xs font-semibold text-gray-900 bg-gray-50/50 border rounded-lg px-3 py-2.5 focus:bg-white focus:ring-1 transition-all outline-none ${error
+        className={`w-full text-xs font-semibold text-gray-900 bg-gray-50/50 border rounded-lg px-3 py-2 sm:py-2.5 focus:bg-white focus:ring-1 transition-all outline-none ${error
           ? "border-red-300 focus:border-red-500 focus:ring-red-200"
           : "border-gray-200 focus:border-blue-300 focus:ring-blue-100"
           }`}
@@ -1489,5 +1473,27 @@ function SidebarField({ label, value, onChange, error, placeholder, onSpeak, isS
       />
       {error && <p className="text-[10px] text-red-500 font-medium mt-1">{error}</p>}
     </div>
+  );
+}
+
+// Helper component for auto-growing textareas
+function AutoGrowingTextarea({ value, onChange, className, placeholder, disabled, maxLength }) {
+  const textareaRef = useRef(null);
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [value]);
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      disabled={disabled}
+      maxLength={maxLength}
+      className={className}
+    />
   );
 }

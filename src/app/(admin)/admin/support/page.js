@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { adminSupportService } from "@/lib/api/admin/support";
 import { toast } from "react-toastify";
 import Button from "@/components/ui/Button";
+import Pagination from "@/components/ui/Pagination";
 import { Search, Loader2, Calendar, User, Mail, MessageSquare, ChevronRight, Filter } from "lucide-react";
 import TicketDetailsModal from "@/components/admin/TicketDetailsModal";
 
@@ -178,41 +179,14 @@ export default function AdminSupportPage() {
             </div>
 
             {/* Pagination */}
-            {!loading && totalResults > 0 && (
-                <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <p className="text-sm text-gray-500 font-medium tracking-tight">
-                        Showing <span className="text-gray-900 font-bold">{(currentPage - 1) * 10 + 1}</span> to{" "}
-                        <span className="text-gray-900 font-bold">
-                            {Math.min(currentPage * 10, totalResults)}
-                        </span>{" "}
-                        of <span className="text-gray-900 font-bold">{totalResults}</span> tickets
-                    </p>
-                    <div className="flex gap-2">
-                        <Button
-                            onClick={() => {
-                                setCurrentPage(prev => Math.max(1, prev - 1));
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                            disabled={currentPage === 1}
-                            variant="outline"
-                            className="px-6"
-                        >
-                            Previous
-                        </Button>
-                        <Button
-                            onClick={() => {
-                                setCurrentPage(prev => Math.min(totalPages, prev + 1));
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                            disabled={currentPage >= totalPages}
-                            variant="outline"
-                            className="px-6"
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </div>
-            )}
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalResults={totalResults}
+                itemsPerPage={10}
+                className="mt-0"
+            />
 
             <TicketDetailsModal
                 ticket={selectedTicket}

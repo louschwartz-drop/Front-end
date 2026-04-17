@@ -5,6 +5,7 @@ import Link from "next/link";
 import { adminUserService } from "@/lib/api/admin/users";
 import { toast } from "react-toastify";
 import Button from "@/components/ui/Button";
+import Pagination from "@/components/ui/Pagination";
 import { ChevronUp, ChevronDown, DollarSign } from "lucide-react";
 import PaymentHistoryModal from "@/components/admin/PaymentHistoryModal";
 
@@ -252,31 +253,14 @@ export default function AdminUsersPage() {
             </div>
 
             {/* Pagination */}
-            {!loading && totalPages > 1 && (
-                <div className="mt-6 flex items-center justify-between">
-                    <div className="text-sm text-gray-700">
-                        Showing {(currentPage - 1) * 10 + 1} to{" "}
-                        {Math.min(currentPage * 10, totalResults)}{" "}
-                        of {totalResults} users
-                    </div>
-                    <div className="flex gap-2">
-                        <Button
-                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                            disabled={currentPage === 1}
-                            variant="outline"
-                        >
-                            Previous
-                        </Button>
-                        <Button
-                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                            disabled={currentPage >= totalPages}
-                            variant="outline"
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </div>
-            )}
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalResults={totalResults}
+                itemsPerPage={10}
+                className="mt-0"
+            />
 
             <PaymentHistoryModal
                 isOpen={paymentHistoryModal.isOpen}

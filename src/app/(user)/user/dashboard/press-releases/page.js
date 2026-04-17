@@ -9,6 +9,7 @@ import userAuthStore from "@/store/userAuthStore";
 import { pressReleaseService } from "@/lib/api/user/press-releases";
 import FullArticlePreview from "@/components/user/FullArticlePreview";
 import DistributionStatusModal from "@/components/user/DistributionStatusModal";
+import Pagination from "@/components/ui/Pagination";
 import VideoModal from "@/components/ui/VideoModal";
 
 export default function UserPressReleasesPage() {
@@ -151,7 +152,7 @@ export default function UserPressReleasesPage() {
             </div>
 
             {/* Status Filter Bar */}
-            <div className="flex flex-wrap items-center gap-2 mb-6">
+            <div className="flex flex-row items-center gap-2 mb-4 sm:mb-6 mt-6 md:mt-8 overflow-x-auto no-scrollbar pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
                 {[
                     { id: "all", label: "All Press Releases" },
                     { id: "in-progress", label: "In Progress", color: "amber" },
@@ -161,7 +162,7 @@ export default function UserPressReleasesPage() {
                     <button
                         key={f.id}
                         onClick={() => setFilter(f.id)}
-                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all flex items-center gap-2 ${filter === f.id
+                        className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] font-bold tracking-widest border transition-all flex items-center gap-2 whitespace-nowrap ${filter === f.id
                             ? "bg-gray-900 text-white border-gray-900 shadow-sm scale-105"
                             : "bg-white text-gray-500 border-gray-100 hover:border-gray-300"
                             }`}
@@ -211,8 +212,8 @@ export default function UserPressReleasesPage() {
                                 transition={{ delay: index * 0.05 }}
                                 className="bg-white p-2.5 md:p-5 rounded-xl md:rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6"
                             >
-                                <div className="flex items-center gap-3 md:gap-5 flex-1 min-w-0">
-                                    <div className="relative w-14 h-14 md:w-20 md:h-20 rounded-lg md:rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200 group-hover:border-blue-200 transition-colors">
+                                <div className="flex items-center gap-2.5 md:gap-5 flex-1 min-w-0">
+                                    <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-20 md:h-20 rounded-lg md:rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200 group-hover:border-blue-200 transition-colors">
                                         {(release.campaign?.productCard?.thumbnail || release.campaign?.videoThumbnail) ? (
                                             <img
                                                 src={release.campaign?.productCard?.thumbnail || release.campaign?.videoThumbnail}
@@ -281,7 +282,7 @@ export default function UserPressReleasesPage() {
                                 </div>
 
                                 <div className="flex items-center gap-2 border-t md:border-t-0 pt-2.5 md:pt-0">
-                                    <span className={`px-3 md:px-4 py-1 md:py-1.5 rounded-full text-[8px] md:text-[10px] font-black tracking-widest border mr-1 md:mr-2 flex items-center gap-1.5 ${getStatusStyle(release.status, release)}`}>
+                                    <span className={`px-3 md:px-4 py-1 md:py-1.5 rounded-full text-[8px] md:text-[10px] font-bold tracking-widest border mr-1 md:mr-2 flex items-center gap-1.5 ${getStatusStyle(release.status, release)}`}>
                                         {release.distributionStatus?.needsReview && <Flag className="w-3 h-3 fill-current" />}
                                         {getStatusLabel(release)}
                                     </span>
@@ -317,33 +318,14 @@ export default function UserPressReleasesPage() {
                     </div>
 
                     {/* Pagination */}
-                    {true && (
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 md:pt-6 border-t border-gray-100">
-                            <p className="text-[10px] md:text-sm text-gray-500 font-medium">
-                                Showing <span className="text-gray-900 font-bold">{(currentPage - 1) * 10 + 1}</span> to{" "}
-                                <span className="text-gray-900 font-bold">
-                                    {Math.min(currentPage * 10, totalResults)}
-                                </span>{" "}
-                                of <span className="text-gray-900 font-bold">{totalResults}</span> releases
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                    disabled={currentPage === 1}
-                                    variant="outline"
-                                >
-                                    Previous
-                                </Button>
-                                <Button
-                                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                    disabled={currentPage >= totalPages}
-                                    variant="outline"
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                        </div>
-                    )}
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                        totalResults={totalResults}
+                        itemsPerPage={10}
+                        className="mt-0"
+                    />
                 </div>
             )
             }
