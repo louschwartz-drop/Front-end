@@ -122,9 +122,19 @@ function PricingContent() {
       toast.error("Please select a plan");
       return;
     }
+    
+    // Safety check
+    const selectedPlanObj = plans.find((p) => p._id === selectedPlan);
+    if (selectedPlanObj?.isComingSoon) {
+      toast.error("This plan is coming soon and cannot be purchased yet.");
+      return;
+    }
+
     router.push(`/user/payment/${campaignId}?plan=${selectedPlan}`);
   };
 
+  const selectedPlanObj = plans.find((p) => p._id === selectedPlan);
+  const isComingSoonSelected = selectedPlanObj?.isComingSoon;
 
   if (loading) {
     return (
@@ -160,22 +170,24 @@ function PricingContent() {
               Select a pricing plan for campaign #{campaignId?.slice(-8)}
             </motion.p>
           </div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="w-full sm:w-auto"
-          >
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                variant="primary"
-                onClick={handleProceed}
-                className="w-full sm:w-auto bg-[#0A5CFF] hover:bg-[#3B82F6]"
-              >
-                Continue to Payment
-              </Button>
+          {!isComingSoonSelected && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="w-full sm:w-auto"
+            >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="primary"
+                  onClick={handleProceed}
+                  className="w-full sm:w-auto bg-[#0A5CFF] hover:bg-[#3B82F6]"
+                >
+                  Continue to Payment
+                </Button>
+              </motion.div>
             </motion.div>
-          </motion.div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
@@ -193,27 +205,33 @@ function PricingContent() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + index * 0.1 }}
                 whileHover={{ y: -10, transition: { duration: 0.3 } }}
-                onClick={() => handleSelectPlan(selected._id)}
+                onClick={() => {
+                  if (!selected.isComingSoon) handleSelectPlan(selected._id);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    handleSelectPlan(selected._id);
+                    if (!selected.isComingSoon) handleSelectPlan(selected._id);
                   }
                 }}
-                className={`relative bg-white rounded-xl shadow-lg border-2 overflow-hidden flex flex-col cursor-pointer ${isSelected
+                className={`relative bg-white rounded-xl shadow-lg border-2 overflow-hidden flex flex-col ${selected.isComingSoon ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'} ${isSelected
                   ? "border-[#0A5CFF] shadow-xl"
-                  : selected.isPopular
+                  : selected.isPopular || selected.isComingSoon
                     ? "border-blue-100"
                     : "border-gray-200"
                   }`}
               >
-                {selected.isPopular && (
+                {selected.isComingSoon ? (
+                  <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-center py-2 text-sm font-semibold uppercase tracking-wider">
+                    Coming Soon
+                  </div>
+                ) : selected.isPopular && (
                   <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-[#0A5CFF] to-[#3B82F6] text-white text-center py-2 text-sm font-semibold">
                     Most Popular
                   </div>
                 )}
 
-                <div className={`p-4 sm:p-6 flex-1 flex flex-col ${selected.isPopular ? "pt-10 sm:pt-12" : ""}`}>
+                <div className={`p-4 sm:p-6 flex-1 flex flex-col ${selected.isPopular || selected.isComingSoon ? "pt-10 sm:pt-12" : ""}`}>
                   <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                     {planName}
                   </h3>
@@ -270,18 +288,21 @@ function PricingContent() {
 
                   <motion.button
                     type="button"
+                    disabled={selected.isComingSoon}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleSelectPlan(selected._id);
+                      if (!selected.isComingSoon) handleSelectPlan(selected._id);
                     }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`w-full py-3 sm:py-3.5 rounded-lg font-semibold transition-colors text-sm sm:text-base ${isSelected
+                    whileHover={selected.isComingSoon ? {} : { scale: 1.02 }}
+                    whileTap={selected.isComingSoon ? {} : { scale: 0.98 }}
+                    className={`w-full py-3 sm:py-3.5 rounded-lg font-semibold transition-colors text-sm sm:text-base ${selected.isComingSoon 
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
+                        : isSelected
                       ? "bg-[#0A5CFF] text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }`}
                   >
-                    {isSelected ? "Selected" : "Select Plan"}
+                    {selected.isComingSoon ? "Coming Soon" : isSelected ? "Selected" : "Select Plan"}
                   </motion.button>
                 </div>
               </motion.div>

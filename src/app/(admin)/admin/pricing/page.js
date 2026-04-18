@@ -20,7 +20,8 @@ export default function PricingManagementPage() {
         description: "",
         features: [],
         isPopular: false,
-        isActive: true
+        isActive: true,
+        isComingSoon: false
     });
     const [featureInput, setFeatureInput] = useState("");
     const [selectedVariantByPlan, setSelectedVariantByPlan] = useState({});
@@ -70,7 +71,8 @@ export default function PricingManagementPage() {
                 description: plan.description || "",
                 features: plan.features || [],
                 isPopular: plan.isPopular,
-                isActive: plan.isActive
+                isActive: plan.isActive,
+                isComingSoon: plan.isComingSoon || false
             });
         } else {
             setEditingPlan(null);
@@ -81,7 +83,8 @@ export default function PricingManagementPage() {
                 description: "",
                 features: [],
                 isPopular: false,
-                isActive: true
+                isActive: true,
+                isComingSoon: false
             });
         }
         setFeatureInput("");
@@ -229,6 +232,9 @@ export default function PricingManagementPage() {
                                     {!selected.isActive && (
                                         <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded ml-2">INACTIVE</span>
                                     )}
+                                    {selected.isComingSoon && (
+                                        <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded ml-2">COMING SOON</span>
+                                    )}
                                 </div>
                                 <p className="text-sm text-gray-600 mb-4 line-clamp-2">{selected.description}</p>
                                 <ul className="space-y-2">
@@ -373,6 +379,15 @@ export default function PricingManagementPage() {
                                                 className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                                             />
                                             <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Active</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.isComingSoon}
+                                                onChange={e => setFormData({ ...formData, isComingSoon: e.target.checked })}
+                                                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                            />
+                                            <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Coming Soon</span>
                                         </label>
                                     </div>
 

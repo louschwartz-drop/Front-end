@@ -87,7 +87,16 @@ export default function PaymentPage() {
       setLoading(true);
       const res = await pricingService.getPlan(planId);
       if (res.success) {
-        setPlan(res.data);
+        const planData = res.data;
+        
+        // Redirect if plan is "Coming Soon"
+        if (planData.isComingSoon) {
+          toast.error("This plan is coming soon and cannot be purchased yet.");
+          router.push(`/user/pricing/${campaignId}`);
+          return;
+        }
+
+        setPlan(planData);
         // Pre-create payment intent when plan is loaded
         const piRes = await paymentService.createPaymentIntent(campaignId, planId, userId, saveCard);
         if (piRes.success) {
