@@ -9,13 +9,15 @@ import {
 import { motion } from "framer-motion";
 import Button from "@/components/ui/Button";
 import { toast } from "react-toastify";
+import { paymentService } from "@/lib/api/user/payments";
 
-export default function CheckoutForm({ amount, campaignId, onSuccess, saveCard, setSaveCard, userEmail, paymentMethodId, clientSecret }) {
+export default function CheckoutForm({ amount, campaignId, onSuccess, saveCard, setSaveCard, userEmail, paymentMethodId, clientSecret, isSetupIntent, isFreeTransaction, planId, promoCode }) {
     const stripe = useStripe();
     const elements = useElements();
 
     const [message, setMessage] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isCardEmpty, setIsCardEmpty] = useState(true);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -27,10 +29,53 @@ export default function CheckoutForm({ amount, campaignId, onSuccess, saveCard, 
         setIsLoading(true);
         setMessage(null);
 
+        // If it's a free transaction and no card details are entered, bypass Stripe entirely
+        if (isFreeTransaction && !paymentMethodId && isCardEmpty) {
+            console.log("Free transaction, no card entered. Skipping Stripe validation...");
+            try {
+                const fulfillmentRes = await paymentService.confirmFreeOrder(planId, campaignId, promoCode);
+                if (fulfillmentRes.success) {
+                    onSuccess({ id: `free_${Date.now()}` });
+                    return;
+                } else {
+                    toast.error(fulfillmentRes.message || "Failed to finalize free order");
+                }
+            } catch (fulfillErr) {
+                toast.error(fulfillErr.response?.data?.message || "Error finalizing your free order.");
+            } finally {
+                setIsLoading(false);
+            }
+            return;
+        }
+
         try {
             let result;
 
-            if (paymentMethodId) {
+            if (isSetupIntent) {
+                // Confirm SetupIntent for free transaction
+                if (paymentMethodId) {
+                    // With saved card
+                    result = await stripe.confirmCardSetup(clientSecret, {
+                        payment_method: paymentMethodId,
+                    });
+                } else {
+                    // With new card
+                    result = await stripe.confirmSetup({
+                        elements,
+                        confirmParams: {
+                            payment_method_data: {
+                                billing_details: { 
+                                    email: userEmail,
+                                    address: {
+                                        country: 'US',
+                                    }
+                                }
+                            }
+                        },
+                        redirect: "if_required",
+                    });
+                }
+            } else if (paymentMethodId) {
                 // Confirm payment with saved card
                 result = await stripe.confirmCardPayment(clientSecret, {
                     payment_method: paymentMethodId,
@@ -54,18 +99,55 @@ export default function CheckoutForm({ amount, campaignId, onSuccess, saveCard, 
                 });
             }
 
-            const { error, paymentIntent } = result;
+            const { error, paymentIntent, setupIntent } = result;
 
             if (error) {
-                if (error.type === "card_error" || error.type === "validation_error") {
+                // If it's a free transaction and the error is due to missing card info, 
+                // we fulfill the order directly without a card.
+                if (isFreeTransaction && (error.type === "validation_error" || !paymentMethodId)) {
+                    console.log("Free transaction with no card details. Fulfilling manually...");
+                    try {
+                        const fulfillmentRes = await paymentService.confirmFreeOrder(planId, campaignId, promoCode);
+                        if (fulfillmentRes.success) {
+                            onSuccess({ id: `free_${Date.now()}` });
+                            return;
+                        } else {
+                            toast.error(fulfillmentRes.message || "Failed to finalize free order");
+                        }
+                    } catch (fulfillErr) {
+                        toast.error(fulfillErr.response?.data?.message || "Error finalizing your free order.");
+                    }
+                } else if (error.type === "card_error" || error.type === "validation_error") {
                     setMessage(error.message);
                     toast.error(error.message);
                 } else {
                     setMessage("An unexpected error occurred.");
                     toast.error("An unexpected error occurred.");
                 }
-            } else if (paymentIntent && paymentIntent.status === "succeeded") {
-                onSuccess(paymentIntent);
+            } else if ((paymentIntent && paymentIntent.status === "succeeded") || 
+                       (setupIntent && setupIntent.status === "succeeded")) {
+                
+                if (isSetupIntent) {
+                    // For SetupIntents (free orders), we MUST manually call a backend endpoint 
+                    // to verify and fulfill the order because SetupIntents don't naturally 
+                    // trigger our payment success webhook flow.
+                    try {
+                        const fulfillmentRes = await paymentService.confirmFreeSetup(
+                            setupIntent.id, 
+                            setupIntent.payment_method
+                        );
+                        if (fulfillmentRes.success) {
+                            onSuccess(setupIntent);
+                        } else {
+                            toast.error(fulfillmentRes.message || "Failed to finalize free order");
+                        }
+                    } catch (fulfillErr) {
+                        console.error("Fulfillment error:", fulfillErr);
+                        toast.error(fulfillErr.response?.data?.message || "Error finalizing your free order.");
+                    }
+                } else {
+                    onSuccess(paymentIntent);
+                }
             } else {
                 console.log("Payment status:", paymentIntent?.status);
             }
@@ -96,7 +178,11 @@ export default function CheckoutForm({ amount, campaignId, onSuccess, saveCard, 
         <form id="payment-form" onSubmit={handleSubmit} className="space-y-6">
             {!paymentMethodId && (
                 <div className="bg-white md:p-2 sm:p-4 rounded-xl border border-gray-100 shadow-sm">
-                    <PaymentElement id="payment-element" options={paymentElementOptions} />
+                    <PaymentElement 
+                        id="payment-element" 
+                        options={paymentElementOptions} 
+                        onChange={(e) => setIsCardEmpty(e.empty)}
+                    />
                 </div>
             )}
 
@@ -137,7 +223,7 @@ export default function CheckoutForm({ amount, campaignId, onSuccess, saveCard, 
                             Processing...
                         </div>
                     ) : (
-                        `Complete Payment · $${amount.toFixed(2)}`
+                        isSetupIntent ? "Complete Verification · $0.00" : `Complete Payment · $${amount.toFixed(2)}`
                     )}
                 </Button>
             </motion.div>

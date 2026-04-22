@@ -30,5 +30,13 @@ export const paymentService = {
     setDefaultCard: async (cardId, userId) => {
         const response = await api.post("/user/payments/cards/default", { cardId, userId });
         return response.data;
+    },
+    confirmFreeSetup: async (setupIntentId, paymentMethodId) => {
+        const response = await api.post("/user/payments/confirm-free-setup", { setupIntentId, paymentMethodId });
+        return response.data;
+    },
+    confirmFreeOrder: async (planId, campaignId, promoCode) => {
+        const response = await api.post("/user/payments/confirm-free-order", { planId, campaignId, promoCode });
+        return response.data;
     }
 };

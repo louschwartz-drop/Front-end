@@ -23,6 +23,7 @@ const promoSchema = z.object({
         return selectedDate >= today;
     }, "Expiry date cannot be in the past"),
     usageLimit: z.number().nullable(),
+    allowedReleasesCount: z.number().nullable(),
     description: z.string().optional(),
     isActive: z.boolean(),
 });
@@ -39,6 +40,7 @@ export default function PromoCodesPage() {
         discountValue: "",
         expiryDate: "",
         usageLimit: "",
+        allowedReleasesCount: "",
         description: "",
         isActive: true
     });
@@ -69,6 +71,7 @@ export default function PromoCodesPage() {
                 discountValue: promo.discountValue,
                 expiryDate: promo.expiryDate ? new Date(promo.expiryDate).toISOString().split('T')[0] : "",
                 usageLimit: promo.usageLimit || "",
+                allowedReleasesCount: promo.allowedReleasesCount || "",
                 description: promo.description || "",
                 isActive: promo.isActive
             });
@@ -80,6 +83,7 @@ export default function PromoCodesPage() {
                 discountValue: "",
                 expiryDate: "",
                 usageLimit: "",
+                allowedReleasesCount: "",
                 description: "",
                 isActive: true
             });
@@ -92,6 +96,7 @@ export default function PromoCodesPage() {
             ...formData,
             discountValue: Number(formData.discountValue),
             usageLimit: formData.usageLimit === "" ? null : Number(formData.usageLimit),
+            allowedReleasesCount: formData.allowedReleasesCount === "" ? null : Number(formData.allowedReleasesCount),
         };
 
         const result = promoSchema.safeParse(dataToValidate);
@@ -226,6 +231,10 @@ export default function PromoCodesPage() {
                                         <Clock className="w-3 h-3 text-gray-400" />
                                         <span>Used: {promo.usedCount}{promo.usageLimit ? `/${promo.usageLimit}` : ''}</span>
                                     </div>
+                                    <div className="flex items-center gap-2 text-xs text-blue-600 font-bold bg-blue-50 p-2 rounded-lg col-span-2">
+                                        <Info className="w-3 h-3" />
+                                        <span>Plan Type: {promo.allowedReleasesCount ? `${promo.allowedReleasesCount} Article(s)` : 'All Plans'}</span>
+                                    </div>
                                 </div>
 
                                 {promo.description && (
@@ -348,7 +357,7 @@ export default function PromoCodesPage() {
                                         </div>
                                         {formErrors.expiryDate && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{formErrors.expiryDate}</p>}
                                     </div>
-                                    <div>
+                                    <div className="flex flex-col">
                                         <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Total Usage Limit</label>
                                         <input
                                             type="number"
@@ -358,7 +367,25 @@ export default function PromoCodesPage() {
                                             className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-bold text-gray-900"
                                             placeholder="e.g. 100"
                                         />
-                                        <p className="text-[9px] text-gray-400 mt-1 ml-1">Enter how many people will use it. (Leave empty for unlimited)</p>
+                                        <p className="text-[9px] text-gray-400 mt-1 ml-1 leading-tight">Leave empty for unlimited</p>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Allowed Plan Type</label>
+                                        <Select
+                                            value={formData.allowedReleasesCount === null || formData.allowedReleasesCount === "" ? "all" : formData.allowedReleasesCount.toString()}
+                                            onValueChange={(val) => setFormData({ ...formData, allowedReleasesCount: val === "all" ? "" : Number(val) })}
+                                        >
+                                            <SelectTrigger className="rounded-lg h-[46px] border-gray-200 bg-gray-50">
+                                                <SelectValue placeholder="All Plans" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All Plans</SelectItem>
+                                                <SelectItem value="1">1 Article</SelectItem>
+                                                <SelectItem value="3">3 Articles</SelectItem>
+                                                <SelectItem value="5">5 Articles</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-[9px] text-gray-400 mt-1 ml-1 leading-tight">Restrict to 1, 3, or 5 releases</p>
                                     </div>
                                 </div>
 

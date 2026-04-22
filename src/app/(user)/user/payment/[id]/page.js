@@ -30,6 +30,8 @@ export default function PaymentPage() {
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [promoError, setPromoError] = useState("");
+  const [isSetupIntent, setIsSetupIntent] = useState(false);
+  const [isFreeTransaction, setIsFreeTransaction] = useState(false);
 
   const { user } = userAuthStore();
   const userId = user?._id || user?.id;
@@ -101,6 +103,8 @@ export default function PaymentPage() {
         const piRes = await paymentService.createPaymentIntent(campaignId, planId, userId, saveCard);
         if (piRes.success) {
           setClientSecret(piRes.data.clientSecret);
+          setIsSetupIntent(!!piRes.data.isSetupIntent);
+          setIsFreeTransaction(!!piRes.data.isFreeTransaction);
         } else {
           toast.error(piRes.message || "Failed to initialize payment");
         }
@@ -131,6 +135,8 @@ export default function PaymentPage() {
         const piRes = await paymentService.createPaymentIntent(campaignId, planId, userId, saveCard, promoCodeInput.trim());
         if (piRes.success) {
           setClientSecret(piRes.data.clientSecret);
+          setIsSetupIntent(!!piRes.data.isSetupIntent);
+          setIsFreeTransaction(!!piRes.data.isFreeTransaction);
         } else {
           toast.error("Failed to update payment amount with promo");
         }
@@ -153,6 +159,8 @@ export default function PaymentPage() {
     const piRes = await paymentService.createPaymentIntent(campaignId, planId, userId, saveCard);
     if (piRes.success) {
       setClientSecret(piRes.data.clientSecret);
+      setIsSetupIntent(!!piRes.data.isSetupIntent);
+      setIsFreeTransaction(!!piRes.data.isFreeTransaction);
     }
   };
 
@@ -410,6 +418,7 @@ export default function PaymentPage() {
                 <div className="pt-4">
                   {savedCards.length > 0 && <p className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1 mb-3">New Card Details</p>}
                   <Elements
+                    key={clientSecret}
                     options={{
                       clientSecret,
                       appearance: {
@@ -442,12 +451,15 @@ export default function PaymentPage() {
                       setSaveCard={setSaveCard}
                       userEmail={user?.email}
                       promoCode={appliedPromo ? appliedPromo.code : null}
+                      isSetupIntent={isSetupIntent}
+                      isFreeTransaction={isFreeTransaction}
+                      planId={planId}
                     />
                   </Elements>
                 </div>
               ) : clientSecret && !useNewCard && selectedCardId ? (
                 <div className="pt-6">
-                  <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
+                  <Elements key={clientSecret} stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
                     <CheckoutForm
                       amount={appliedPromo ? appliedPromo.finalPrice : plan.price}
                       campaignId={campaignId}
@@ -458,6 +470,9 @@ export default function PaymentPage() {
                       paymentMethodId={selectedCardId}
                       clientSecret={clientSecret}
                       promoCode={appliedPromo ? appliedPromo.code : null}
+                      isSetupIntent={isSetupIntent}
+                      isFreeTransaction={isFreeTransaction}
+                      planId={planId}
                     />
                   </Elements>
                 </div>
