@@ -165,7 +165,7 @@ export default function UserPressReleasesPage() {
                         className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] font-bold tracking-widest border transition-all flex items-center gap-2 whitespace-nowrap ${filter === f.id
                             ? "bg-gray-900 text-white border-gray-900 shadow-sm scale-105"
                             : "bg-white text-gray-500 border-gray-100 hover:border-gray-300"
-                            }`}
+                            } ${f.id === 'all' ? 'ml-4 sm:ml-0' : ''}`}
                     >
                         {f.id !== "all" && (
                             <div className={`w-2 h-2 rounded-full bg-${f.color}-500 shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />
@@ -254,6 +254,11 @@ export default function UserPressReleasesPage() {
                                                     year: "numeric"
                                                 })}
                                             </span>
+                                            {release.campaign?._id && (
+                                                <span className="flex items-center gap-1 text-gray-500 font-mono text-[8px] sm:text-[10px] bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100" title="Publish GUID / Campaign ID">
+                                                    ID: {release.campaign._id}
+                                                </span>
+                                            )}
                                             {release.distributionStatus && release.distributionStatus.total > 0 && (
                                                 <span className="flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100 font-bold text-[8px] sm:text-[10px]">
                                                     <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
@@ -297,10 +302,11 @@ export default function UserPressReleasesPage() {
 
                                     <button
                                         onClick={() => setStatusModal({ show: true, campaignId: release.campaign._id, title: release.campaign.article?.headline })}
-                                        className="p-1.5 md:p-2 hover:bg-blue-50 rounded-lg transition-all text-blue-500 hover:text-blue-700 group/btn flex items-center gap-1"
-                                        title="View Distribution Status"
+                                        className="px-2 md:px-3 py-1.5 md:py-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all text-blue-600 hover:text-blue-700 group/btn flex items-center gap-1.5 border border-blue-100"
+                                        title="Click to check live publication status"
                                     >
-                                        <Activity className="w-4 h-4 md:w-5 md:h-5 group-hover/btn:scale-110 transition-transform" />
+                                        <Activity className="w-4 h-4 md:w-4 md:h-4 group-hover/btn:scale-110 transition-transform" />
+                                        <span className="text-[10px] md:text-xs font-bold whitespace-nowrap">Check Status</span>
                                     </button>
 
                                     {release.campaign?.videoUrl && (

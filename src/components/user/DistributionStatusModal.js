@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Activity, CheckCircle, Clock, AlertCircle, RefreshCw } from "lucide-react";
+import { X, Activity, CheckCircle, Clock, AlertCircle, RefreshCw, ExternalLink } from "lucide-react";
 import { toast } from "react-toastify";
 import xprArticleRelease from "@/lib/api/user/xprArticleRelease";
+import apiAdmin from "@/lib/api/admin/apiAdmin";
 
-export default function DistributionStatusModal({ isOpen, onClose, campaignId, title, onStatusUpdate }) {
+export default function DistributionStatusModal({ isOpen, onClose, campaignId, title, onStatusUpdate, isAdmin = false }) {
     const [statusData, setStatusData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("liveAt");
@@ -16,7 +17,13 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
         setLoading(true);
         try {
             // Using campaignId as guid
-            const res = await xprArticleRelease.checkStatus({ guid: campaignId });
+            let res;
+            if (isAdmin) {
+                const response = await apiAdmin.get('/admin/press-releases/status-check', { params: { guid: campaignId } });
+                res = response.data;
+            } else {
+                res = await xprArticleRelease.checkStatus({ guid: campaignId });
+            }
 
             // Handle 202 (Processing) - The backend returns { success: true, message: "..." } with 202 status
             // If the message contains "processed", or if data is missing, it's likely a processing state
@@ -328,12 +335,25 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                {dest.pubDate && (
-                                                                    <div className="text-left sm:text-right shrink-0 mt-2 sm:mt-0 pl-10 sm:pl-0">
-                                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5 mt-1 sm:mt-0">Published</p>
-                                                                        <p className="text-[11px] sm:text-xs font-semibold text-gray-700">{new Date(dest.pubDate).toLocaleString()}</p>
-                                                                    </div>
-                                                                )}
+                                                                <div className="flex flex-col sm:items-end shrink-0 mt-2 sm:mt-0 pl-10 sm:pl-0 gap-2">
+                                                                    {dest.pubDate && (
+                                                                        <div className="text-left sm:text-right">
+                                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5 mt-1 sm:mt-0">Published</p>
+                                                                            <p className="text-[11px] sm:text-xs font-semibold text-gray-700">{new Date(dest.pubDate).toLocaleString()}</p>
+                                                                        </div>
+                                                                    )}
+                                                                    {dest.source && (
+                                                                        <a
+                                                                            href={dest.source}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-bold transition-colors w-fit sm:w-auto"
+                                                                        >
+                                                                            <ExternalLink className="w-3.5 h-3.5" />
+                                                                            View Article
+                                                                        </a>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         ))}
                                                     </div>

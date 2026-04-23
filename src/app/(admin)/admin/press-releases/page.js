@@ -281,6 +281,11 @@ export default function AdminPressReleasesPage() {
                                                     year: "numeric"
                                                 })}
                                             </span>
+                                            {release.campaign?._id && (
+                                                <span className="flex items-center gap-1 text-gray-500 font-mono text-[8px] md:text-[9px] bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100" title="Publish GUID / Campaign ID">
+                                                    ID: {release.campaign._id}
+                                                </span>
+                                            )}
                                             {release.distributionStatus?.total > 0 && (
                                                 <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
                                                     <CheckCircle className="w-2.5 h-2.5" />
@@ -301,17 +306,18 @@ export default function AdminPressReleasesPage() {
                                         <button
                                             onClick={() => setPreviewModal({ show: true, campaign: release.campaign })}
                                             className="p-1.5 md:p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-gray-500 hover:text-blue-600"
-                                            title="View Article"
+                                            title="Preview Article"
                                         >
                                             <Eye className="w-4 h-4" />
                                         </button>
 
                                         <button
                                             onClick={() => setStatusModal({ show: true, campaignId: release.campaign?._id, title: release.campaign?.article?.headline })}
-                                            className="p-1.5 md:p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-blue-500 hover:text-blue-700"
-                                            title="View Distribution Status"
+                                            className="px-2 py-1.5 hover:bg-white hover:shadow-sm rounded-lg transition-all text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                                            title="Click to check live publication status"
                                         >
-                                            <Activity className="w-4 h-4" />
+                                            <Activity className="w-3.5 h-3.5" />
+                                            <span className="text-[9px] font-black uppercase tracking-tight">Check Status</span>
                                         </button>
                                     </div>
                                 </div>
@@ -346,6 +352,7 @@ export default function AdminPressReleasesPage() {
                 onClose={() => setStatusModal({ show: false, campaignId: null, title: "" })}
                 campaignId={statusModal.campaignId}
                 title={statusModal.title}
+                isAdmin={true}
                 onStatusUpdate={(newStatus) => {
                     setReleases(prev => prev.map(r =>
                         r.campaign?._id === statusModal.campaignId
