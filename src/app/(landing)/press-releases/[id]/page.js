@@ -81,7 +81,7 @@ export default async function ArticleDetailsPage({ params }) {
             <Header />
 
             <main className="flex-grow pt-32 pb-20">
-                <div className="container mx-auto px-4">
+                <div className="max-w-7xl mx-auto px-4">
                     <div className="max-w-4xl mx-auto">
                         {/* Breadcrumbs */}
                         <nav className="flex items-center gap-2 text-sm text-gray-500 mb-8">

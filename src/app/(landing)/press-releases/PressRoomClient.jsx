@@ -225,7 +225,7 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                     <div className="absolute inset-0 bg-linear-to-b from-brand-dark/95 via-brand-dark/80 to-white/5"></div>
                 </div>
 
-                <div className="container mx-auto px-4 relative z-10 text-center">
+                <div className="max-w-7xl mx-auto px-4 relative z-10 text-center">
                     <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 tracking-tight">
                         Global Press Room
                     </h1>
@@ -282,8 +282,7 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                 </div>
             </section>
 
-            {/* Articles Grid */}
-            <section className="py-20 container mx-auto px-4 min-h-[400px]">
+            <section className="py-20 max-w-7xl mx-auto px-4 min-h-[400px]">
                 {articles && articles.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {articles.map((article, index) => {
