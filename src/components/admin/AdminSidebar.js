@@ -18,11 +18,13 @@ import {
   UserCircle,
   MessageSquare,
   Headset,
+  ChevronDown,
+  ChevronRight,
+  PlusCircle,
+  FolderOpen,
+  List,
+  Mail,
 } from "lucide-react";
-import adminAuthStore from "@/store/adminAuthStore";
-import Image from "next/image";
-import ConfirmationModal from "../ui/ConfirmationModal";
-import { useAdminSocket } from "@/context/AdminSocketContext";
 
 export const ADMIN_MENU_ITEMS = [
   {
@@ -70,13 +72,32 @@ export const ADMIN_MENU_ITEMS = [
     label: "Live Chat",
     icon: Headset,
   },
-
+  {
+    href: "/admin/blogs",
+    label: "Blogs",
+    icon: FileText,
+    subItems: [
+      { href: "/admin/blogs", label: "All Posts", icon: List },
+      { href: "/admin/blogs/categories", label: "Categories", icon: FolderOpen },
+      { href: "/admin/blogs/create", label: "Create Post", icon: PlusCircle },
+    ]
+  },
+  {
+    href: "/admin/emails",
+    label: "Email Campaigns",
+    icon: Mail,
+  },
   {
     href: "/admin/profile",
     label: "Profile",
     icon: UserCircle,
   },
 ];
+
+import adminAuthStore from "@/store/adminAuthStore";
+import Image from "next/image";
+import ConfirmationModal from "../ui/ConfirmationModal";
+import { useAdminSocket } from "@/context/AdminSocketContext";
 
 function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
   const router = useRouter();
@@ -85,7 +106,14 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [waitingCount, setWaitingCount] = useState(0);
+  const [expandedMenus, setExpandedMenus] = useState(["/admin/blogs"]); // Default blogs open
   const adminSocket = useAdminSocket();
+
+  const toggleMenu = (href) => {
+    setExpandedMenus(prev => 
+      prev.includes(href) ? prev.filter(h => h !== href) : [...prev, href]
+    );
+  };
 
   // Track real-time waiting-agent requests
   useEffect(() => {
@@ -129,7 +157,8 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
     setIsModalOpen(false);
   }, []);
 
-  const isActive = (href) => {
+  const isActive = (href, exact = false) => {
+    if (exact) return pathname === href;
     return pathname === href || pathname.startsWith(href + "/");
   };
 
@@ -186,33 +215,84 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 overflow-y-auto py-4">
+        <nav className="flex-1 overflow-y-auto py-4 no-scrollbar">
           <ul className="space-y-1 px-2">
             {ADMIN_MENU_ITEMS.map((item) => {
               const Icon = item.icon;
               const isLiveChat = item.href === "/admin/chat";
+              const hasSubItems = item.subItems && item.subItems.length > 0;
+              const isExpanded = expandedMenus.includes(item.href);
+              const active = isActive(item.href, hasSubItems);
+
               return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`
-                      flex items-center gap-3 px-4 py-3 rounded-lg
-                      transition-colors duration-200 cursor-pointer
-                      ${isActive(item.href)
-                        ? "bg-brand-blue text-white"
-                        : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                      }
-                    `}
-                  >
-                    <Icon className="w-5 h-5 shrink-0" />
-                    <span className="text-sm font-medium flex-1">{item.label}</span>
-                    {isLiveChat && waitingCount > 0 && (
-                      <span className="bg-yellow-500 text-white text-[9px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 animate-pulse">
-                        {waitingCount}
-                      </span>
-                    )}
-                  </Link>
+                <li key={item.href} className="space-y-1">
+                  {hasSubItems ? (
+                    <button
+                      onClick={() => toggleMenu(item.href)}
+                      className={`
+                        w-full flex items-center gap-3 px-4 py-3 rounded-lg
+                        transition-all duration-200 cursor-pointer group
+                        ${active || isExpanded
+                          ? "text-white"
+                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                        }
+                      `}
+                    >
+                      <Icon className={`w-5 h-5 shrink-0 ${active ? "text-brand-blue" : "text-gray-400 group-hover:text-white"}`} />
+                      <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
+                      {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
+                    </button>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`
+                        flex items-center gap-3 px-4 py-3 rounded-lg
+                        transition-all duration-200 cursor-pointer group
+                        ${active
+                          ? "bg-brand-blue text-white shadow-lg shadow-brand-blue/20"
+                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                        }
+                      `}
+                    >
+                      <Icon className="w-5 h-5 shrink-0" />
+                      <span className="text-sm font-medium flex-1">{item.label}</span>
+                      {isLiveChat && waitingCount > 0 && (
+                        <span className="bg-yellow-500 text-white text-[9px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 animate-pulse">
+                          {waitingCount}
+                        </span>
+                      )}
+                    </Link>
+                  )}
+
+                  {/* Sub Items */}
+                  {hasSubItems && isExpanded && (
+                    <ul className="mt-1 ml-4 border-l border-gray-800 space-y-1 py-1">
+                      {item.subItems.map((sub) => {
+                        const SubIcon = sub.icon;
+                        const subActive = isActive(sub.href, true);
+                        return (
+                          <li key={sub.href}>
+                            <Link
+                              href={sub.href}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className={`
+                                flex items-center gap-3 px-4 py-2 rounded-lg ml-2
+                                transition-all duration-200 cursor-pointer group
+                                ${subActive
+                                  ? "text-brand-blue font-bold"
+                                  : "text-gray-400 hover:text-white"
+                                }
+                              `}
+                            >
+                              <SubIcon className={`w-4 h-4 shrink-0 ${subActive ? "text-brand-blue" : "text-gray-500 group-hover:text-white"}`} />
+                              <span className="text-[13px]">{sub.label}</span>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </li>
               );
             })}

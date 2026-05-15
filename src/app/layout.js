@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import Script from "next/script";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -21,6 +22,13 @@ export const metadata = {
   description:
     "Build instant exposure with DropPR.ai. Convert your videos into AI-written articles and distribute them to top media outlets.",
   keywords: "AI article generation, press release distribution, media outlets, PR distribution, video to article, content publishing",
+  manifest: "/manifest.json",
+  themeColor: "#3b82f6",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "DropPR.ai",
+  },
   icons: {
     icon: "/drop-logo.png",
     apple: "/drop-logo.png",
@@ -40,6 +48,7 @@ export const metadata = {
 
 import { SocketProvider } from "@/context/SocketContext";
 import ChatWidgetWrapper from "@/components/chat/ChatWidgetWrapper";
+import NextAuthProvider from "@/context/NextAuthProvider";
 
 export default function RootLayout({ children }) {
   return (
@@ -48,7 +57,7 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
+        <NextAuthProvider>
           <SocketProvider>
             {children}
             <ChatWidgetWrapper />
@@ -65,9 +74,22 @@ export default function RootLayout({ children }) {
               theme="light"
             />
           </SocketProvider>
-        </GoogleOAuthProvider>
+        </NextAuthProvider>
+        <Script id="register-sw" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                  console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, function(err) {
+                  console.log('ServiceWorker registration failed: ', err);
+                });
+              });
+            }
+          `}
+        </Script>
       </body>
-    </html >
+    </html>
   );
 }
 

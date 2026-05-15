@@ -58,35 +58,78 @@ export default function CampaignsPage() {
     useEffect(() => {
         // Listen for real-time updates via Socket
         if (socket) {
-            socket.on("campaign_updated", (data) => {
+            const onCampaignUpdated = (data) => {
                 console.log("🔄 Campaign updated via socket:", data.campaignId, data.status);
-                
+
                 if (data.campaign) {
-                    // Update only the specific campaign in state
-                    setCampaigns(prevCampaigns => 
-                        prevCampaigns.map(c => 
-                            c._id === data.campaignId ? data.campaign : c
-                        )
-                    );
-                } else {
-                    // Fallback to fetch if no campaign object provided
-                    fetchCampaigns(true);
+                    setCampaigns(prev => prev.map(c => c._id === data.campaignId ? data.campaign : c));
                 }
-            });
+            };
+
+            const onStatusChange = (data) => {
+                if (!data.campaignId) return;
+                console.log("🚦 Campaign status changed:", data.campaignId, data.status);
+                setCampaigns(prev => prev.map(c =>
+                    c._id === data.campaignId ? { ...c, status: data.status } : c
+                ));
+            };
+
+            const onMediaProgress = (data) => {
+                if (!data.campaignId) return;
+                // We don't necessarily show progress bars on the cards yet, 
+                // but we update the status message if provided
+                if (data.message) {
+                    setCampaigns(prev => prev.map(c =>
+                        c._id === data.campaignId ? { ...c, lastProgressMessage: data.message } : c
+                    ));
+                }
+            };
+
+            const onCampaignCreated = (data) => {
+                console.log("🆕 New campaign created via socket:", data.campaignId);
+                if (data.campaign) {
+                    setCampaigns(prev => {
+                        // Check if it already exists to avoid duplicates
+                        if (prev.some(c => c._id === data.campaignId)) return prev;
+                        return [data.campaign, ...prev];
+                    });
+                    setTotalResults(prev => prev + 1);
+                }
+            };
+
+            socket.on("campaign_updated", onCampaignUpdated);
+            socket.on("status_change", onStatusChange);
+            socket.on("media_progress", onMediaProgress);
+            socket.on("campaign_created", onCampaignCreated);
 
             return () => {
-                socket.off("campaign_updated");
+                socket.off("campaign_updated", onCampaignUpdated);
+                socket.off("status_change", onStatusChange);
+                socket.off("media_progress", onMediaProgress);
+                socket.off("campaign_created", onCampaignCreated);
             };
         }
     }, [socket]);
-    
+
     // Original effect for initial load and filter changes
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             fetchCampaigns();
         }, searchTerm ? 500 : 0);
 
-        return () => clearTimeout(timeoutId);
+        // SYNC ON FOCUS: If user comes back to this tab, refresh silently 
+        // to catch any updates that might have happened while backgrounded.
+        const handleFocus = () => {
+            console.log("🪟 Tab focused, syncing campaigns...");
+            fetchCampaigns(true);
+        };
+
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            clearTimeout(timeoutId);
+            window.removeEventListener('focus', handleFocus);
+        };
     }, [searchTerm, currentPage, filter]);
 
     const fetchCampaigns = async (silent = false) => {
@@ -184,7 +227,7 @@ export default function CampaignsPage() {
         const status = campaign.status;
         const isIrrelevant = campaign.errorMessage?.toLowerCase().includes("irrelevant");
         const isLanguageError = campaign.errorMessage?.toLowerCase().includes("language");
-        
+
         const statusConfig = {
             uploading: { color: "bg-blue-500", label: "Uploading", mobileLabel: "Uploading" },
             uploaded: { color: "bg-blue-500", label: "Uploaded", mobileLabel: "Uploaded" },
@@ -193,8 +236,8 @@ export default function CampaignsPage() {
             finished: { color: "bg-green-500", label: "Ready for Publish", mobileLabel: "Ready for Publish" },
             published: { color: "bg-green-600", label: "Published", mobileLabel: "Published" },
             submitted_successfully: { color: "bg-green-600", label: "Submitted Successfully", mobileLabel: "Submitted Successfully" },
-            failed: { 
-                color: "bg-red-500", 
+            failed: {
+                color: "bg-red-500",
                 label: isLanguageError ? "Language Not Supported" : (isIrrelevant ? "Content Irrelevant" : "Failed"),
                 mobileLabel: isLanguageError ? "Language Not Supported" : (isIrrelevant ? "Irrelevant" : "Failed")
             },
@@ -412,7 +455,12 @@ export default function CampaignsPage() {
                                             </p>
                                         ) : (
                                             <p className="text-sm text-gray-400 italic">
-                                                No headline yet
+                                                {campaign.lastProgressMessage || "No headline yet"}
+                                            </p>
+                                        )}
+                                        {["uploading", "transcribing", "generating"].includes(campaign.status) && campaign.lastProgressMessage && (
+                                            <p className="text-[10px] text-primary font-bold mt-1 animate-pulse">
+                                                {campaign.lastProgressMessage}
                                             </p>
                                         )}
                                     </div>
@@ -422,11 +470,11 @@ export default function CampaignsPage() {
                                         <div className="mt-2 bg-red-50 p-2 rounded border border-red-100 flex items-start justify-between gap-2 overflow-hidden">
                                             <p className="text-[10px] text-red-600 leading-tight font-medium" title={campaign.errorMessage.length > 100 ? campaign.errorMessage : ""}>
                                                 <span className="font-bold mr-1">Error:</span>
-                                                {campaign.errorMessage.length > 80 
-                                                    ? `${campaign.errorMessage.substring(0, 80)}...` 
+                                                {campaign.errorMessage.length > 80
+                                                    ? `${campaign.errorMessage.substring(0, 80)}...`
                                                     : campaign.errorMessage}
                                             </p>
-                                            <button 
+                                            <button
                                                 onClick={() => handleViewError(campaign)}
                                                 className="shrink-0 p-1 text-red-600 hover:bg-red-100 rounded-full transition-colors"
                                                 title="View Full Error"
@@ -442,50 +490,63 @@ export default function CampaignsPage() {
 
                                 {/* Card Body */}
                                 <div className="p-4 md:p-5 space-y-3 md:space-y-4">
-                                    {/* Transcript */}
+                                    {/* Transcript / Document Content */}
                                     <div>
                                         <h4 className="text-[10px] md:text-xs font-medium text-gray-500 mb-2">
-                                            Transcript
+                                            {campaign.videoSource === "document_upload" ? "Document Content" : "Transcript"}
                                         </h4>
                                         {campaign.rawTranscript ? (
                                             <div>
-                                                <p className="text-sm text-gray-600 line-clamp-3 mb-1">
+                                                <p className="text-sm text-gray-600 line-clamp-5 mb-1 whitespace-pre-wrap">
                                                     {campaign.rawTranscript}
                                                 </p>
                                                 <button
                                                     onClick={() => handleViewTranscript(campaign)}
                                                     className="text-xs text-primary hover:underline font-medium"
                                                 >
-                                                    View Full Transcript
+                                                    View Full {campaign.videoSource === "document_upload" ? "Content" : "Transcript"}
                                                 </button>
                                             </div>
                                         ) : (
                                             <span className="text-sm text-gray-400 italic">
-                                                Pending...
+                                                {campaign.status === "failed" ? "Not available" : "Pending..."}
                                             </span>
                                         )}
                                     </div>
 
-                                    {/* Video URL */}
-                                    <div>
-                                        <h4 className="text-[10px] md:text-xs font-medium text-gray-500 mb-2">
-                                            Video
-                                        </h4>
-                                        {campaign.videoUrl ? (
-                                            <button
-                                                onClick={() => setVideoModal({ show: true, url: campaign.videoUrl })}
-                                                className="text-sm text-primary hover:underline font-medium inline-flex items-center gap-1"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    {/* Video URL - Hide for documents */}
+                                    {campaign.videoSource !== "document_upload" && (
+                                        <div>
+                                            <h4 className="text-[10px] md:text-xs font-medium text-gray-500 mb-2">
+                                                Video
+                                            </h4>
+                                            {campaign.videoUrl ? (
+                                                <button
+                                                    onClick={() => setVideoModal({ show: true, url: campaign.videoUrl })}
+                                                    className="text-sm text-primary hover:underline font-medium inline-flex items-center gap-1"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    View Video
+                                                </button>
+                                            ) : (
+                                                <span className="text-sm text-gray-400">No video available</span>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {campaign.videoSource === "document_upload" && (
+                                        <div className="pt-1">
+                                            <div className="flex items-center gap-2 text-green-600 bg-green-50 px-2 py-1.5 rounded-md border border-green-100">
+                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
-                                                View Video
-                                            </button>
-                                        ) : (
-                                            <span className="text-sm text-gray-400">No video available</span>
-                                        )}
-                                    </div>
+                                                <span className="text-[10px] font-bold uppercase tracking-tight">Article Generated from Document</span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Card Footer - Actions */}
@@ -667,16 +728,16 @@ export default function CampaignsPage() {
                                     </div>
                                     <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                                         <h3 className="text-lg leading-6 font-medium text-gray-900">
-                                            {campaigns.find(c => c._id === deleteModal.campaignId)?.status && 
-                                             ["uploading", "transcribing", "generating"].includes(campaigns.find(c => c._id === deleteModal.campaignId)?.status) 
-                                             ? "Cancel Analysis" : "Delete Campaign"}
+                                            {campaigns.find(c => c._id === deleteModal.campaignId)?.status &&
+                                                ["uploading", "transcribing", "generating"].includes(campaigns.find(c => c._id === deleteModal.campaignId)?.status)
+                                                ? "Cancel Analysis" : "Delete Campaign"}
                                         </h3>
                                         <div className="mt-2">
                                             <p className="text-sm text-gray-500">
-                                                {campaigns.find(c => c._id === deleteModal.campaignId)?.status && 
-                                                 ["uploading", "transcribing", "generating"].includes(campaigns.find(c => c._id === deleteModal.campaignId)?.status) 
-                                                 ? "Are you sure you want to cancel this analysis? This will stop all background processing and remove the campaign."
-                                                 : "Are you sure you want to delete this campaign? This action cannot be undone."}
+                                                {campaigns.find(c => c._id === deleteModal.campaignId)?.status &&
+                                                    ["uploading", "transcribing", "generating"].includes(campaigns.find(c => c._id === deleteModal.campaignId)?.status)
+                                                    ? "Are you sure you want to cancel this analysis? This will stop all background processing and remove the campaign."
+                                                    : "Are you sure you want to delete this campaign? This action cannot be undone."}
                                             </p>
                                         </div>
                                     </div>
@@ -687,9 +748,9 @@ export default function CampaignsPage() {
                                         onClick={handleDeleteConfirm}
                                         className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
                                     >
-                                        {campaigns.find(c => c._id === deleteModal.campaignId)?.status && 
-                                         ["uploading", "transcribing", "generating"].includes(campaigns.find(c => c._id === deleteModal.campaignId)?.status) 
-                                         ? "Cancel & Delete" : "Delete"}
+                                        {campaigns.find(c => c._id === deleteModal.campaignId)?.status &&
+                                            ["uploading", "transcribing", "generating"].includes(campaigns.find(c => c._id === deleteModal.campaignId)?.status)
+                                            ? "Cancel & Delete" : "Delete"}
                                     </button>
                                     <button
                                         type="button"
@@ -758,7 +819,7 @@ export default function CampaignsPage() {
                                         </svg>
                                     </button>
                                 </div>
-                                
+
                                 <div className="sm:flex sm:items-start">
                                     <div className="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                                         <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

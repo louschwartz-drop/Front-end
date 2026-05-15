@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
@@ -16,9 +16,9 @@ async function runSocialLinkProcessing(campaignId, campaign, campaignService) {
 }
 
 const processingSteps = [
-  "Uploading your media...",
-  "Transcribing your content...",
-  "Generating article from transcription...",
+  "Uploading your content...",
+  "Prechecking and analyzing...",
+  "Generating your article...",
   "Finalizing your press release...",
 ];
 
@@ -27,9 +27,10 @@ function ProcessingContent() {
   const params = useParams();
   const socket = useSocket();
   const campaignId = params.id;
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(null); // Changed from 0 to null to prevent flashing
   const [processingComplete, setProcessingComplete] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState(null); // Changed from 0 to null
+  const uploadStartedRef = useRef(false);
 
   useEffect(() => {
     if (!campaignId) {
@@ -46,7 +47,8 @@ function ProcessingContent() {
       const store = useFileStore.getState();
       const user = userAuthStore.getState().user;
 
-      if (store.pendingUpload && store.pendingUpload.campaignId === campaignId) {
+      if (store.pendingUpload && store.pendingUpload.campaignId === campaignId && !uploadStartedRef.current) {
+        uploadStartedRef.current = true;
         // Found pending upload
         const file = store.pendingUpload.file;
         const userId = user._id || user.id;
@@ -54,14 +56,20 @@ function ProcessingContent() {
         try {
           console.log("Starting optimized background upload...");
 
-          // Use the new optimized endpoint instead of direct S3 + separate transcription call
-          await campaignService.uploadOptimized(campaignId, file, (progress) => {
-            setUploadProgress(progress);
-          });
+          if (store.pendingUpload.type === "document") {
+            await campaignService.uploadDocument(campaignId, file, (progress) => {
+              setUploadProgress(progress);
+            });
+          } else {
+            // Use the new optimized endpoint instead of direct S3 + separate transcription call
+            await campaignService.uploadOptimized(campaignId, file, (progress) => {
+              setUploadProgress(progress);
+            });
+          }
 
           // Clear pending upload
           store.clearPendingUpload();
-          toast.success("Upload & Analysis started!");
+          toast.success("Upload & Analysis started!", { toastId: "upload-start-toast" });
         } catch (error) {
           console.error("Background upload failed:", error);
           toast.error("Upload failed: " + error.message);
@@ -105,24 +113,22 @@ function ProcessingContent() {
           const statusToStep = {
             uploading: 0,
             uploaded: 0,
+            prechecking: 1,
             transcribing: 1,
             generating: 2,
             finished: 3,
             failed: 3,
           };
 
-          setCurrentStep(statusToStep[campaign.status] || 0);
+          const newStep = statusToStep[campaign.status];
+          if (newStep !== undefined) {
+            setCurrentStep(prev => (prev === null || newStep > prev || campaign.status === "failed") ? newStep : prev);
+          }
 
           // Handle completion
           if (campaign.status === "finished") {
             setProcessingComplete(true);
-            toast.success(
-              "Campaign processed successfully! Redirecting to edit...",
-              {
-                position: "top-right",
-                autoClose: 2000,
-              },
-            );
+            // REDUNDANT TOAST REMOVED: Sockets handle this more reliably
             router.replace(`/user/edit/${campaignId}`);
 
             // Clear polling
@@ -163,48 +169,105 @@ function ProcessingContent() {
 
     // SOCKET LISTENERS
     if (socket && campaignId) {
-      console.log(`📡 Joining socket room for campaign: ${campaignId}`);
-      socket.emit("join_campaign", { campaignId });
+      // REDUNDANCY REMOVED: We no longer join private campaign rooms.
+      // All updates come through the unified user room joined in SocketContext.
 
-      socket.on("media_progress", (data) => {
+      const onMediaProgress = (data) => {
+        // Unified check: only process if it's for this campaign
+        if (data.campaignId && data.campaignId !== campaignId) return;
+
         console.log("📈 Progress:", data.percent, data.message);
         if (data.percent) setUploadProgress(data.percent);
-      });
+      };
 
-      socket.on("status_change", (data) => {
-        console.log("🚦 Status Change:", data.status);
+      const handleStatusUpdate = (status) => {
         const statusToStep = {
           uploading: 0,
           uploaded: 0,
+          prechecking: 1,
           transcribing: 1,
           generating: 2,
           finished: 3,
           failed: 3,
         };
-        setCurrentStep(statusToStep[data.status] || 0);
 
-        if (data.status === "finished") {
+        const newStep = statusToStep[status];
+        if (newStep !== undefined) {
+          setCurrentStep(prev => (prev === null || newStep > prev || status === "failed") ? newStep : prev);
+        }
+
+        if (status === "finished" && !processingComplete) {
           setProcessingComplete(true);
-          toast.success("Ready! Redirecting...", { autoClose: 2000 });
+          toast.success("Ready! Redirecting...", {
+            autoClose: 2000,
+            toastId: "finished-toast",
+            position: "top-right"
+          });
           router.replace(`/user/edit/${campaignId}`);
         }
-      });
+      };
 
-      socket.on("media_error", (data) => {
+      const onCampaignUpdated = (data) => {
+        if (data.campaignId !== campaignId) return;
+        console.log("🔄 Campaign Updated:", data.status);
+        if (data.status) handleStatusUpdate(data.status);
+      };
+
+      const onStatusChange = (data) => {
+        if (data.campaignId !== campaignId) return;
+        console.log("🚦 Status Change:", data.status);
+        if (data.status) handleStatusUpdate(data.status);
+      };
+
+      const onMediaError = (data) => {
+        if (data.campaignId && data.campaignId !== campaignId) return;
         console.error("❌ Media Error:", data.message);
         toast.error(data.message || "Processing failed");
         router.replace("/user/dashboard/campaigns");
-      });
-    }
+      };
 
-    return () => {
-      if (socket) {
-        socket.off("media_progress");
-        socket.off("status_change");
-        socket.off("media_error");
-      }
-    };
+      socket.on("campaign_updated", onCampaignUpdated);
+      socket.on("status_change", onStatusChange);
+      socket.on("media_progress", onMediaProgress);
+      socket.on("media_error", onMediaError);
+
+      return () => {
+        socket.off("campaign_updated", onCampaignUpdated);
+        socket.off("status_change", onStatusChange);
+        socket.off("media_progress", onMediaProgress);
+        socket.off("media_error", onMediaError);
+      };
+    }
   }, [campaignId, router, socket]);
+
+  // SYNC ON FOCUS: Catch up if tab was backgrounded/throttled
+  useEffect(() => {
+    const handleFocus = () => {
+      // Re-poll status on focus
+      console.log("🪟 Processing tab focused, syncing status...");
+      const pollCampaignStatus = async () => {
+        try {
+          const { campaignService } = await import("@/lib/api/user/campaigns");
+          const response = await campaignService.getCampaign(campaignId);
+          if (response.success) {
+            const campaign = response.data;
+            const statusToStep = {
+              uploading: 0, uploaded: 0, transcribing: 1, generating: 2, finished: 3, failed: 3,
+            };
+            setCurrentStep(statusToStep[campaign.status] || 0);
+            if (campaign.status === "finished") {
+              setProcessingComplete(true);
+              router.replace(`/user/edit/${campaignId}`);
+            }
+          }
+        } catch (err) { console.error("Sync on focus failed:", err); }
+      };
+      pollCampaignStatus();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [campaignId, router]);
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-12rem)]">
@@ -278,14 +341,14 @@ function ProcessingContent() {
               >
                 <AnimatePresence mode="wait">
                   <motion.h2
-                    key={currentStep}
+                    key={currentStep ?? 'initial'}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.5 }}
                     className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900"
                   >
-                    {processingSteps[currentStep]}
+                    {currentStep !== null ? processingSteps[currentStep] : "Initializing processing..."}
                   </motion.h2>
                 </AnimatePresence>
 

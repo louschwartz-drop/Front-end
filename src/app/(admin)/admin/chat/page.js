@@ -9,6 +9,7 @@ import {
   Search, Trash2, CheckCheck, Archive,
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import adminAuthStore from '@/store/adminAuthStore';
 
 // ── User-type helpers ─────────────────────────────────────────────────────────
 function getUserType(chat) {
@@ -75,12 +76,83 @@ function sectionStatuses(section) {
 }
 
 // ── User-type filter tabs (only for active section) ───────────────────────────
+// Guest filter removed — agent connect requires login, so only registered/paid users can request agents
 const USER_FILTERS = [
   { key: 'all',        label: 'All',        Icon: Users },
-  { key: 'guest',      label: 'Guest',      Icon: User },
   { key: 'registered', label: 'Registered', Icon: UserCheck },
   { key: 'paid',       label: 'Paid',       Icon: CreditCard },
 ];
+
+const formatContent = (content, isAgent) => {
+  if (!content) return '';
+  // Simple markdown link regex: [text](url)
+  // Also supports relative paths starting with /
+  const urlRegex = /(\[[^\]]+\]\((?:https?:\/\/|\/)[^\s)]+\)|https?:\/\/[^\s]+?[^.,;?!()\]}\s](?=[.,;?!()\]}\s]|$))/g;
+  const parts = content.split(urlRegex);
+
+  return parts.map((part, i) => {
+    if (!part) return null;
+
+    // Check for markdown link [text](url)
+    const mdMatch = part.match(/\[([^\]]+)\]\(([^)]+)\)/);
+    if (mdMatch) {
+      return (
+        <a
+          key={i}
+          href={mdMatch[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`underline font-semibold cursor-pointer ${isAgent ? 'text-blue-100' : 'text-brand-blue'}`}
+        >
+          {mdMatch[1]}
+        </a>
+      );
+    }
+
+    // Check for raw URL
+    if (/^https?:\/\//.test(part)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`underline break-all ${isAgent ? 'text-blue-100 font-medium' : 'text-brand-blue'}`}
+        >
+          {part}
+        </a>
+      );
+    }
+
+    // Handle bolding (**text**)
+    if (typeof part === 'string' && part.includes('**')) {
+      const boldParts = part.split(/(\*\*[^*]+\*\*)/g);
+      return boldParts.map((bp, bidx) => {
+        if (bp.startsWith('**') && bp.endsWith('**')) {
+          return <strong key={`${i}-${bidx}`} className="font-extrabold">{bp.slice(2, -2)}</strong>;
+        }
+        return bp;
+      });
+    }
+
+    return part;
+  });
+};
+
+const renderMessageContent = (content, isAgent) => {
+  if (!content) return null;
+  
+  const lines = content.split('\n');
+  return lines.map((line, i) => {
+    const isBullet = line.trim().startsWith('- ');
+    return (
+      <div key={i} className={`${isBullet ? 'flex gap-2 ml-1 my-1' : 'mb-1 last:mb-0'}`}>
+        {isBullet && <span className="shrink-0">•</span>}
+        <span>{formatContent(isBullet ? line.trim().slice(2) : line, isAgent)}</span>
+      </div>
+    );
+  });
+};
 
 // ── MessageBubble ─────────────────────────────────────────────────────────────
 function MessageBubble({ msg }) {
@@ -106,7 +178,7 @@ function MessageBubble({ msg }) {
             {msg.sender === 'AI' ? 'AI Assistant' : 'User'}
           </p>
         )}
-        {msg.content}
+        {renderMessageContent(msg.content, isAgent)}
       </div>
     </div>
   );
@@ -205,6 +277,17 @@ export default function AdminChatPage() {
 
   useEffect(() => { fetchChats(); }, []);
 
+  useEffect(() => {
+    if (socket) {
+      const admin = adminAuthStore.getState().admin;
+      const adminId = admin?._id || admin?.id;
+      if (adminId) {
+        socket.emit('join_admin', { adminId });
+        socket.emit('join_admin_room');
+      }
+    }
+  }, [socket]);
+
   // ── socket events ──
   useEffect(() => {
     if (!socket) return;
@@ -224,7 +307,12 @@ export default function AdminChatPage() {
 
     const onNewMessage = (message) => {
       const cid = message.chatId?._id ?? message.chatId;
-      if (cid === selectedChat?._id) setMessages((prev) => [...prev, message]);
+      if (cid === selectedChat?._id) {
+        setMessages((prev) => {
+          if (prev.some(m => m._id === message._id)) return prev;
+          return [...prev, message];
+        });
+      }
       else setUnreadChatIds((prev) => new Set([...prev, cid]));
     };
 
@@ -254,6 +342,7 @@ export default function AdminChatPage() {
     socket.on('session_started', onSessionStarted);
     socket.on('chat_closed', onChatClosed);
     socket.on('incoming_message', onIncoming);
+    socket.on('connect', fetchChats);
 
     return () => {
       socket.off('new_support_request', onNewRequest);
@@ -262,6 +351,7 @@ export default function AdminChatPage() {
       socket.off('session_started', onSessionStarted);
       socket.off('chat_closed', onChatClosed);
       socket.off('incoming_message', onIncoming);
+      socket.off('connect', fetchChats);
     };
   }, [socket, selectedChat]);
 
@@ -331,7 +421,6 @@ export default function AdminChatPage() {
   const chattedChats = chats.filter((c) => CHATTED_STATUSES.includes(c.status));
   const closedChats  = chats.filter((c) => CLOSED_STATUSES.includes(c.status));
 
-  const guestCount      = activeChats.filter((c) => getUserType(c) === 'guest').length;
   const registeredCount = activeChats.filter((c) => getUserType(c) === 'registered').length;
   const paidCount       = activeChats.filter((c) => getUserType(c) === 'paid').length;
   const waitingCount    = chats.filter((c) => c.status === 'WAITING').length;
@@ -366,8 +455,7 @@ export default function AdminChatPage() {
     <div className="flex flex-col gap-4" style={{ height: 'calc(100vh - 120px)' }}>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
-        <StatCard label="Guest Users"      value={guestCount}      Icon={User}       color="border-gray-200 bg-gray-50 text-gray-700"         sub="Anonymous sessions" />
+      <div className="grid grid-cols-3 gap-3 shrink-0">
         <StatCard label="Registered Users" value={registeredCount} Icon={UserCheck}  color="border-blue-200 bg-blue-50 text-blue-700"          sub="Signed-in, no plan" />
         <StatCard label="Paid Users"       value={paidCount}       Icon={CreditCard} color="border-emerald-200 bg-emerald-50 text-emerald-700"  sub="Active plan holders" />
         <StatCard
@@ -422,7 +510,7 @@ export default function AdminChatPage() {
             {section === 'active' && (
               <div className="flex gap-1 flex-wrap">
                 {USER_FILTERS.map(({ key, label, Icon }) => {
-                  const cnt = key === 'all' ? activeChats.length : key === 'guest' ? guestCount : key === 'registered' ? registeredCount : paidCount;
+                  const cnt = key === 'all' ? activeChats.length : key === 'registered' ? registeredCount : paidCount;
                   return (
                     <button
                       key={key}

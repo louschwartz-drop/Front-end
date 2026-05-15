@@ -15,6 +15,7 @@ export default function CreateCampaignPage() {
 
   const [uploadMethod, setUploadMethod] = useState("upload");
   const [videoFile, setVideoFile] = useState(null);
+  const [documentFile, setDocumentFile] = useState(null);
   const [videoLink, setVideoLink] = useState("");
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -88,6 +89,24 @@ export default function CreateCampaignPage() {
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
+
+      if (uploadMethod === "document_upload") {
+        if (file.type === "application/pdf" || 
+            file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+            file.type === "application/msword") {
+          
+          if (file.size > 5 * 1024 * 1024) {
+            toast.error("File size exceeds 5MB limit");
+            return;
+          }
+          setDocumentFile(file);
+          toast.success("Document selected!");
+        } else {
+          toast.error("Please upload a PDF or Word document");
+        }
+        return;
+      }
+
       if (file.type.startsWith("video/")) {
         setDurationError(null);
         setVideoDuration(null);
@@ -139,6 +158,24 @@ export default function CreateCampaignPage() {
   const handleFileChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+
+      if (uploadMethod === "document_upload") {
+        if (file.type === "application/pdf" || 
+            file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+            file.type === "application/msword") {
+          
+          if (file.size > 5 * 1024 * 1024) {
+            toast.error("File size exceeds 5MB limit");
+            return;
+          }
+          setDocumentFile(file);
+          toast.success("Document selected!");
+        } else {
+          toast.error("Please upload a PDF or Word document");
+        }
+        return;
+      }
+
       if (file.type.startsWith("video/")) {
         setDurationError(null);
         setVideoDuration(null);
@@ -275,6 +312,11 @@ export default function CreateCampaignPage() {
       return;
     }
 
+    if (uploadMethod === "document_upload" && !documentFile) {
+      toast.error("Please select a document file");
+      return;
+    }
+
     if (uploadMethod === "link" && !videoLink) {
       toast.error("Please enter a video link");
       return;
@@ -305,7 +347,7 @@ export default function CreateCampaignPage() {
 
       let campaignId;
 
-      if (uploadMethod === "upload" || uploadMethod === "record_audio" || uploadMethod === "record_video") {
+      if (uploadMethod === "upload" || uploadMethod === "record_audio" || uploadMethod === "record_video" || uploadMethod === "document_upload") {
         // Step 1: Create campaign record for local upload / recording
         const createResponse = await campaignService.createCampaign(userId, {
           sourceType: uploadMethod
@@ -318,13 +360,11 @@ export default function CreateCampaignPage() {
 
         campaignId = createResponse.data._id;
 
-        // Step 2: Store file in global store for processing page
         useFileStore.getState().setPendingUpload({
           campaignId: campaignId,
-          file: videoFile,
+          file: uploadMethod === "document_upload" ? documentFile : videoFile,
+          type: uploadMethod === "document_upload" ? "document" : "video"
         });
-
-        toast.success("Campaign initialized!");
       } else {
         // Handle Social Link Flow
         const createResponse = await campaignService.createCampaignFromLink(userId, videoLink);
@@ -334,7 +374,6 @@ export default function CreateCampaignPage() {
         }
 
         campaignId = createResponse.data._id;
-        toast.success("Link processing initialized!");
       }
 
       // Redirect immediately to processing page
@@ -376,13 +415,14 @@ export default function CreateCampaignPage() {
           <label className="block text-sm font-medium text-gray-700 mb-4">
             Choose Upload Method
           </label>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             <motion.button
               type="button"
               disabled={isRecording}
               onClick={() => {
                 setUploadMethod("upload");
                 setVideoFile(null);
+                setDocumentFile(null);
                 setVideoLink("");
                 stopRecording();
               }}
@@ -410,6 +450,44 @@ export default function CreateCampaignPage() {
                 <div className="text-left">
                   <p className="text-sm sm:text-base font-bold text-gray-900">Upload</p>
                   <p className="text-[9px] sm:text-[10px] text-gray-500 whitespace-nowrap">Video files</p>
+                </div>
+              </div>
+            </motion.button>
+
+            <motion.button
+              type="button"
+              disabled={isRecording}
+              onClick={() => {
+                setUploadMethod("document_upload");
+                setVideoFile(null);
+                setDocumentFile(null);
+                setVideoLink("");
+                stopRecording();
+              }}
+              whileHover={!isRecording ? { scale: 1.02 } : {}}
+              whileTap={!isRecording ? { scale: 0.98 } : {}}
+              className={`p-2.5 sm:p-4 border-2 rounded-lg transition-all ${uploadMethod === "document_upload"
+                ? "border-primary bg-blue-50"
+                : "border-gray-300 hover:border-gray-400"
+                } ${isRecording ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <div className="flex items-center gap-2 sm:gap-3">
+                <svg
+                  className="w-5 h-5 sm:w-6 sm:h-6 text-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <div className="text-left">
+                  <p className="text-sm sm:text-base font-bold text-gray-900">Document</p>
+                  <p className="text-[9px] sm:text-[10px] text-gray-500 whitespace-nowrap">PDF or Word</p>
                 </div>
               </div>
             </motion.button>
@@ -691,6 +769,152 @@ export default function CreateCampaignPage() {
                   ref={fileInputRef}
                   type="file"
                   accept="video/mp4,video/quicktime,video/x-msvideo"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </motion.div>
+            </motion.div>
+          ) : uploadMethod === "document_upload" ? (
+            <motion.div
+              key="document"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+              className="mb-6"
+            >
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Document File (PDF, DOCX) <span className="text-red-500">*</span>
+              </label>
+              <motion.div
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                animate={{
+                  scale: dragActive ? 1.02 : 1,
+                  borderColor: dragActive
+                    ? "#0A5CFF"
+                    : documentFile
+                      ? "#10B981"
+                      : "#D1D5DB",
+                  backgroundColor: dragActive
+                    ? "#EFF6FF"
+                    : documentFile
+                      ? "#ECFDF5"
+                      : "#FFFFFF",
+                }}
+                transition={{ duration: 0.2 }}
+                className="border-2 border-dashed rounded-lg p-8 text-center transition-colors"
+              >
+                <AnimatePresence mode="wait">
+                  {documentFile ? (
+                    <motion.div
+                      key="doc-selected"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <motion.svg
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 200,
+                          delay: 0.1,
+                        }}
+                        className="w-12 h-12 text-green-500 mx-auto mb-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </motion.svg>
+                      <motion.p
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="text-gray-900 font-medium"
+                      >
+                        {documentFile.name}
+                      </motion.p>
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                        className="text-sm text-gray-600 mt-1"
+                      >
+                        {(documentFile.size / 1024 / 1024).toFixed(2)} MB
+                      </motion.p>
+                      <motion.button
+                        type="button"
+                        onClick={() => setDocumentFile(null)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="mt-4 text-sm text-red-600 hover:text-red-700"
+                      >
+                        Remove file
+                      </motion.button>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="doc-empty"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <motion.svg
+                        animate={{
+                          y: [0, -10, 0],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                        className="w-12 h-12 text-gray-400 mx-auto mb-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </motion.svg>
+                      <p className="text-gray-600 mb-2">
+                        Drag and drop your document here, or
+                      </p>
+                      <motion.button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="text-[#0A5CFF] hover:text-[#3B82F6] font-medium"
+                      >
+                        browse files
+                      </motion.button>
+                      <p className="text-sm text-gray-500 mt-2">
+                        PDF, DOCX files only
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Maximum size: 5MB
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   onChange={handleFileChange}
                   className="hidden"
                 />

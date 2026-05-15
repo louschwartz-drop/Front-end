@@ -6,7 +6,7 @@ export const campaignService = {
     createCampaign: async (userId, metadata = {}) => {
         const response = await api.post("/user/campaigns", {
             userId,
-            videoSource: "local_upload",
+            videoSource: metadata.sourceType || "local_upload",
             metadata,
         });
         return response.data;
@@ -140,5 +140,20 @@ export const campaignService = {
             }
             throw error;
         }
+    },
+    // Upload Document (PDF/Word)
+    uploadDocument: async (campaignId, file, onUploadProgress) => {
+        const formData = new FormData();
+        formData.append("document", file);
+        const response = await api.post(`/user/campaigns/${campaignId}/upload-document`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+            onUploadProgress: (progressEvent) => {
+                if (onUploadProgress) {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    onUploadProgress(percentCompleted);
+                }
+            },
+        });
+        return response.data;
     },
 };

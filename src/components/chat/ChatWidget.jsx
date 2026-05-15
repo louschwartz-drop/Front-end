@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useSocket } from '@/context/SocketContext';
+import { useSocket, useSocketRequest } from '@/context/SocketContext';
 import { getOrCreateChat, getChatMessages, getChatHistory } from '@/lib/api/user/chat.api';
 import userAuthStore from '@/store/userAuthStore';
 import { useRouter } from 'next/navigation';
@@ -25,6 +25,13 @@ import LoginModal from '../landingPage/LoginModal';
 
 // ── constants ────────────────────────────────────────────────────────────────
 const AGENT_TIMEOUT_MS = 5 * 60 * 1000; // match server-side value
+
+// ── FAQ suggestion chips shown on first open ─────────────────────────────────
+const FAQ_SUGGESTIONS = [
+  'What is DropPR.ai and how does it work?',
+  'How do I create a campaign?',
+  'What are the pricing plans?',
+];
 
 // ── sub-components ───────────────────────────────────────────────────────────
 
@@ -84,7 +91,128 @@ function TimeoutBanner({ onRetry }) {
   );
 }
 
-function MessageBubble({ msg }) {
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Converts markdown to plain text for clipboard copy.
+ * Relative links are expanded to full URLs using the current origin.
+ * [Create Page](/user/dashboard/create) → Create Page (https://droppr.ai/user/dashboard/create)
+ */
+function stripMarkdownForCopy(content) {
+  if (!content) return '';
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  return content
+    .replace(/\*\*(\[[^\]]+\]\([^)]+\))\*\*/g, '$1')           // **[link](url)** → [link](url) first
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
+      // Expand relative paths to full URLs, no parentheses
+      const fullUrl = url.startsWith('/') ? `${origin}${url}` : url;
+      return `${text}: ${fullUrl}`;
+    })
+    .replace(/\*\*([^*]+)\*\*/g, '$1')                          // **bold** → bold
+    .replace(/^\s*-\s/gm, '• ');                                // - bullet → • bullet
+}
+
+/**
+ * Renders markdown content as React elements.
+ * onLinkClick(href) — called for internal relative links so the parent
+ * can handle auth-gating before navigation.
+ */
+const formatContent = (content, isUser, onLinkClick) => {
+  if (!content) return null;
+
+  // Pre-process: remove ** wrapped around markdown links.
+  // e.g. **[Create Page](/user/dashboard/create)** → [Create Page](/user/dashboard/create)
+  // Without this, the ** get split off as orphaned literal stars.
+  content = content.replace(/\*\*(\[[^\]]+\]\([^)]+\))\*\*/g, '$1');
+
+  const urlRegex = /(\[[^\]]+\]\((?:https?:\/\/|\/)[^\s)]+\)|https?:\/\/[^\s]+?[^.,;?!()\]}\s](?=[.,;?!()\]}\s]|$))/g;
+  const parts = content.split(urlRegex);
+
+  return parts.map((part, i) => {
+    if (!part) return null;
+
+    // Check for Markdown link first (supports /path or http://path)
+    const mdMatch = part.match(/^\[([^\]]+)\]\(((?:https?:\/\/|\/)[^\s)]+)\)$/);
+    if (mdMatch) {
+      const linkText = mdMatch[1];
+      const href = mdMatch[2];
+      const isInternal = href.startsWith('/');
+
+      if (isInternal && onLinkClick) {
+        // Internal link — delegate to parent for auth-gating
+        return (
+          <button
+            key={i}
+            onClick={() => onLinkClick(href)}
+            className={`underline font-semibold cursor-pointer ${isUser ? 'text-blue-100' : 'text-primary'}`}
+          >
+            {linkText}
+          </button>
+        );
+      }
+
+      return (
+        <a
+          key={i}
+          href={href}
+          target={isInternal ? '_self' : '_blank'}
+          rel="noopener noreferrer"
+          className={`underline font-semibold cursor-pointer ${isUser ? 'text-blue-100' : 'text-primary'}`}
+        >
+          {linkText}
+        </a>
+      );
+    }
+
+    // Check for raw URL
+    if (/^https?:\/\//.test(part)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`underline break-all ${isUser ? 'text-blue-100 font-medium' : 'text-primary'}`}
+        >
+          {part}
+        </a>
+      );
+    }
+
+    // Handle bolding (**text**)
+    if (typeof part === 'string' && part.includes('**')) {
+      const boldParts = part.split(/(\*\*[^*]+\*\*)/g);
+      return boldParts.map((bp, bidx) => {
+        if (bp.startsWith('**') && bp.endsWith('**')) {
+          return <strong key={`${i}-${bidx}`} className="font-extrabold">{bp.slice(2, -2)}</strong>;
+        }
+        // Filter out any orphaned lone ** markers
+        if (bp === '**') return null;
+        return bp;
+      });
+    }
+
+    return part;
+  });
+};
+
+const renderMessageContent = (content, isUser, onLinkClick) => {
+  if (!content) return null;
+
+  // Split by lines to handle bullet points
+  const lines = content.split('\n');
+  return lines.map((line, i) => {
+    const isBullet = line.trim().startsWith('- ');
+    return (
+      <div key={i} className={`${isBullet ? 'flex gap-2 ml-1 my-1' : 'mb-1 last:mb-0'}`}>
+        {isBullet && <span className="shrink-0">•</span>}
+        <span>{formatContent(isBullet ? line.trim().slice(2) : line, isUser, onLinkClick)}</span>
+      </div>
+    );
+  });
+};
+
+function MessageBubble({ msg, onLinkClick }) {
   const [copied, setCopied] = useState(false);
 
   if (msg.isSystem) {
@@ -100,65 +228,22 @@ function MessageBubble({ msg }) {
   const isUser = msg.sender === 'USER';
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(msg.content);
+    // Copy clean plain text — strips markdown bold/link syntax
+    navigator.clipboard.writeText(stripMarkdownForCopy(msg.content));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const formatContent = (content) => {
-    if (!content) return null;
-    // Regex that catches Markdown links [text](url) OR raw URLs (excluding trailing punctuation)
-    const urlRegex = /(\[[^\]]+\]\(https?:\/\/[^\s)]+\)|https?:\/\/[^\s]+?[^.,;?!()\]}\s](?=[.,;?!()\]}\s]|$))/g;
-    const parts = content.split(urlRegex);
-
-    return parts.map((part, i) => {
-      if (!part) return null;
-
-      // Check for Markdown link first
-      const mdMatch = part.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
-      if (mdMatch) {
-        return (
-          <a
-            key={i}
-            href={mdMatch[2]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`underline font-medium ${isUser ? 'text-blue-100' : 'text-primary'}`}
-          >
-            {mdMatch[1]}
-          </a>
-        );
-      }
-
-      // Check for raw URL
-      if (/^https?:\/\//.test(part)) {
-        return (
-          <a
-            key={i}
-            href={part}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`underline break-all ${isUser ? 'text-blue-100 font-medium' : 'text-primary'}`}
-          >
-            {part}
-          </a>
-        );
-      }
-
-      return part;
-    });
   };
 
   return (
     <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} gap-1`}>
       <div className={`flex items-start gap-2 max-w-[85%] group ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
         <div
-          className={`p-3 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed relative ${isUser
+          className={`p-3 rounded-2xl text-sm leading-relaxed relative ${isUser
             ? 'bg-primary text-white rounded-tr-none'
             : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-tl-none'
             }`}
         >
-          {formatContent(msg.content)}
+          {renderMessageContent(msg.content, isUser, onLinkClick)}
         </div>
 
         <button
@@ -179,6 +264,7 @@ function MessageBubble({ msg }) {
 // ── main component ────────────────────────────────────────────────────────────
 export default function ChatWidget() {
   const socket = useSocket();
+  const requestSocket = useSocketRequest();
   const router = useRouter();
   const dragControls = useDragControls();
   const [isDraggingIcon, setIsDraggingIcon] = useState(false);
@@ -200,6 +286,7 @@ export default function ChatWidget() {
 
   // agent-wait state
   const [isWaiting, setIsWaiting] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState("");
   const [timedOut, setTimedOut] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(AGENT_TIMEOUT_MS / 1000);
 
@@ -209,6 +296,9 @@ export default function ChatWidget() {
   const isInitializingRef = useRef(false);
   const containerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [pendingChatId, setPendingChatId] = useState(null); // triggers agent-request emit once socket is ready
+  const [pendingRedirect, setPendingRedirect] = useState(null); // URL to navigate to after login
 
   // ── responsive detection ──
   useEffect(() => {
@@ -218,27 +308,38 @@ export default function ChatWidget() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Logged-in user info (reactive)
+  // Logged-in user info (reactive) — must be before any useEffect that reads isAuthenticated
   const { user: currentUser, isAuthenticated } = userAuthStore();
+
+  // ── redirect after login (for protected links clicked while unauthenticated) ──
+  useEffect(() => {
+    if (isAuthenticated && pendingRedirect) {
+      const href = pendingRedirect;
+      setPendingRedirect(null);
+      setIsLoginModalOpen(false);
+      router.push(href);
+    }
+  }, [isAuthenticated, pendingRedirect]);
+
 
   // ── react to auth changes ──
   useEffect(() => {
     // If user logs out
     if (!isAuthenticated && chat?.userId) {
       console.log("🔄 User logged out, switching to guest mode...");
-      
+
       // 1. Cancel any active agent request
       if (isWaiting && socket && chat?._id) {
         socket.emit('cancel_agent_request', { chatId: chat._id });
         stopWaiting();
       }
-      
+
       // 2. Reset states
       setTimedOut(false);
       setMessages([]);
       setChat(null);
       setView('chat');
-      
+
       // 3. Generate a fresh guest ID on logout to ensure "new guest" behavior
       const newGuestId = Math.random().toString(36).substring(7);
       localStorage.setItem('chat_guest_id', newGuestId);
@@ -246,17 +347,20 @@ export default function ChatWidget() {
     }
     // If user logs in (or just loaded auth)
     else if (isAuthenticated && (!chat || chat.guestId)) {
-      console.log("🔄 User logged in, migrating/syncing session...");
-      initChat();
+      // Only auto-init if the widget is open OR we have a pending action
+      if (isOpen || pendingActionRef.current) {
+        console.log("🔄 User logged in, migrating/syncing session...");
+        initChat();
+      }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isOpen]); // Added isOpen to dependencies
 
   // ── click outside handler ──
   useEffect(() => {
     const handleClickOutside = (event) => {
       // Don't close if clicking inside the chat window
       if (containerRef.current && containerRef.current.contains(event.target)) return;
-      
+
       // Don't close if login modal is open (so clicks on modal don't close the chat)
       if (isLoginModalOpen) return;
 
@@ -269,7 +373,7 @@ export default function ChatWidget() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, isLoginModalOpen]);
 
   // ── scroll to bottom on new messages or view change back to chat ──
   useEffect(() => {
@@ -280,7 +384,10 @@ export default function ChatWidget() {
 
   // ── init chat when widget opens ──
   useEffect(() => {
-    if (isOpen && !chat) initChat();
+    if (isOpen) {
+      requestSocket(); // Trigger socket connection
+      if (!chat) initChat();
+    }
   }, [isOpen]);
 
   // ── socket event listeners ──
@@ -288,8 +395,9 @@ export default function ChatWidget() {
     if (!chat || !socket) return;
 
     const joinRoom = () => {
-      socket.emit('join_chat', { chatId: chat._id });
-      console.log('💬 Socket joined/re-joined chat room:', chat._id);
+      // Join the specific chat room
+      socket.emit('join_chat', { chatId: chat._id, userId: isAuthenticated ? (currentUser?._id || currentUser?.id) : null });
+      console.log('💬 Joined chat room:', chat._id);
     };
 
     // Join immediately
@@ -299,7 +407,20 @@ export default function ChatWidget() {
     socket.on('connect', joinRoom);
 
     const onNewMessage = (msg) => {
+      // Unified check: only process if it's for this chat
+      const msgChatId = msg.chatId?._id ?? msg.chatId;
+      if (msgChatId && msgChatId !== chat._id) return;
+
+      // For AI messages: clear the streaming bubble FIRST, then append the
+      // persisted message. This prevents a single frame where both are visible.
+      if (msg.sender === 'AI') {
+        setStreamingMessage('');
+      }
+
       setMessages((prev) => {
+        // Avoid duplicate messages if received from multiple paths
+        if (prev.some(m => m._id === msg._id)) return prev;
+
         // If it's a message from the user, check if we already have it optimistically
         if (msg.sender === 'USER') {
           const exists = prev.find(
@@ -319,46 +440,122 @@ export default function ChatWidget() {
       }
     };
 
-    const onStatusChange = ({ status }) => {
-      setChat((prev) => ({ ...prev, status }));
+    const onAITyping = (data) => {
+      // Unified check
+      const typingChatId = data.chatId?._id ?? data.chatId;
+      if (typingChatId && typingChatId !== chat._id) return;
+
+      setIsTyping(data.typing);
+      if (data.typing) {
+        // New AI response starting — reset streaming bubble
+        setStreamingMessage('');
+      } else {
+        // Typing stopped — safety-clear the streaming bubble.
+        // new_message will arrive shortly with the persisted content;
+        // we also clear here so there's no orphaned bubble if the event is delayed.
+        setStreamingMessage('');
+      }
+    };
+
+    const onAiChunk = (data) => {
+      const chunkChatId = data.chatId?._id ?? data.chatId;
+      if (chunkChatId && chunkChatId !== chat._id) return;
+      
+      setStreamingMessage(prev => prev + data.chunk);
+    };
+
+    const onStatusChange = (data) => {
+      // Unified check
+      const statusChatId = data.chatId?._id ?? data.chatId;
+      if (statusChatId && statusChatId !== chat._id) return;
+
+      if (data.status === 'WAITING' && data.waitingStartedAt) {
+        const startedAt = new Date(data.waitingStartedAt).getTime();
+        const now = new Date().getTime();
+        const elapsedSecs = Math.floor((now - startedAt) / 1000);
+        const remainingSecs = (AGENT_TIMEOUT_MS / 1000) - elapsedSecs;
+
+        if (remainingSecs > 0) {
+          startWaitingCountdown(remainingSecs);
+        } else {
+          setTimedOut(true);
+          setIsWaiting(false);
+        }
+      } else if (data.status === 'AI') {
+        stopWaiting();
+      }
+
+      setChat((prev) => ({ ...prev, status: data.status }));
     };
 
     const onSessionStarted = (sysMsg) => {
+      // Unified check
+      const cid = sysMsg.chatId?._id ?? sysMsg.chatId;
+      if (cid && cid !== chat._id) return;
+
       // Agent connected – cancel waiting state
       stopWaiting();
-      setMessages((prev) => [...prev, sysMsg]);
+      setMessages((prev) => {
+        if (prev.some(m => m._id === sysMsg._id)) return prev;
+        return [...prev, sysMsg];
+      });
       setChat((prev) => ({ ...prev, status: 'LIVE_AGENT' }));
     };
 
     const onChatClosed = (sysMsg) => {
-      setMessages((prev) => [...prev, sysMsg]);
+      // Unified check
+      const cid = sysMsg.chatId?._id ?? sysMsg.chatId;
+      if (cid && cid !== chat._id) return;
+
+      setMessages((prev) => {
+        if (prev.some(m => m._id === sysMsg._id)) return prev;
+        return [...prev, sysMsg];
+      });
       setChat((prev) => ({ ...prev, status: 'AI' }));
       stopWaiting();
     };
 
     const onAgentTimeout = (sysMsg) => {
+      // Unified check
+      const cid = sysMsg.chatId?._id ?? sysMsg.chatId;
+      if (cid && cid !== chat._id) return;
+
       // Server confirmed the timeout – revert to AI
       stopWaiting();
       setTimedOut(true);
-      setMessages((prev) => [...prev, sysMsg]);
+      setMessages((prev) => {
+        if (prev.some(m => m._id === sysMsg._id)) return prev;
+        return [...prev, sysMsg];
+      });
       setChat((prev) => ({ ...prev, status: 'AI' }));
     };
 
+    // Re-join on every (re)connection and refresh state
+    const handleConnect = () => {
+      joinRoom();
+      initChat(); 
+    };
+
+    socket.on('connect', handleConnect);
     socket.on('new_message', onNewMessage);
+    socket.on('ai_typing', onAITyping);
+    socket.on('ai_chunk', onAiChunk);
     socket.on('status_change', onStatusChange);
     socket.on('session_started', onSessionStarted);
     socket.on('chat_closed', onChatClosed);
     socket.on('agent_timeout', onAgentTimeout);
 
     return () => {
-      socket.off('connect', joinRoom);
+      socket.off('connect', handleConnect);
       socket.off('new_message', onNewMessage);
+      socket.off('ai_typing', onAITyping);
+      socket.off('ai_chunk', onAiChunk);
       socket.off('status_change', onStatusChange);
       socket.off('session_started', onSessionStarted);
       socket.off('chat_closed', onChatClosed);
       socket.off('agent_timeout', onAgentTimeout);
     };
-  }, [chat, socket]);
+  }, [chat, socket, isAuthenticated]);
 
   // ── helpers ──
   const stopWaiting = useCallback(() => {
@@ -399,6 +596,28 @@ export default function ChatWidget() {
     };
   }, []);
 
+  // ── fire pending agent request once socket is connected ──
+  // Fixes the race condition: after login, the socket is being recreated (auth change
+  // creates a new instance). We wait until the new socket is connected before emitting.
+  useEffect(() => {
+    if (!socket || !pendingChatId) return;
+
+    const firePendingRequest = () => {
+      console.log('🚀 Firing pending agent request for chat:', pendingChatId);
+      socket.emit('request_live_agent', { chatId: pendingChatId });
+      setPendingChatId(null);
+      pendingActionRef.current = null;
+    };
+
+    if (socket.connected) {
+      firePendingRequest();
+    } else {
+      // Wait for this socket instance to connect, then fire once
+      socket.once('connect', firePendingRequest);
+      return () => socket.off('connect', firePendingRequest);
+    }
+  }, [socket, pendingChatId]);
+
   const initChat = async () => {
     if (isInitializingRef.current) return;
     isInitializingRef.current = true;
@@ -418,7 +637,18 @@ export default function ChatWidget() {
         throw new Error(res.message || 'Unknown error');
       }
 
+      // Trigger socket request if we have an active chat session
+      const activeStatuses = ['AI', 'WAITING', 'LIVE_AGENT'];
+      if (activeStatuses.includes(res.data.status)) {
+        requestSocket();
+      }
+
       setChat(res.data);
+
+      // CRITICAL: Ensure we join the newly fetched chat room on the socket!
+      if (socket) {
+        socket.emit('join_chat', { chatId: res.data._id, userId });
+      }
 
       const msgRes = await getChatMessages(res.data._id);
       if (msgRes.success) {
@@ -429,14 +659,17 @@ export default function ChatWidget() {
       // Restore waiting UI if chat was already WAITING (e.g. page refresh)
       if (res.data.status === 'WAITING' && res.data.waitingStartedAt) {
         const startedAt = new Date(res.data.waitingStartedAt).getTime();
-        const now = new Date().getTime();
+        const now = Date.now();
         const elapsedSecs = Math.floor((now - startedAt) / 1000);
-        const remainingSecs = (AGENT_TIMEOUT_MS / 1000) - elapsedSecs;
+        
+        // Ensure remainingSecs is at most AGENT_TIMEOUT_MS and at least 0
+        const totalTimeoutSecs = AGENT_TIMEOUT_MS / 1000;
+        const remainingSecs = Math.max(0, Math.min(totalTimeoutSecs, totalTimeoutSecs - elapsedSecs));
 
         if (remainingSecs > 0) {
+          console.log(`⏱️ Resuming countdown with ${Math.floor(remainingSecs)}s left`);
           startWaitingCountdown(remainingSecs);
         } else {
-          // Already timed out but server hasn't updated yet or we just synced
           setIsWaiting(false);
           setTimedOut(true);
         }
@@ -444,10 +677,10 @@ export default function ChatWidget() {
 
       // Handle auto-trigger of live agent request if pending after login
       if (pendingActionRef.current === 'request_agent') {
-        console.log("🚀 Auto-triggering live agent request after sync...");
-        socket.emit('request_live_agent', { chatId: res.data._id });
+        console.log("🚀 Scheduling live agent request after sync — waiting for socket to be ready...");
+        setPendingChatId(res.data._id);
         startWaitingCountdown();
-        pendingActionRef.current = null;
+        // Actual emit fires via the pendingChatId useEffect once socket is connected
       }
     } catch (err) {
       console.error('Failed to init chat:', err.message || err);
@@ -502,11 +735,15 @@ export default function ChatWidget() {
     socket.emit('send_message', { chatId: chat._id, content: input });
     setInput('');
 
+    // Dismiss the agent-timeout error banner on next message so the
+    // "Connect to Live Agent" button reappears and the user can try again.
+    if (timedOut) setTimedOut(false);
+
     // Show typing indicator only in AI mode
     if (chat.status === 'AI') setIsTyping(true);
   };
 
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
 
   const requestAgent = () => {
     if (!chat || !socket || isWaiting) return;
@@ -524,9 +761,30 @@ export default function ChatWidget() {
     startWaitingCountdown();
   };
 
+  // Handles clicks on internal links from AI messages.
+  // Protected paths (/user/*) require login — show modal and redirect after.
+  const handleChatLinkClick = useCallback((href) => {
+    const isProtected = href.startsWith('/user/') || href.startsWith('/admin/');
+    if (isProtected && !isAuthenticated) {
+      setPendingRedirect(href);
+      setIsLoginModalOpen(true);
+    } else {
+      router.push(href);
+    }
+  }, [isAuthenticated, router]);
+
   const handleLoginSuccess = () => {
-    console.log("👋 Login success, pending action:", pendingActionRef.current);
+    console.log("👋 Login success, pending action:", pendingActionRef.current, 'redirect:', pendingRedirect);
+    // If login was triggered by clicking a protected link, redirect there now
+    // (pendingRedirect state is read via closure — handled in the useEffect below)
   };
+
+  const joinRoom = useCallback(() => {
+    if (!socket || !chat) return;
+    const user = userAuthStore.getState().user;
+    const userId = user?._id || user?.id || null;
+    socket.emit('join_chat', { chatId: chat._id, userId });
+  }, [socket, chat]);
 
   const cancelAgentRequest = () => {
     if (!chat || !socket) return;
@@ -576,7 +834,7 @@ export default function ChatWidget() {
   // ── derived flags ──
   const isLive = chat?.status === 'LIVE_AGENT';
   const isAI = chat?.status === 'AI';
-  const inputDisabled = isWaiting || isTyping || !chat || !socket;
+  const inputDisabled = isWaiting || isTyping || !chat || !socket?.connected;
 
   // ── render ────────────────────────────────────────────────────────────────
   return (
@@ -593,14 +851,14 @@ export default function ChatWidget() {
             initial={isMobile ? { opacity: 0, y: 100 } : { opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={isMobile ? { opacity: 0, y: 100 } : { opacity: 0, scale: 0.8, y: 20 }}
-            className={`bg-white flex flex-col overflow-hidden touch-none ${isMobile 
-              ? 'w-full rounded-none border-t border-gray-100' 
+            className={`bg-white flex flex-col overflow-hidden touch-none ${isMobile
+              ? 'w-full rounded-none border-t border-gray-100'
               : 'mb-4 w-80 sm:w-96 rounded-2xl shadow-2xl border border-gray-100'
-            }`}
+              }`}
             style={{ height: isMobile ? 'calc(100vh - 64px)' : '520px' }}
           >
             {/* Header */}
-            <div 
+            <div
               onPointerDown={(e) => !isMobile && dragControls.start(e)}
               className={`p-4 flex items-center justify-between text-white shrink-0 transition-colors ${!isMobile ? 'cursor-move' : ''} ${view === 'history-detail' ? 'bg-blue-600' : 'bg-primary'}`}
             >
@@ -662,11 +920,12 @@ export default function ChatWidget() {
                     </div>
                   )}
                   <p className="text-[10px] text-white/80 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                    <span className={`w-1.5 h-1.5 rounded-full ${socket?.connected ? 'bg-green-400' : 'bg-red-400 animate-pulse'}`} />
                     {isLive
                       ? 'Live Agent • Connected'
                       : isWaiting
                         ? 'Connecting to Agent…'
-                        : 'Online • AI Assistant'}
+                        : socket?.connected ? 'Online • AI Assistant' : 'Reconnecting…'}
                   </p>
                 </div>
               </div>
@@ -692,12 +951,54 @@ export default function ChatWidget() {
                     </div>
                   )}
                   {messages.map((msg, idx) => (
-                    <MessageBubble key={msg._id ?? idx} msg={msg} />
+                    <MessageBubble key={msg._id ?? idx} msg={msg} onLinkClick={handleChatLinkClick} />
                   ))}
+
+                  {/* FAQ suggestion chips — centered in the middle of the empty chat window */}
+                  {messages.length === 0 && !isTyping && !streamingMessage && isAI && !isWaiting && (
+                    <div className="flex-1 flex flex-col items-center justify-center gap-4 py-6">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-2xl">✨</span>
+                        <p className="text-xs text-gray-500 font-semibold tracking-wide">Quick questions to get started</p>
+                      </div>
+                      <div className="flex flex-col gap-2.5 w-full">
+                        {FAQ_SUGGESTIONS.map((q) => (
+                          <button
+                            key={q}
+                            onClick={() => {
+                              if (!chat || !socket) return;
+                              const tempMsg = {
+                                _id: `temp-${Date.now()}`,
+                                content: q,
+                                sender: 'USER',
+                                createdAt: new Date().toISOString(),
+                                chatId: chat._id,
+                              };
+                              setMessages((prev) => [...prev, tempMsg]);
+                              socket.emit('send_message', { chatId: chat._id, content: q });
+                              setIsTyping(true);
+                            }}
+                            className="text-left px-4 py-3 rounded-xl border border-primary/25 bg-white text-primary text-xs font-semibold hover:bg-primary hover:text-white hover:border-primary transition-all duration-200 shadow-sm hover:shadow-md"
+                          >
+                            {q}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Streaming Message */}
+                  {streamingMessage && (
+                    <div className="flex justify-start">
+                      <div className="max-w-[85%] p-3 rounded-2xl bg-white text-gray-800 shadow-sm border border-gray-100 rounded-tl-none text-sm leading-relaxed">
+                        {renderMessageContent(streamingMessage, false, handleChatLinkClick)}
+                      </div>
+                    </div>
+                  )}
 
                   {isWaiting && <WaitingBanner secondsLeft={secondsLeft} />}
                   {timedOut && !isWaiting && <TimeoutBanner onRetry={handleRetryAgent} />}
-                  {isTyping && <TypingIndicator />}
+                  {isTyping && !streamingMessage && <TypingIndicator />}
                 </div>
               )}
 
@@ -803,7 +1104,8 @@ export default function ChatWidget() {
                 {isAI && !isWaiting && !timedOut && (
                   <button
                     onClick={requestAgent}
-                    className="w-full mb-3 text-[11px] text-primary font-medium hover:underline flex items-center justify-center gap-1 transition-opacity"
+                    disabled={!socket?.connected}
+                    className="w-full mb-3 text-[11px] text-primary font-medium hover:underline flex items-center justify-center gap-1 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Headset size={12} /> Connect to Live Agent
                   </button>

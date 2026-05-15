@@ -4,9 +4,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import { blogService } from "@/lib/api/user/blogs";
+import { ChevronDown } from "lucide-react";
 import userAuthStore from "@/store/userAuthStore";
 import LoginModal from "../../components/landingPage/LoginModal";
 import ConfirmationModal from "../ui/ConfirmationModal";
+
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
@@ -16,11 +19,22 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [categories, setCategories] = useState([]);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
     checkAuthSync();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const data = await blogService.getPublicCategories();
+      setCategories(data.data);
+    } catch (error) {
+      console.error("Header: Failed to fetch categories", error);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -110,6 +124,55 @@ export default function Header() {
               >
                 Home
                 {isActive("/") && (
+                  <span className="absolute bottom-0 left-0 right-0 mx-2 h-0.5 bg-brand-blue"></span>
+                )}
+              </Link>
+              <div className="relative group">
+                <Link
+                  href="/blog"
+                  className={`flex items-center gap-1 px-3 md:px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-[13px] lg:text-sm relative ${isActive("/blog")
+                    ? "text-brand-blue"
+                    : "text-gray-700 hover:text-brand-blue"
+                    }`}
+                >
+                  Blog
+                  {isActive("/blog") && (
+                    <span className="absolute bottom-0 left-0 right-0 mx-2 h-0.5 bg-brand-blue"></span>
+                  )}
+                </Link>
+
+                {/* Blog Dropdown */}
+                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-100 rounded-xl shadow-xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 z-[110]">
+                  <div className="p-2 space-y-1">
+                    <Link href="/blog" className="block px-4 py-2 text-xs font-bold text-gray-600 hover:bg-blue-50 hover:text-brand-blue rounded-lg transition-colors">
+                      All Posts
+                    </Link>
+                    <div className="h-px bg-gray-50 mx-2 my-1" />
+                    {categories.length > 0 ? (
+                      categories.map(cat => (
+                        <Link
+                          key={cat._id}
+                          href={`/blog?category=${cat.slug}`}
+                          className="block px-4 py-2 text-xs font-bold text-gray-600 hover:bg-blue-50 hover:text-brand-blue rounded-lg transition-colors"
+                        >
+                          {cat.name}
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="px-4 py-2 text-[10px] text-gray-400 italic">No categories</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <Link
+                href="/press-releases"
+                className={`px-3 md:px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-[13px] lg:text-sm relative ${isActive("/press-releases")
+                  ? "text-brand-blue"
+                  : "text-gray-700 hover:text-brand-blue"
+                  }`}
+              >
+                Press Room
+                {isActive("/press-releases") && (
                   <span className="absolute bottom-0 left-0 right-0 mx-2 h-0.5 bg-brand-blue"></span>
                 )}
               </Link>
@@ -203,9 +266,9 @@ export default function Header() {
                   >
                     {user?.avatar ? (
                       <img
-                        src={user.avatar}
+                        src={user.avatar || null}
                         alt={user.name}
-                        className="w-10 h-10 rounded-full object-cover "
+                        className="w-10 h-10 rounded-full object-cover border-2 border-brand-blue"
                       />
                     ) : (
                       <div className="w-10 h-10 rounded-full  from-brand-blue to-blue-700 flex items-center justify-center text-primary font-semibold border-2 border-brand-blue">
@@ -236,7 +299,7 @@ export default function Header() {
                       >
                         {user?.avatar ? (
                           <img
-                            src={user.avatar}
+                            src={user.avatar || null}
                             alt={user.name}
                             className="w-10 h-10 rounded-full object-cover border-2 border-brand-blue"
                           />
@@ -367,6 +430,46 @@ export default function Header() {
                     Home
                   </Link>
                   <Link
+                    href="/blog"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-brand-blue rounded-lg transition-colors"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                      />
+                    </svg>
+                    Blog
+                  </Link>
+                  <Link
+                    href="/press-releases"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-brand-blue rounded-lg transition-colors"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                      />
+                    </svg>
+                    Press Room
+                  </Link>
+                  <Link
                     href="/contact"
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-brand-blue rounded-lg transition-colors"
@@ -458,7 +561,7 @@ export default function Header() {
                     >
                       {user?.avatar ? (
                         <img
-                          src={user.avatar}
+                          src={user.avatar || null}
                           alt={user.name}
                           className="w-10 h-10 rounded-full object-cover border-2 border-brand-blue"
                         />

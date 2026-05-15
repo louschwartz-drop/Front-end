@@ -235,20 +235,30 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                         </div>
 
                         <div className="pt-6 md:pt-8 border-t border-gray-100 text-[10px] md:text-sm text-gray-500 flex flex-col gap-3 md:gap-4">
-                            <div className="space-y-1 md:space-y-2">
-                                <p className="text-[9px] md:text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                    Original Source:
-                                </p>
-                                <button
-                                    onClick={() => setIsVideoOpen(true)}
-                                    className="text-blue-500 hover:text-blue-700 underline font-medium text-left transition-colors flex items-center gap-1.5"
-                                >
-                                    Watch Original Creator Video
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            {campaign?.videoSource !== "document_upload" && (
+                                <div className="space-y-1 md:space-y-2">
+                                    <p className="text-[9px] md:text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                        Original Source:
+                                    </p>
+                                    <button
+                                        onClick={() => setIsVideoOpen(true)}
+                                        className="text-blue-500 hover:text-blue-700 underline font-medium text-left transition-colors flex items-center gap-1.5"
+                                    >
+                                        Watch Original Creator Video
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2-2v8a2 2 0 002 2z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            )}
+                            {campaign?.videoSource === "document_upload" && (
+                                <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 rounded-lg border border-green-100 w-fit">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                </button>
-                            </div>
+                                    <span className="text-xs font-bold uppercase tracking-tight">Article Generated from Document</span>
+                                </div>
+                            )}
                             <p className="">
                                 {displayProduct.authorName &&
                                     `© ${new Date().getFullYear()} ${displayProduct.authorName}`}

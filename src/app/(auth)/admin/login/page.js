@@ -15,19 +15,11 @@ function LoginForm({ redirectPath }) {
     email: "",
     password: "",
   });
+  const [showOTP, setShowOTP] = useState(false);
+  const [otp, setOtp] = useState("");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
-
-  useEffect(() => {
-    if (isAuthenticated && !isLoading) {
-      if (redirectPath) {
-        router.push(redirectPath);
-      } else {
-        router.push("/admin/dashboard");
-      }
-    }
-  }, [isAuthenticated, isLoading, router, redirectPath]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,15 +32,8 @@ function LoginForm({ redirectPath }) {
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    }
-
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    }
-
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    if (!formData.password) newErrors.password = "Password is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -57,9 +42,7 @@ function LoginForm({ redirectPath }) {
     e.preventDefault();
     setSubmitError("");
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
     try {
@@ -67,9 +50,38 @@ function LoginForm({ redirectPath }) {
       router.push("/admin/dashboard");
     } catch (error) {
       console.error("Login error:", error);
-      setSubmitError(
-        error.message || "Login failed. Please check your credentials.",
-      );
+      // Check if it's a verification error
+      if (error.message.includes("verify your email") || error.message.includes("403")) {
+        setShowOTP(true);
+        setSubmitError("Verification required. Please enter the OTP sent to your email.");
+      } else {
+        setSubmitError(error.message || "Login failed. Please check your credentials.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOTPVerify = async (e) => {
+    e.preventDefault();
+    if (otp.length !== 6) {
+      setSubmitError("Please enter a valid 6-digit code.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // We need a verifyOTP method in the store or service
+      const { adminAuthService } = await import("@/lib/api/admin/auth");
+      await adminAuthService.verifyOTP({ otp });
+      
+      // Update local state to verified
+      const { admin, updateAdmin } = adminAuthStore.getState();
+      updateAdmin({ isEmailVerified: true });
+      
+      router.push("/admin/dashboard");
+    } catch (error) {
+      setSubmitError(error.message || "OTP verification failed.");
     } finally {
       setLoading(false);
     }
@@ -216,32 +228,53 @@ function LoginForm({ redirectPath }) {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <Input
-                  type="email"
-                  label="Email Address"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="admin@droppr.ai"
-                  required
-                  error={errors.email}
-                />
+              <form onSubmit={showOTP ? handleOTPVerify : handleSubmit} className="space-y-6">
+                {!showOTP ? (
+                  <>
+                    <Input
+                      type="email"
+                      label="Email Address"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="admin@droppr.ai"
+                      required
+                      error={errors.email}
+                    />
 
-                <Input
-                  type="password"
-                  label="Password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="••••••••"
-                  required
-                  error={errors.password}
-                  showPasswordToggle={true}
-                />
+                    <Input
+                      type="password"
+                      label="Password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="••••••••"
+                      required
+                      error={errors.password}
+                      showPasswordToggle={true}
+                    />
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <Input
+                      type="text"
+                      label="6-Digit Verification Code"
+                      name="otp"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      placeholder="123456"
+                      maxLength={6}
+                      required
+                      className="text-center text-2xl tracking-[1em] font-bold"
+                    />
+                    <p className="text-sm text-gray-500 text-center">
+                      We've sent a code to <span className="font-semibold">{formData.email}</span>
+                    </p>
+                  </div>
+                )}
 
                 {submitError && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-start gap-3">
+                  <div className={`px-4 py-3 rounded-xl text-sm flex items-start gap-3 ${showOTP && !submitError.includes("failed") ? 'bg-blue-50 border border-blue-200 text-blue-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
                     <svg
                       className="w-5 h-5 shrink-0 mt-0.5"
                       fill="currentColor"
@@ -264,8 +297,18 @@ function LoginForm({ redirectPath }) {
                   loading={loading}
                   className="mt-8 h-12 text-base font-semibold"
                 >
-                  Sign In to Dashboard
+                  {showOTP ? "Verify & Continue" : "Sign In to Dashboard"}
                 </Button>
+                
+                {showOTP && (
+                   <button 
+                    type="button"
+                    onClick={() => setShowOTP(false)}
+                    className="w-full text-center text-sm text-gray-500 hover:text-brand-blue transition-colors mt-2"
+                   >
+                     Back to Login
+                   </button>
+                )}
               </form>
 
 

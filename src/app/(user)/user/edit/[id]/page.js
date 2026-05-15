@@ -71,6 +71,7 @@ export default function EditPage() {
   const [xprStoryPayload, setXprStoryPayload] = useState(null);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [showAiScoreSheet, setShowAiScoreSheet] = useState(false);
+  const [videoSource, setVideoSource] = useState(null);
 
   const [editData, setEditData] = useState({
     headline: "",
@@ -219,6 +220,7 @@ export default function EditPage() {
 
           if (response.success) {
             const campaign = response.data;
+            setVideoSource(campaign.videoSource);
             if (campaign.article) {
               setEditData({
                 headline: campaign.article.headline || "",
@@ -555,11 +557,20 @@ export default function EditPage() {
       const aiAnalysisData = response?.data?.aiAnalysis;
       setAiAnalysis(aiAnalysisData);
 
-      // ALWAYS show the AI score sheet modal after validation
-      setShowAiScoreSheet(true);
+      if (aiAnalysisData) {
+        console.log(`[Frontend AI Score] ${aiAnalysisData.score}/100 - Classification: ${aiAnalysisData.classification}`);
+        console.log(`[Frontend AI Summary] ${aiAnalysisData.summary}`);
+      }
 
-      if (aiAnalysisData && aiAnalysisData.score < 70) {
-        toast.warn("AI Quality Score is too low for publication. Please improve the content.");
+      if (aiAnalysisData && aiAnalysisData.score >= 70) {
+        // Score is good, proceed directly to publish modal
+        handleInitiatePublish();
+      } else {
+        // Score is low, show the AI improvement modal
+        setShowAiScoreSheet(true);
+        if (aiAnalysisData && aiAnalysisData.score < 70) {
+          toast.warn("AI Quality Score is too low for publication. Please improve the content.");
+        }
       }
     } catch (error) {
       console.error("Validation failed:", error);
@@ -625,10 +636,10 @@ export default function EditPage() {
     !productCard.thumbnail?.trim() ||
     !productCard.affiliateLink?.trim() ||
     !productCard.authorName?.trim() ||
-    !productCard.sourceVideoLink?.trim() ||
+    (videoSource !== "document_upload" && !productCard.sourceVideoLink?.trim()) ||
     !isValidUrl(productCard.thumbnail) ||
     !isValidUrl(productCard.affiliateLink) ||
-    !isValidUrl(productCard.sourceVideoLink) ||
+    (videoSource !== "document_upload" && !isValidUrl(productCard.sourceVideoLink)) ||
     !!thumbnailUrlError ||
     validatingImage;
 
@@ -993,18 +1004,20 @@ export default function EditPage() {
                   isSpeaking={currentlySpeaking === 'sidebar-author'}
                 />
 
-                <SidebarField
-                  label="Source Video Link"
-                  value={productCard.sourceVideoLink}
-                  onChange={(val) => {
-                    setProductCard({ ...productCard, sourceVideoLink: val });
-                    setSourceLinkError(val && !isValidUrl(val) ? "Please enter a valid URL (e.g. https://...)" : "");
-                  }}
-                  error={sourceLinkError}
-                  placeholder="https://..."
-                  onSpeak={() => toggleSpeech(productCard.sourceVideoLink, 'sidebar-source')}
-                  isSpeaking={currentlySpeaking === 'sidebar-source'}
-                />
+                {videoSource !== "document_upload" && (
+                  <SidebarField
+                    label="Source Video Link"
+                    value={productCard.sourceVideoLink}
+                    onChange={(val) => {
+                      setProductCard({ ...productCard, sourceVideoLink: val });
+                      setSourceLinkError(val && !isValidUrl(val) ? "Please enter a valid URL (e.g. https://...)" : "");
+                    }}
+                    error={sourceLinkError}
+                    placeholder="https://..."
+                    onSpeak={() => toggleSpeech(productCard.sourceVideoLink, 'sidebar-source')}
+                    isSpeaking={currentlySpeaking === 'sidebar-source'}
+                  />
+                )}
 
                 <CategorySelector
                   categories={editData.categories}
@@ -1020,20 +1033,25 @@ export default function EditPage() {
                   </div>
 
                   <button
-                    disabled={isPublishDisabled || validating}
+                    disabled={isPublishDisabled || validating || regenerating}
                     onClick={handlePublishClick}
-                    className={`w-full py-2.5 rounded-xl font-bold text-sm transition-all shadow-md flex justify-center items-center gap-2 ${isPublishDisabled || validating
+                    className={`w-full py-2.5 rounded-xl font-bold text-sm transition-all shadow-md flex justify-center items-center gap-2 ${isPublishDisabled || validating || regenerating
                       ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                       : "bg-linear-to-r from-blue-600 to-primary text-white hover:shadow-lg focus:ring-4 focus:ring-blue-100"
                       }`}
                   >
-                    {validating ? (
+                    {regenerating ? (
+                      <>
+                        <div className="w-4 h-4 rounded-full border-2 border-gray-400 border-t-transparent animate-spin" />
+                        Regenerating...
+                      </>
+                    ) : validating ? (
                       <>
                         <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
                         Validating...
                       </>
                     ) : (
-                      "Publish Article"
+                      "Validate Now"
                     )}
                   </button>
                 </div>
@@ -1130,7 +1148,7 @@ export default function EditPage() {
                   Edit
                 </button>
                 <div className="flex gap-2 sm:gap-3">
-                  {aiAnalysis.score < 85 && (
+                  {aiAnalysis.score < 70 && (
                     <button
                       disabled={regenerating}
                       onClick={async () => {

@@ -13,38 +13,28 @@ const userAuthStore = create(
       isLoading: false,
       error: null,
 
-      // Login with Google
-      loginWithGoogle: async (idToken) => {
-        set({ isLoading: true, error: null });
-        try {
-          const response = await authService.loginWithGoogle(idToken);
+      // Sync with NextAuth or Email Login
+      setAuth: (user, token) => {
+        // Set cookie (30 days expiry) for backend compatibility
+        document.cookie = `auth_token=${token}; path=/; max-age=2592000; SameSite=Lax; Secure`;
 
-          // Set cookie (30 days expiry)
-          document.cookie = `auth_token=${response.token}; path=/; max-age=2592000; SameSite=Lax; Secure`;
-
-          set({
-            user: response.data,
-            token: response.token,
-            isAuthenticated: true,
-            isLoading: false,
-            error: null,
-          });
-
-          return response;
-        } catch (error) {
-          set({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            isLoading: false,
-            error: error.message || "Login failed",
-          });
-          throw error;
-        }
+        set({
+          user,
+          token,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        });
       },
 
       // Logout
-      logout: () => {
+      logout: async () => {
+        // Handle NextAuth logout if needed
+        const { signOut } = await import("next-auth/react");
+        try {
+          await signOut({ redirect: false });
+        } catch (e) {}
+
         // Remove cookie
         document.cookie =
           "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";

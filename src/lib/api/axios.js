@@ -16,12 +16,14 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     try {
-      const authStorage = localStorage.getItem("auth-storage");
-      if (authStorage) {
-        const { state } = JSON.parse(authStorage);
-        const token = state?.token;
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+      if (typeof window !== "undefined") {
+        const authStorage = localStorage.getItem("auth-storage");
+        if (authStorage) {
+          const { state } = JSON.parse(authStorage);
+          const token = state?.token;
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
         }
       }
     } catch (error) {
@@ -37,7 +39,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      console.log(error);
       return Promise.reject({
         success: false,
         message:
@@ -45,15 +46,14 @@ api.interceptors.response.use(
           "Something went wrong. Please try again.",
       });
     } else if (error.request) {
-      console.log(error);
       return Promise.reject({
         success: false,
-        message: "No response from server. Check your connection.",
+        message: "Network error: No response from server. Please check your connection.",
       });
     } else {
       return Promise.reject({
         success: false,
-        message: error.message || "Unexpected error occurred.",
+        message: error.message || "An unexpected error occurred during the request.",
       });
     }
   },

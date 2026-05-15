@@ -15,7 +15,8 @@ const apiAdmin = axios.create({
 apiAdmin.interceptors.request.use(
   (config) => {
     try {
-      const adminAuthStorage = localStorage.getItem("admin-auth-storage");
+      if (typeof window !== "undefined") {
+        const adminAuthStorage = localStorage.getItem("admin-auth-storage");
       if (adminAuthStorage) {
         const { state } = JSON.parse(adminAuthStorage);
         const token = state?.token;
@@ -23,6 +24,7 @@ apiAdmin.interceptors.request.use(
           config.headers.Authorization = `Bearer ${token}`;
         }
       }
+    }
     } catch (error) {
       console.error("Error setting admin auth header:", error);
     }

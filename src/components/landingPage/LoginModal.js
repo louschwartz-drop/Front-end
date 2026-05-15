@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { GoogleLogin } from "@react-oauth/google";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import {
   Dialog,
   DialogContent,
@@ -13,105 +13,506 @@ import {
 import Button from "@/components/ui/Button";
 import userAuthStore from "@/store/userAuthStore";
 import Link from "next/link";
+import {
+  Github,
+  Mail,
+  Linkedin,
+  Facebook,
+  Apple,
+  Chrome,
+  Loader2,
+  Lock,
+  ArrowRight,
+  Eye,
+  EyeOff
+} from "lucide-react";
+
 export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect = true }) {
   const [isLoading, setIsLoading] = useState(false);
-  const { loginWithGoogle, error, clearError } = userAuthStore();
+  const [authMode, setAuthMode] = useState("login"); // "login", "signup", or "otp"
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [name, setName] = useState("");
+  const [localError, setLocalError] = useState(null);
+  const [otpValue, setOtpValue] = useState("");
+  const [otpToken, setOtpToken] = useState(null); // temp JWT from register response
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  const { setAuth, error: storeError, clearError } = userAuthStore();
   const router = useRouter();
 
-  const handleGoogleSuccess = async (credentialResponse) => {
+  useEffect(() => {
+    if (localError || storeError) {
+      const timer = setTimeout(() => {
+        setLocalError(null);
+        if (storeError) clearError();
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [localError, storeError, clearError]);
+
+  // Resend cooldown countdown
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  const handleSocialLogin = async (provider) => {
     try {
       setIsLoading(true);
       clearError();
+      setLocalError(null);
 
-      if (credentialResponse.credential) {
-        await loginWithGoogle(credentialResponse.credential);
-        onSuccess?.();
-        onClose();
-        // Redirect to user dashboard create page if requested
-        if (shouldRedirect) {
-          router.push("/user/dashboard/create");
-        }
-      }
+      // trigger next-auth signin
+      // Removing redirect: false so the browser actually navigates to the provider's auth page
+      await signIn(provider);
+
+      // Note: Full logic for social sync will happen in api/auth/[...nextauth] 
+      // and we will handle the session in a wrapper or useEffect elsewhere,
+      // but for this modal, we trigger the popup/redirect.
     } catch (err) {
-      console.error("Google Sign-In error:", err);
+      console.error(`${provider} Sign-In error:`, err);
+      setLocalError(`Failed to connect with ${provider}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleError = () => {
-    console.error("Google Sign-In failed");
+  const handleEmailAuth = async (e) => {
+    e.preventDefault();
+    try {
+      setIsLoading(true);
+      clearError();
+      setLocalError(null);
+
+      if (authMode === "signup") {
+        if (password.length < 6) {
+          setLocalError("Password must be at least 6 characters.");
+          setIsLoading(false);
+          return;
+        }
+        if (password !== confirmPassword) {
+          setLocalError("Passwords do not match.");
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      if (authMode === "login") {
+        const result = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (result.error) {
+          setLocalError(result.error);
+        } else {
+          // The session will be synced via AuthSync, but we can trigger a hard refresh 
+          // or redirect to ensure the user sees the authenticated state immediately.
+          onSuccess?.();
+          onClose();
+          if (shouldRedirect) {
+            window.location.href = "/user/dashboard/create"; // Use window.location for hard refresh/sync
+          }
+        }
+      } else {
+        // Handle Signup via our backend
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          // Store the temp token and move to OTP step
+          setOtpToken(data.token);
+          setOtpValue("");
+          setAuthMode("otp");
+          setResendCooldown(60);
+        } else {
+          setLocalError(data.message);
+        }
+      }
+    } catch (err) {
+      setLocalError("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOTPVerify = async (e) => {
+    e.preventDefault();
+    if (otpValue.length !== 6) {
+      setLocalError("Please enter the 6-digit code sent to your email.");
+      return;
+    }
+    try {
+      setIsLoading(true);
+      clearError();
+      setLocalError(null);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${otpToken}`,
+        },
+        body: JSON.stringify({ otp: otpValue }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        // OTP verified — sign in via NextAuth so session is established
+        const result = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+        });
+        if (result?.error) {
+          setLocalError(result.error);
+        } else {
+          onSuccess?.();
+          onClose();
+          if (shouldRedirect) window.location.href = "/user/dashboard/create";
+        }
+      } else {
+        setLocalError(data.message || "Invalid or expired OTP.");
+      }
+    } catch {
+      setLocalError("An unexpected error occurred.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (resendCooldown > 0 || !otpToken) return;
+    try {
+      setIsLoading(true);
+      setLocalError(null);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/resend-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${otpToken}`,
+        },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setResendCooldown(60);
+        setOtpValue("");
+      } else {
+        setLocalError(data.message || "Failed to resend OTP.");
+      }
+    } catch {
+      setLocalError("An unexpected error occurred.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-white">
-        <DialogHeader>
-          <DialogTitle className=" flex items-center justify-center gap-2 text-center"></DialogTitle>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[850px] p-0 overflow-hidden bg-white border-none shadow-2xl max-h-[95vh] sm:max-h-[80vh] overflow-y-auto">
+        <div className="flex flex-col md:flex-row h-full min-h-0 md:min-h-[550px]">
 
-        <div className="flex flex-col items-center space-y-4 py-4 ">
-          {/* DropPR Logo */}
-          <div className=" flex items-center justify-center mb-6">
-            <Image
-              src="/logo.png"
-              alt="DropPR.ai"
-              width={150}
-              height={150}
-              priority
-              className="w-full h-full object-contain"
-            />
-          </div>
-
-          <div className="text-center space-y-2">
-            <h3 className="font-semibold text-lg text-gray-900">
-              Sign in to continue
-            </h3>
-            <p className="text-gray-600 text-sm">
-              Please sign in with Google to publish and generate your article.
-            </p>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="w-full p-3 bg-red-100 text-red-700 rounded-md text-sm text-center">
-              {error}
-            </div>
-          )}
-
-          {/* Google Login Button */}
-          <div className="w-full">
-            {isLoading ? (
-              <Button disabled variant="primary" size="md" className="w-full">
-                Signing in...
-              </Button>
-            ) : (
-              <div className="w-full [&>div]:w-full! [&>div>iframe]:w-full! [&>div]:max-w-none!">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  size="large"
-                  theme="outline"
-                  shape="rectangular"
-                  width="100%"
+          {/* Left Column: Branding & Features - HIDDEN ON MOBILE */}
+          <div className="hidden md:flex md:w-[40%] bg-slate-900 p-6 text-white flex-col justify-between relative overflow-hidden">
+            <div className="relative z-10">
+              <div className="mb-6">
+                <Image
+                  src="/logo.png"
+                  alt="DropPR"
+                  width={120}
+                  height={35}
+                  className="brightness-0 invert opacity-90"
                 />
               </div>
-            )}
+
+              <h2 className="text-2xl font-bold mb-3 tracking-tight">
+                Empowering your PR journey.
+              </h2>
+              <p className="text-slate-400 text-xs leading-relaxed mb-6">
+                Join thousands of creators using DropPR.ai to generate and publish professional articles in seconds.
+              </p>
+
+              <ul className="space-y-3">
+                {[
+                  "AI Article Generation",
+                  "Global Distribution",
+                  "Real-time Analytics"
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-xs text-slate-300">
+                    <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center">
+                      <ArrowRight className="w-2 h-2 text-primary" />
+                    </div>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Decorative element */}
+            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl"></div>
+
+            <div className="relative z-10 mt-auto pt-6 border-t border-slate-800">
+              <p className="text-[10px] text-slate-500">
+                Trusted by 500+ global marketing agencies.
+              </p>
+            </div>
           </div>
 
-          <p className="text-xs text-center text-gray-500 max-w-sm">
-            By continuing, you agree to our{" "}
-            <Link href="/terms" className="text-primary hover:underline">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="text-primary hover:underline">
-              Privacy Policy
-            </Link>
-            .
-          </p>
+          {/* Right Column: Auth Flows */}
+          <div className="w-full md:w-[60%] px-2 py-4 md:p-6 flex flex-col justify-center bg-white">
+
+            {/* ── OTP VERIFICATION STEP ── */}
+            {authMode === "otp" ? (
+              <div className="px-2">
+                <div className="mb-6 text-center">
+                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <Mail className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-1">Check your email</h3>
+                  <p className="text-slate-500 text-sm">
+                    We sent a 6-digit code to <span className="font-semibold text-slate-700">{email}</span>
+                  </p>
+                </div>
+
+                {(localError || storeError) && (
+                  <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs border border-red-100 flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></div>
+                    {localError || storeError}
+                  </div>
+                )}
+
+                <form onSubmit={handleOTPVerify} className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-700 uppercase ml-1">Verification Code</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="123456"
+                      className="w-full text-center text-2xl tracking-[0.6em] font-bold py-4 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                      value={otpValue}
+                      onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      required
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="w-full py-3 rounded-xl font-bold text-sm space-x-2"
+                    disabled={isLoading || otpValue.length !== 6}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <span>Verify &amp; Continue</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+
+                <div className="mt-4 text-center space-y-2">
+                  <button
+                    type="button"
+                    onClick={handleResendOTP}
+                    disabled={resendCooldown > 0 || isLoading}
+                    className="text-sm font-semibold text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
+                  </button>
+                  <br />
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode("signup")}
+                    className="text-xs text-slate-400 hover:text-slate-600 transition-all"
+                  >
+                    ← Back to signup
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* ── LOGIN / SIGNUP FLOWS ── */
+              <>
+                <div className="mb-4 px-2">
+                  <h3 className="text-2xl font-bold text-slate-900 mb-1">
+                    {authMode === "login" ? "Welcome Back" : "Create Account"}
+                  </h3>
+                  <p className="text-slate-500 text-sm">
+                    {authMode === "login"
+                      ? "Select a provider or use your email address."
+                      : "Start your professional journey with us today."}
+                  </p>
+                </div>
+
+                {/* Social Grid */}
+                <div className="grid grid-cols-2 gap-3 mb-4 px-2">
+                  <SocialButton
+                    icon={<Chrome className="w-5 h-5 text-red-500" />}
+                    label="Google"
+                    onClick={() => handleSocialLogin("google")}
+                    isLoading={isLoading}
+                  />
+                  <SocialButton
+                    icon={<Github className="w-5 h-5 text-slate-900" />}
+                    label="GitHub"
+                    onClick={() => handleSocialLogin("github")}
+                    isLoading={isLoading}
+                  />
+                </div>
+
+                {(localError || storeError) && (
+                  <div className="mx-2 mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs border border-red-100 flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></div>
+                    {localError || storeError}
+                  </div>
+                )}
+
+                <div className="relative mb-4 text-center px-2">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-slate-100"></span>
+                  </div>
+                  <span className="relative px-4 text-xs uppercase tracking-widest text-slate-400 bg-white">
+                    or use email
+                  </span>
+                </div>
+
+                {/* Email Form */}
+                <form onSubmit={handleEmailAuth} className="space-y-3 px-2">
+              {authMode === "signup" && (
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700 uppercase ml-1">Name</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Your Full Name"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                    />
+                    <ArrowRight className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700 uppercase ml-1">Email Address</label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                  <Mail className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700 uppercase ml-1">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                  <Lock className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {authMode === "signup" && (
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700 uppercase ml-1">Confirm Password</label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Confirm your password"
+                      className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                    <Lock className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full py-3 rounded-xl font-bold text-sm space-x-2 mt-2"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <span>{authMode === "login" ? "Sign In" : "Create My Account"}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </Button>
+                </form>
+
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-slate-500">
+                    {authMode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
+                    <button
+                      onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
+                      className="font-bold text-primary hover:underline transition-all"
+                    >
+                      {authMode === "login" ? "Create one" : "Sign in here"}
+                    </button>
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function SocialButton({ icon, label, onClick, isLoading }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={isLoading}
+      className="flex items-center justify-center gap-3 py-3 px-4 bg-white border border-slate-100 rounded-xl hover:bg-slate-50 hover:border-slate-200 transition-all group disabled:opacity-50"
+    >
+      <div className="group-hover:scale-110 transition-transform">{icon}</div>
+      <span className="text-xs font-bold text-slate-700">{label}</span>
+    </button>
   );
 }
