@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
@@ -27,11 +27,50 @@ function ProcessingContent() {
   const params = useParams();
   const socket = useSocket();
   const campaignId = params.id;
-  const [currentStep, setCurrentStep] = useState(null); // Changed from 0 to null to prevent flashing
+  const [currentStep, setCurrentStep] = useState(null);
   const [processingComplete, setProcessingComplete] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(null); // Changed from 0 to null
+  const [uploadProgress, setUploadProgress] = useState(null);
   const uploadStartedRef = useRef(false);
 
+  // 1. Move status update logic to a stable callback
+  const handleStatusUpdate = useCallback((status, errorMessage = null) => {
+    if (!status) return;
+    console.log(`🎯 [Processing] Updating status: ${status}`);
+
+    const statusToStep = {
+      uploading: 0,
+      uploaded: 0,
+      prechecking: 1,
+      transcribing: 1,
+      generating: 2,
+      finished: 3,
+      failed: 3,
+    };
+
+    const newStep = statusToStep[status];
+    if (newStep !== undefined) {
+      setCurrentStep(prev => (prev === null || newStep > prev || status === "failed") ? newStep : prev);
+    }
+
+    if (status === "finished" && !processingComplete) {
+      setProcessingComplete(true);
+      toast.success("Analysis Complete! Redirecting...", {
+        autoClose: 2000,
+        toastId: "finished-toast",
+        position: "top-right"
+      });
+      router.replace(`/user/edit/${campaignId}`);
+    } else if (status === "failed") {
+      toast.error(errorMessage || "Campaign processing failed", {
+        position: "top-right",
+        autoClose: 5000,
+        toastId: "failed-toast"
+      });
+      router.replace("/user/dashboard/campaigns");
+    }
+  }, [campaignId, processingComplete, router]);
+
+  // 2. Initial Setup & Pending Uploads
   useEffect(() => {
     if (!campaignId) {
       router.push("/dashboard");
@@ -87,11 +126,7 @@ function ProcessingContent() {
       }
     };
 
-    checkPendingUpload();
-
-    let pollInterval;
-
-    const pollCampaignStatus = async () => {
+    const fetchInitialStatus = async () => {
       try {
         const { campaignService } = await import("@/lib/api/user/campaigns");
         const response = await campaignService.getCampaign(campaignId);
@@ -109,143 +144,66 @@ function ProcessingContent() {
             }
           }
 
-          // Update current step based on status
-          const statusToStep = {
-            uploading: 0,
-            uploaded: 0,
-            prechecking: 1,
-            transcribing: 1,
-            generating: 2,
-            finished: 3,
-            failed: 3,
-          };
-
-          const newStep = statusToStep[campaign.status];
-          if (newStep !== undefined) {
-            setCurrentStep(prev => (prev === null || newStep > prev || campaign.status === "failed") ? newStep : prev);
-          }
-
-          // Handle completion
-          if (campaign.status === "finished") {
-            setProcessingComplete(true);
-            // REDUNDANT TOAST REMOVED: Sockets handle this more reliably
-            router.replace(`/user/edit/${campaignId}`);
-
-            // Clear polling
-            if (pollInterval) {
-              clearInterval(pollInterval);
-            }
-          } else if (campaign.status === "failed") {
-            // Log technical detail to console for developers
-            if (campaign.technicalError) {
-              console.error("[Backend Technical Error]:", campaign.technicalError);
-            }
-
-            toast.error(
-              campaign.errorMessage || "Campaign processing failed",
-              {
-                position: "top-right",
-                autoClose: 5000,
-              },
-            );
-            // Clear polling
-            if (pollInterval) {
-              clearInterval(pollInterval);
-            }
-            // REDIRECT TO CAMPAIGNS LIST ON FAILURE
-            router.replace("/user/dashboard/campaigns");
-          }
+          handleStatusUpdate(campaign.status, campaign.errorMessage);
         }
       } catch (error) {
-        console.error("Error polling campaign status:", error);
-        // If critical polling error, safe to redirect back
-        if (pollInterval) clearInterval(pollInterval);
+        console.error("Error fetching initial status:", error);
         router.replace("/user/dashboard/campaigns");
       }
     };
 
-    // Initial poll (just to get starting state)
-    pollCampaignStatus();
+    checkPendingUpload();
+    fetchInitialStatus();
+  }, [campaignId, handleStatusUpdate, router]);
 
-    // SOCKET LISTENERS
-    if (socket && campaignId) {
-      // REDUNDANCY REMOVED: We no longer join private campaign rooms.
-      // All updates come through the unified user room joined in SocketContext.
+  // 3. Dedicated Socket Listener Effect (Matches Campaigns Page)
+  useEffect(() => {
+    if (!socket || !campaignId) return;
 
-      const onMediaProgress = (data) => {
-        // Unified check: only process if it's for this campaign
-        if (data.campaignId && data.campaignId !== campaignId) return;
+    console.log(`🔌 [Processing] Registering socket listeners for: ${campaignId}`);
 
-        console.log("📈 Progress:", data.percent, data.message);
-        if (data.percent) setUploadProgress(data.percent);
-      };
+    const onMediaProgress = (data) => {
+      if (data.campaignId && data.campaignId !== campaignId) return;
+      if (data.percent) setUploadProgress(data.percent);
+    };
 
-      const handleStatusUpdate = (status) => {
-        const statusToStep = {
-          uploading: 0,
-          uploaded: 0,
-          prechecking: 1,
-          transcribing: 1,
-          generating: 2,
-          finished: 3,
-          failed: 3,
-        };
+    const onCampaignUpdated = (data) => {
+      if (data.campaignId !== campaignId) return;
+      console.log("🔄 [Socket] Campaign Updated:", data.status);
+      handleStatusUpdate(data.status || data.campaign?.status, data.campaign?.errorMessage);
+    };
 
-        const newStep = statusToStep[status];
-        if (newStep !== undefined) {
-          setCurrentStep(prev => (prev === null || newStep > prev || status === "failed") ? newStep : prev);
-        }
+    const onStatusChange = (data) => {
+      if (data.campaignId !== campaignId) return;
+      console.log("🚦 [Socket] Status Change:", data.status);
+      handleStatusUpdate(data.status, data.errorMessage);
+    };
 
-        if (status === "finished" && !processingComplete) {
-          setProcessingComplete(true);
-          toast.success("Ready! Redirecting...", {
-            autoClose: 2000,
-            toastId: "finished-toast",
-            position: "top-right"
-          });
-          router.replace(`/user/edit/${campaignId}`);
-        }
-      };
+    const onMediaError = (data) => {
+      if (data.campaignId && data.campaignId !== campaignId) return;
+      console.error("❌ [Socket] Media Error:", data.message);
+      toast.error(data.message || "Processing failed");
+      router.replace("/user/dashboard/campaigns");
+    };
 
-      const onCampaignUpdated = (data) => {
-        if (data.campaignId !== campaignId) return;
-        console.log("🔄 Campaign Updated:", data.status);
-        if (data.status) handleStatusUpdate(data.status);
-      };
+    socket.on("campaign_updated", onCampaignUpdated);
+    socket.on("status_change", onStatusChange);
+    socket.on("media_progress", onMediaProgress);
+    socket.on("media_error", onMediaError);
 
-      const onStatusChange = (data) => {
-        if (data.campaignId !== campaignId) return;
-        console.log("🚦 Status Change:", data.status);
-        if (data.status) handleStatusUpdate(data.status);
-      };
+    return () => {
+      socket.off("campaign_updated", onCampaignUpdated);
+      socket.off("status_change", onStatusChange);
+      socket.off("media_progress", onMediaProgress);
+      socket.off("media_error", onMediaError);
+    };
+  }, [campaignId, socket, handleStatusUpdate, router]);
 
-      const onMediaError = (data) => {
-        if (data.campaignId && data.campaignId !== campaignId) return;
-        console.error("❌ Media Error:", data.message);
-        toast.error(data.message || "Processing failed");
-        router.replace("/user/dashboard/campaigns");
-      };
-
-      socket.on("campaign_updated", onCampaignUpdated);
-      socket.on("status_change", onStatusChange);
-      socket.on("media_progress", onMediaProgress);
-      socket.on("media_error", onMediaError);
-
-      return () => {
-        socket.off("campaign_updated", onCampaignUpdated);
-        socket.off("status_change", onStatusChange);
-        socket.off("media_progress", onMediaProgress);
-        socket.off("media_error", onMediaError);
-      };
-    }
-  }, [campaignId, router, socket]);
-
-  // SYNC ON FOCUS: Catch up if tab was backgrounded/throttled
+  // SYNC ON FOCUS: Fallback for missed socket events while tab was backgrounded
   useEffect(() => {
     const handleFocus = () => {
-      // Re-poll status on focus
-      console.log("🪟 Processing tab focused, syncing status...");
-      const pollCampaignStatus = async () => {
+      console.log("🪟 Tab focused, syncing status...");
+      const syncStatus = async () => {
         try {
           const { campaignService } = await import("@/lib/api/user/campaigns");
           const response = await campaignService.getCampaign(campaignId);
@@ -258,11 +216,14 @@ function ProcessingContent() {
             if (campaign.status === "finished") {
               setProcessingComplete(true);
               router.replace(`/user/edit/${campaignId}`);
+            } else if (campaign.status === "failed") {
+              toast.error(campaign.errorMessage || "Processing failed");
+              router.replace("/user/dashboard/campaigns");
             }
           }
         } catch (err) { console.error("Sync on focus failed:", err); }
       };
-      pollCampaignStatus();
+      syncStatus();
     };
 
     window.addEventListener('focus', handleFocus);
