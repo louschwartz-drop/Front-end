@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { adminUserService } from "@/lib/api/admin/users";
 import { toast } from "react-toastify";
 import Link from "next/link";
-import ArticlePreviewModal from "../../../campaigns/ArticlePreviewModal";
+import FullArticlePreview from "@/components/user/FullArticlePreview";
 import VideoModal from "@/components/ui/VideoModal";
 import { Play, Eye, AlertCircle, X, FileText, ExternalLink, Check, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -315,10 +315,12 @@ export default function UserCampaignsPage() {
                 )}
             </div>
 
-            <ArticlePreviewModal
+            <FullArticlePreview
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 campaign={selectedCampaign}
+                article={selectedCampaign?.article}
+                productCard={selectedCampaign?.productCard}
             />
 
             <VideoModal

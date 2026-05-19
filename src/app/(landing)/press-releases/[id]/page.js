@@ -1,7 +1,47 @@
 import Header from "@/components/landingPage/Header";
 import Footer from "@/components/landingPage/Footer";
 import Link from "next/link";
-import { ArrowLeft, Calendar, User, Tag, Share2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Calendar, User, Tag, Share2, ExternalLink, Globe } from "lucide-react";
+
+const STANDARD_FOOTER = `
+<div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>
+  <h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>
+  <p style='margin:0;font-weight:700;color:#111827;'>Droppr AI Research & Media Desk</p>
+  <p style='margin:4px 0;color:#4b5563;'>support@droppr.ai</p>
+  <p style='margin:4px 0;color:#4b5563;'>Austin, Texas</p>
+</div>
+<div style='margin-top:2.5rem;padding:1.5rem;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;'>
+  <h4 style='margin-top:0;color:#111827;'>About Droppr AI</h4>
+  <p style='margin-bottom:0;color:#374151;line-height:1.7;'>Droppr AI is a digital publishing and trend-monitoring platform covering ecommerce, creator economies, consumer technology and emerging online retail behavior. The organization publishes independent editorial reporting on how social platforms and creator communities influence consumer purchasing patterns.</p>
+</div>
+`;
+
+function stripFooter(html) {
+  if (!html) return "";
+  const footerKeywords = [
+    "<div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>",
+    "<div style=\"margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;\">",
+    "<div style='margin-top:3rem;",
+    "<div style=\"margin-top:3rem;",
+    "<h4>Media Contact</h4>",
+    "<h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>",
+    "<h4 style=\"text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;\">Media Contact</h4>",
+    "Media Contact",
+  ];
+
+  for (const keyword of footerKeywords) {
+    const index = html.indexOf(keyword);
+    if (index !== -1) {
+      let cleanHtml = html.substring(0, index).trim();
+      if (cleanHtml.endsWith("<div>")) {
+        cleanHtml = cleanHtml.slice(0, -5).trim();
+      }
+      return cleanHtml;
+    }
+  }
+
+  return html;
+}
 
 async function getArticle(id) {
     // Check if ID is a MongoDB ObjectId (24 char hex)
@@ -167,9 +207,50 @@ export default async function ArticleDetailsPage({ params }) {
                                                         {article.introduction}
                                                     </div>
                                                 )}
-                                                <div className="whitespace-pre-wrap">
-                                                    {article.body}
-                                                </div>
+                                                {article.body && /<[a-z][\s\S]*>/i.test(article.body) ? (
+                                                    <>
+                                                        <style dangerouslySetInnerHTML={{ __html: `
+                                                          .article-html blockquote {
+                                                            border-left: 4px solid #2563eb !important;
+                                                            padding: 1.25rem 1.5rem !important;
+                                                            margin: 1.75rem 0 !important;
+                                                            background-color: #f0f7ff !important;
+                                                            border-radius: 0 10px 10px 0 !important;
+                                                            color: #1e3a8a !important;
+                                                            font-style: italic !important;
+                                                            box-shadow: 0 1px 4px 0 rgba(37,99,235,0.07) !important;
+                                                          }
+                                                          .article-html blockquote > p:first-child {
+                                                            margin: 0 0 0.5rem 0 !important;
+                                                            font-size: 1.05rem !important;
+                                                            font-weight: 500 !important;
+                                                            line-height: 1.7 !important;
+                                                            color: #1e3a8a !important;
+                                                            font-style: italic !important;
+                                                          }
+                                                          .article-html blockquote > p:not(:first-child),
+                                                          .article-html blockquote > cite,
+                                                          .article-html blockquote > footer {
+                                                            display: block !important;
+                                                            margin: 0 !important;
+                                                            font-size: 0.875rem !important;
+                                                            font-weight: 600 !important;
+                                                            color: #4b5563 !important;
+                                                            font-style: normal !important;
+                                                            letter-spacing: 0.01em !important;
+                                                          }
+                                                        `}} />
+                                                        <div 
+                                                            className="space-y-6 html-content-body article-html"
+                                                            dangerouslySetInnerHTML={{ __html: `<div>${stripFooter(article.body)}${STANDARD_FOOTER}</div>` }}
+                                                        />
+                                                    </>
+                                                ) : (
+                                                    <div className="whitespace-pre-wrap">
+                                                        {stripFooter(article.body)}
+                                                        <div dangerouslySetInnerHTML={{ __html: STANDARD_FOOTER }} />
+                                                    </div>
+                                                )}
                                                 {article.campaign?.article?.conclusion && (
                                                     <div className="mt-8 font-medium italic">
                                                         {article.campaign.article.conclusion}

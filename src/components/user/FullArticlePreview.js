@@ -4,7 +4,48 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import VideoModal from "@/components/ui/VideoModal";
-import { downloadCampaignFile } from "@/utils/downloadHelper";
+import { downloadCampaignFile, printArticleAsPdf } from "@/utils/downloadHelper";
+import { BLOCKQUOTE_STYLES } from "@/components/editor/blockquoteStyles";
+
+export const STANDARD_FOOTER = `
+<div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>
+  <h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>
+  <p style='margin:0;font-weight:700;color:#111827;'>Droppr AI Research & Media Desk</p>
+  <p style='margin:4px 0;color:#4b5563;'>support@droppr.ai</p>
+  <p style='margin:4px 0;color:#4b5563;'>Austin, Texas</p>
+</div>
+<div style='margin-top:2.5rem;padding:1.5rem;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;'>
+  <h4 style='margin-top:0;color:#111827;'>About Droppr AI</h4>
+  <p style='margin-bottom:0;color:#374151;line-height:1.7;'>Droppr AI is a digital publishing and trend-monitoring platform covering ecommerce, creator economies, consumer technology and emerging online retail behavior. The organization publishes independent editorial reporting on how social platforms and creator communities influence consumer purchasing patterns.</p>
+</div>
+`;
+
+export function stripFooter(html) {
+  if (!html) return "";
+  const footerKeywords = [
+    "<div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>",
+    "<div style=\"margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;\">",
+    "<div style='margin-top:3rem;",
+    "<div style=\"margin-top:3rem;",
+    "<h4>Media Contact</h4>",
+    "<h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>",
+    "<h4 style=\"text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;\">Media Contact</h4>",
+    "Media Contact",
+  ];
+
+  for (const keyword of footerKeywords) {
+    const index = html.indexOf(keyword);
+    if (index !== -1) {
+      let cleanHtml = html.substring(0, index).trim();
+      if (cleanHtml.endsWith("<div>")) {
+        cleanHtml = cleanHtml.slice(0, -5).trim();
+      }
+      return cleanHtml;
+    }
+  }
+
+  return html;
+}
 
 export default function FullArticlePreview({ isOpen, onClose, campaign, article, productCard }) {
     const [isVideoOpen, setIsVideoOpen] = useState(false);
@@ -16,12 +57,28 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
     // Use a more robust way to get the ID, checking both campaign and provided article
     const campaignId = campaign?._id || campaign?.id || article?._id || article?.id;
     
-    const downloadUrl = (format) => {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
-        return `${baseUrl}/user/campaigns/${campaignId}/download/${format}`;
-    };
+    const displayData = article || campaign?.article || {};
+    const displayProduct = productCard || campaign?.productCard || {};
 
     const handleDownload = async (format) => {
+        setShowDownloadDropdown(false);
+
+        if (format === 'pdf') {
+            try {
+                printArticleAsPdf({
+                    displayData,
+                    displayProduct,
+                    standardFooter: STANDARD_FOOTER,
+                    stripFooter
+                });
+                toast.success("PDF generation started in your browser!");
+            } catch (error) {
+                console.error("Client-side PDF printing failed:", error);
+                toast.error("Failed to generate PDF. Please try again.");
+            }
+            return;
+        }
+
         if (!campaignId || campaignId === "undefined") {
             console.error("No campaign ID found for download");
             toast.error("Error: Campaign ID missing. Please try refreshing the page.");
@@ -29,7 +86,6 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
         }
 
         setIsDownloading(true);
-        setShowDownloadDropdown(false);
 
         try {
             await downloadCampaignFile(campaignId, format);
@@ -41,8 +97,6 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
         }
     };
 
-    const displayData = article || campaign?.article || {};
-    const displayProduct = productCard || campaign?.productCard || {};
 
     return (
         <AnimatePresence>
@@ -142,9 +196,11 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                             </div>
                         )}
 
-                        <div className="text-sm md:text-lg text-gray-700 leading-relaxed font-medium">
-                            {displayData.introduction}
-                        </div>
+                        {displayData.introduction && (
+                            <div className="text-sm md:text-lg text-gray-700 leading-relaxed font-medium">
+                                {displayData.introduction}
+                            </div>
+                        )}
 
                         {/* Preview Product Block Moved Higher */}
                         <div className="bg-gray-50 rounded-2xl md:rounded-3xl p-4 md:p-8 border border-gray-100 my-6 md:my-10">
@@ -188,9 +244,12 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                             </div>
                         </div>
 
-                        <div className="text-sm md:text-lg text-gray-700 leading-relaxed md:leading-loose space-y-4 md:space-y-6 whitespace-pre-wrap">
-                            {displayData.body}
-                        </div>
+                        {/* Styled HTML Body Rendering */}
+                        <style dangerouslySetInnerHTML={{ __html: BLOCKQUOTE_STYLES }} />
+                        <div 
+                            className="text-sm md:text-lg text-gray-700 leading-relaxed md:leading-loose space-y-4 md:space-y-6 html-content-preview article-html"
+                            dangerouslySetInnerHTML={{ __html: `<div>${stripFooter(displayData.body || "")}${STANDARD_FOOTER}</div>` }}
+                        />
 
                         {/* Creator Quote Section */}
                         {displayData.creatorQuote && (

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { adminCampaignService } from "@/lib/api/admin/campaigns";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
-import ArticlePreviewModal from "./ArticlePreviewModal";
+import FullArticlePreview from "@/components/user/FullArticlePreview";
 import Pagination from "@/components/ui/Pagination";
 import VideoModal from "@/components/ui/VideoModal";
 import { 
@@ -358,10 +358,12 @@ export default function AdminCampaignsPage() {
                 className="mt-0"
             />
 
-            <ArticlePreviewModal
+            <FullArticlePreview
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 campaign={selectedCampaign}
+                article={selectedCampaign?.article}
+                productCard={selectedCampaign?.productCard}
             />
 
             <VideoModal

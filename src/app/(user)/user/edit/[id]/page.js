@@ -11,6 +11,47 @@ import FullArticlePreview from "@/components/user/FullArticlePreview";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import userAuthStore from "@/store/userAuthStore";
 import { PREDEFINED_CATEGORIES } from "@/lib/constants";
+import RichTextEditor from "@/components/editor/RichTextEditor";
+
+const STANDARD_FOOTER = `
+<div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>
+  <h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>
+  <p style='margin:0;font-weight:700;color:#111827;'>Droppr AI Research & Media Desk</p>
+  <p style='margin:4px 0;color:#4b5563;'>support@droppr.ai</p>
+  <p style='margin:4px 0;color:#4b5563;'>Austin, Texas</p>
+</div>
+<div style='margin-top:2.5rem;padding:1.5rem;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;'>
+  <h4 style='margin-top:0;color:#111827;'>About Droppr AI</h4>
+  <p style='margin-bottom:0;color:#374151;line-height:1.7;'>Droppr AI is a digital publishing and trend-monitoring platform covering ecommerce, creator economies, consumer technology and emerging online retail behavior. The organization publishes independent editorial reporting on how social platforms and creator communities influence consumer purchasing patterns.</p>
+</div>
+`;
+
+function stripFooter(html) {
+  if (!html) return "";
+  const footerKeywords = [
+    "<div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>",
+    "<div style=\"margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;\">",
+    "<div style='margin-top:3rem;",
+    "<div style=\"margin-top:3rem;",
+    "<h4>Media Contact</h4>",
+    "<h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>",
+    "<h4 style=\"text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;\">Media Contact</h4>",
+    "Media Contact",
+  ];
+
+  for (const keyword of footerKeywords) {
+    const index = html.indexOf(keyword);
+    if (index !== -1) {
+      let cleanHtml = html.substring(0, index).trim();
+      if (cleanHtml.endsWith("<div>")) {
+        cleanHtml = cleanHtml.slice(0, -5).trim();
+      }
+      return cleanHtml;
+    }
+  }
+
+  return html;
+}
 
 const SPEECH_SEQUENCE = [
   "headline",
@@ -35,6 +76,7 @@ export default function EditPage() {
   const [regeneratingAction, setRegeneratingAction] = useState(null);
   const [headlineRegenerated, setHeadlineRegenerated] = useState(false);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [isSavingManual, setIsSavingManual] = useState(false);
   const [initialData, setInitialData] = useState(null);
   const [isEditingAuthor, setIsEditingAuthor] = useState(false);
   const [currentlySpeaking, setCurrentlySpeaking] = useState(null);
@@ -222,19 +264,67 @@ export default function EditPage() {
             const campaign = response.data;
             setVideoSource(campaign.videoSource);
             if (campaign.article) {
+              let initialBody = campaign.article.body || "";
+
+              // Detect legacy campaigns (segmented text boxes are populated, body has no HTML markup yet)
+              const isLegacy = campaign.article.introduction || campaign.article.creatorQuote || campaign.article.conclusion;
+              const hasHtml = /<[a-z][\s\S]*>/i.test(initialBody);
+
+              if (isLegacy && !hasHtml) {
+                // Perform dynamic premium migration stitch
+                const dateline = campaign.article.locationDate ? `<strong>${campaign.article.locationDate.toUpperCase()} — </strong>` : "";
+                let htmlContent = "";
+
+                if (campaign.article.introduction) {
+                  htmlContent += `<p>${dateline}${campaign.article.introduction}</p>`;
+                } else if (dateline) {
+                  htmlContent += `<p>${dateline}</p>`;
+                }
+
+                if (initialBody) {
+                  htmlContent += `<p>${initialBody.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`;
+                }
+
+                if (campaign.article.creatorQuote) {
+                  const quoteAuthor = campaign.productCard?.authorName || campaign.productCard?.creatorAttribution || "Independent Creator";
+                  htmlContent += `<blockquote style="border-left: 4px solid #3b82f6; padding-left: 1.5rem; margin: 2rem 0; font-style: italic; color: #374151;">
+                    <p style="font-size: 1.1rem; line-height: 1.6;">"${campaign.article.creatorQuote}"</p>
+                    <footer style="margin-top: 0.75rem; font-weight: 700; font-style: normal; color: #111827;">— ${quoteAuthor}</footer>
+                  </blockquote>`;
+                }
+
+                if (campaign.article.conclusion) {
+                  htmlContent += `<p>${campaign.article.conclusion}</p>`;
+                }
+
+                // Append Media Contact Footer
+                const authorText = campaign.productCard?.authorName || campaign.productCard?.creatorAttribution || user?.name || "Media Relations Department";
+                const userEmail = user?.email || "press@droppr.ai";
+                htmlContent += `
+                  <div style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #f3f4f6;">
+                    <h4 style="text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">Media Contact:</h4>
+                    <p style="margin: 0; font-weight: 700; color: #111827;">${authorText}</p>
+                    <p style="margin: 4px 0; color: #4b5563;">${userEmail}</p>
+                    <p style="margin: 0; color: #9ca3af; font-size: 0.75rem;">Source: Droppr AI Newsroom Network</p>
+                  </div>
+                `;
+
+                initialBody = `<div>${htmlContent}</div>`;
+              }
+
               setEditData({
                 headline: campaign.article.headline || "",
-                locationDate: campaign.article.locationDate || "",
-                introduction: campaign.article.introduction || "",
-                body: campaign.article.body || "",
+                locationDate: "",
+                introduction: "",
+                body: initialBody,
                 productSummary: campaign.article.productSummary || {
                   category: "",
                   useCase: "",
                   positioning: "",
                 },
-                ctaText: campaign.article.ctaText || "",
-                conclusion: campaign.article.conclusion || "",
-                creatorQuote: campaign.article.creatorQuote || "",
+                ctaText: "",
+                conclusion: "",
+                creatorQuote: "",
                 summary: campaign.article.summary || "",
                 categories: campaign.article.categories || "",
               });
@@ -293,13 +383,13 @@ export default function EditPage() {
         setEditData(prev => ({
           ...prev,
           headline: response.data.article.headline || "",
-          locationDate: response.data.article.locationDate || "",
-          introduction: response.data.article.introduction || "",
+          locationDate: "",
+          introduction: "",
           body: response.data.article.body || "",
           productSummary: response.data.article.productSummary || prev.productSummary,
-          ctaText: response.data.article.ctaText || "",
-          conclusion: response.data.article.conclusion || "",
-          creatorQuote: response.data.article.creatorQuote || "",
+          ctaText: "",
+          conclusion: "",
+          creatorQuote: "",
           summary: response.data.article.summary || "",
           categories: response.data.article.categories || prev.categories,
         }));
@@ -320,6 +410,43 @@ export default function EditPage() {
     } finally {
       setRegenerating(false);
       setRegeneratingAction(null);
+    }
+  };
+
+  const handleManualSave = async () => {
+    setIsSavingManual(true);
+    try {
+      const { campaignService } = await import("@/lib/api/user/campaigns");
+      const payload = {
+        article: editData,
+        productCard: productCard,
+        context: context,
+        saveAsVersion: true
+      };
+
+      const response = await campaignService.updateCampaign(campaignId, payload);
+      if (response.success) {
+        setLastSaved(new Date());
+        if (response.data.versions) {
+          setVersions(response.data.versions);
+        }
+        setInitialData(JSON.stringify({
+          data: response.data.article || editData,
+          product: response.data.productCard || productCard,
+          ctx: response.data.context || context
+        }));
+        toast.success("Manual changes saved & new version created!", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+      } else {
+        toast.error(response.message || "Save failed");
+      }
+    } catch (error) {
+      console.error("Manual save failed:", error);
+      toast.error("Failed to save changes.");
+    } finally {
+      setIsSavingManual(false);
     }
   };
 
@@ -464,68 +591,22 @@ export default function EditPage() {
       const storyId = campaignId || Date.now().toString();
       const headline = editData.headline || "Untitled Article";
 
-      // Constructing HTML Content (excluding title and summary which are sent explicitly)
+      // Use the unified WYSIWYG body content directly
       let htmlContent = "";
-
-      // 1. Dateline Integration
-      const dateline = editData.locationDate ? `<strong>${editData.locationDate.toUpperCase()} — </strong>` : "";
-
-      // 2. Introduction (Lede)
-      if (editData.introduction) {
-        htmlContent += `<p>${dateline}${editData.introduction}</p>`;
-      } else if (dateline) {
-        htmlContent += `<p>${dateline}</p>`;
-      }
-
-      // 3. Main Body (Supports both plain text and AI-generated HTML structure from "Improve with AI")
       if (editData.body) {
         const containsHTML = /<[a-z][\s\S]*>/i.test(editData.body);
         if (containsHTML) {
-          // AI provided structure (<h3>, <p>, etc.) - Clean up newlines but trust the tags
-          htmlContent += editData.body.trim();
+          htmlContent = stripFooter(editData.body.trim());
         } else {
-          // Legacy plain text - auto-wrap paragraphs
-          htmlContent += `<p>${editData.body.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`;
+          // Fallback plain text formatting
+          htmlContent = stripFooter(`<p>${editData.body.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`);
         }
       }
 
-      // 4. Expert Quote (Semantic Blockquote)
-      if (editData.creatorQuote) {
-        htmlContent += `<blockquote style="border-left: 4px solid #3b82f6; padding-left: 1.5rem; margin: 2rem 0; font-style: italic; color: #374151;">
-          <p style="font-size: 1.1rem; line-height: 1.6;">"${editData.creatorQuote}"</p>`;
-        if (productCard.authorName) {
-          htmlContent += `<footer style="margin-top: 0.75rem; font-weight: 700; font-style: normal; color: #111827;">— ${productCard.authorName}</footer>`;
-        }
-        htmlContent += `</blockquote>`;
-      }
+      // Ensure the content is wrapped in a container div and dynamically append the STANDARD_FOOTER
+      const wrappedContent = `<div>${htmlContent}${STANDARD_FOOTER}</div>`;
 
-      // 5. Featured Product Section
-      if (productCard.productName) {
-        htmlContent += `<div style="margin: 2rem 0; padding: 1.5rem; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px;">
-          <h3 style="margin-top: 0; color: #111827;">Featured Product: ${productCard.productName}</h3>`;
-        if (productCard.thumbnail) {
-          htmlContent += `<img src="${productCard.thumbnail}" alt="${productCard.productName}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 1rem 0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);" />`;
-        }
-        if (productCard.affiliateLink) {
-          htmlContent += `<p style="margin-bottom: 0;"><strong>Product Page:</strong> <a href="${productCard.affiliateLink}" style="color: #2563eb; text-decoration: underline;">${productCard.affiliateLink}</a></p>`;
-        }
-        htmlContent += `</div>`;
-      }
-
-      // 6. Conclusion
-      if (editData.conclusion) htmlContent += `<p>${editData.conclusion}</p>`;
-
-      // 7. Media Contact Section (Critical for XPR Scoring)
-      htmlContent += `
-        <div style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #f3f4f6;">
-          <h4 style="text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">Media Contact:</h4>
-          <p style="margin: 0; font-weight: 700; color: #111827;">${productCard.authorName || currentUser?.name || "Media Relations Department"}</p>
-          <p style="margin: 4px 0; color: #4b5563;">${currentUser?.email || "press@droppr.ai"}</p>
-          <p style="margin: 0; color: #9ca3af; font-size: 0.75rem;">Source: Droppr AI Newsroom Network</p>
-        </div>
-      `;
-
-      const summary = editData.summary || editData.introduction || "";
+      const summary = editData.summary || "Press Release Summary";
       const image = productCard.thumbnail || "";
       const author = productCard.authorName || currentUser?.name || currentUser?.firstName || "Press Services";
       const categoriesArray = editData.categories
@@ -535,7 +616,7 @@ export default function EditPage() {
       const xprStoryPayload = {
         title: headline,
         summary: summary,
-        content: htmlContent ? `<div>${htmlContent}</div>` : "<div>No Content</div>",
+        content: wrappedContent || "<div>No Content</div>",
         link: `https://droppr.ai/article/${storyId}`, // Adjust once actual links are live
         imageUrl: image,
         author: author,
@@ -626,12 +707,8 @@ export default function EditPage() {
 
   const isPublishDisabled =
     !editData.headline?.trim() ||
-    !editData.introduction?.trim() ||
     !editData.summary?.trim() ||
-    !editData.creatorQuote?.trim() ||
     !editData.body?.trim() ||
-    !editData.conclusion?.trim() ||
-    !editData.ctaText?.trim() ||
     !productCard.productName?.trim() ||
     !productCard.thumbnail?.trim() ||
     !productCard.affiliateLink?.trim() ||
@@ -674,8 +751,31 @@ export default function EditPage() {
 
         <div className="flex items-center gap-1 sm:gap-3">
           <button
+            onClick={handleManualSave}
+            disabled={isSavingManual || isLimitReached}
+            className={`p-1.5 sm:px-3.5 sm:py-1.5 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${
+              isLimitReached
+                ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md disabled:bg-blue-400 disabled:shadow-none"
+            }`}
+            title="Save Changes as Version"
+          >
+            {isSavingManual ? (
+              <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
+            )}
+            <span>{isSavingManual ? "Saving..." : "Save"}</span>
+          </button>
+
+          <button
             onClick={() => setShowVersions(true)}
-            className="p-1.5 sm:px-3 sm:py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg flex items-center gap-1.5 transition-colors"
+            className="p-1.5 sm:px-3 sm:py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg flex items-center gap-1.5 transition-colors border border-gray-200"
             title="History"
           >
             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -775,25 +875,6 @@ export default function EditPage() {
 
 
 
-              {/* Lede Section */}
-              <SectionCard
-                label="Lede (Introduction)"
-                disabled={isLimitReached}
-                onAiAction={() => handleRegenerate("EXPAND_LEDE")}
-                aiLabel={regenerating && regeneratingAction === "EXPAND_LEDE" ? "Expanding..." : "Expand Lede"}
-                aiDisabled={regenerating}
-                onSpeak={() => toggleSpeech(editData.introduction, 'introduction')}
-                isSpeaking={currentlySpeaking === 'introduction'}
-              >
-                <AutoGrowingTextarea
-                  value={editData.introduction}
-                  disabled={isLimitReached}
-                  onChange={(e) => setEditData({ ...editData, introduction: e.target.value })}
-                  className="w-full text-[11px] sm:text-sm text-gray-700 leading-snug border-none focus:ring-0 p-0 resize-none disabled:text-gray-400 overflow-hidden outline-none"
-                  placeholder="Introduction..."
-                />
-              </SectionCard>
-
               {/* Summary Section (Required by XPR Media) */}
               <SectionCard
                 label="Press Release Summary"
@@ -816,52 +897,9 @@ export default function EditPage() {
                 </div>
               </SectionCard>
 
+              {/* HTML Press Release Content */}
               <SectionCard
-                label="Creator Quote"
-                disabled={isLimitReached}
-                onSpeak={() => toggleSpeech(editData.creatorQuote, 'quote')}
-                isSpeaking={currentlySpeaking === 'quote'}
-              >
-                <div className="space-y-3">
-                  <AutoGrowingTextarea
-                    value={editData.creatorQuote}
-                    disabled={isLimitReached}
-                    onChange={(e) => setEditData({ ...editData, creatorQuote: e.target.value })}
-                    className="w-full text-[11px] sm:text-sm text-gray-700 border-none focus:ring-0 p-0 resize-none italic font-serif disabled:text-gray-400 leading-snug overflow-hidden outline-none"
-                    placeholder="Authentic quote..."
-                  />
-                  <div className="flex items-center gap-2 pt-2 border-t border-gray-50">
-                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Attributed to:</span>
-                    {isEditingAuthor ? (
-                      <input
-                        value={productCard.authorName}
-                        onChange={(e) => setProductCard({ ...productCard, authorName: e.target.value })}
-                        onBlur={() => setIsEditingAuthor(false)}
-                        onKeyDown={(e) => e.key === 'Enter' && setIsEditingAuthor(false)}
-                        autoFocus
-                        className="text-[10px] font-bold text-primary bg-blue-50/50 border-none focus:ring-0 p-0"
-                      />
-                    ) : (
-                      <div className="flex items-center gap-1 group/author">
-                        <span className="text-[10px] font-bold text-primary">{productCard.authorName || "Author"}</span>
-                        <button
-                          onClick={() => setIsEditingAuthor(true)}
-                          className="p-1 hover:bg-gray-100 rounded transition-all"
-                          title="Edit Author Name"
-                        >
-                          <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                          </svg>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </SectionCard>
-
-              {/* Body Content Section */}
-              <SectionCard
-                label="Main Body"
+                label="HTML Article Body"
                 disabled={isLimitReached}
                 onAiAction={() => handleRegenerate("IMPROVE_NARRATIVE_FLOW")}
                 aiLabel={regenerating && regeneratingAction === "IMPROVE_NARRATIVE_FLOW" ? "Improving..." : "Improve Narrative Flow"}
@@ -869,54 +907,35 @@ export default function EditPage() {
                 secondaryAction={() => handleRegenerate("CONDENSE_BODY")}
                 secondaryLabel={regenerating && regeneratingAction === "CONDENSE_BODY" ? "Condensing..." : "Condense Body"}
                 secondaryDisabled={headlineRegenerated || regenerating}
-                onSpeak={() => toggleSpeech(editData.body, 'body')}
+                onSpeak={() => {
+                  const plainText = editData.body ? editData.body.replace(/<[^>]*>/g, '') : '';
+                  toggleSpeech(plainText, 'body');
+                }}
                 isSpeaking={currentlySpeaking === 'body'}
               >
-                <textarea
-                  value={editData.body}
-                  disabled={isLimitReached}
-                  onChange={(e) => setEditData({ ...editData, body: e.target.value })}
-                  rows={10}
-                  className="w-full text-[11px] sm:text-sm text-gray-700 leading-6 border-none focus:ring-0 p-0 resize-none disabled:text-gray-400 outline-none"
-                  placeholder="Core narrative..."
-                />
-              </SectionCard>
-
-              {/* Conclusion Section */}
-              <SectionCard
-                label="Conclusion"
-                disabled={isLimitReached}
-                onSpeak={() => toggleSpeech(editData.conclusion, 'conclusion')}
-                isSpeaking={currentlySpeaking === 'conclusion'}
-              >
-                <AutoGrowingTextarea
-                  value={editData.conclusion}
-                  disabled={isLimitReached}
-                  onChange={(e) => setEditData({ ...editData, conclusion: e.target.value })}
-                  className="w-full text-[11px] sm:text-sm text-gray-700 border-none focus:ring-0 p-0 resize-none italic disabled:text-gray-400 leading-snug overflow-hidden outline-none"
-                  placeholder="Conclusion..."
-                />
-              </SectionCard>
-
-              {/* CTA Section */}
-              <SectionCard
-                label="Mandatory CTA"
-                disabled={isLimitReached}
-                onAiAction={() => handleRegenerate("OPTIMIZE_FOR_CONVERSION")}
-                aiLabel={regenerating && regeneratingAction === "OPTIMIZE_FOR_CONVERSION" ? "Optimizing..." : "Optimize for Conversion"}
-                aiDisabled={regenerating}
-                onSpeak={() => toggleSpeech(editData.ctaText, 'cta')}
-                isSpeaking={currentlySpeaking === 'cta'}
-              >
-                <div className="flex flex-col gap-2">
-                  <AutoGrowingTextarea
-                    value={editData.ctaText}
-                    disabled={isLimitReached}
-                    onChange={(e) => setEditData({ ...editData, ctaText: e.target.value })}
-                    className="w-full text-xs sm:text-sm font-bold text-primary border border-blue-100 rounded-lg px-3 py-2 bg-blue-50/20 disabled:text-blue-300 disabled:border-gray-100 disabled:bg-gray-50 outline-none focus:ring-1 focus:ring-blue-400/30 overflow-hidden"
-                    placeholder="Enter CTA text (e.g., Buy Now)..."
+                <div className="mt-2 min-h-[400px]">
+                  <RichTextEditor
+                    value={editData.body}
+                    onChange={(html) => setEditData(prev => ({ ...prev, body: html }))}
+                    placeholder="Write your beautiful HTML press release body..."
+                    maxLength={12000}
                   />
-                  <p className="text-[10px] text-gray-400 font-medium px-1">This text will appear on the primary action button.</p>
+                  
+                  {/* Read-only Static News Footer */}
+                  <div className="mt-8 pt-6 border-t border-gray-200 text-left opacity-85">
+                    <div className="mb-6">
+                      <h4 className="text-xs uppercase font-extrabold text-gray-500 tracking-wider mb-2">Media Contact</h4>
+                      <p className="text-sm font-bold text-gray-900">Droppr AI Research & Media Desk</p>
+                      <p className="text-xs text-gray-600">support@droppr.ai</p>
+                      <p className="text-xs text-gray-500">Austin, Texas</p>
+                    </div>
+                    <div className="bg-gray-50/80 rounded-xl p-4 border border-gray-100">
+                      <h4 className="text-xs font-bold text-gray-900 mb-1">About Droppr AI</h4>
+                      <p className="text-xs text-gray-600 leading-relaxed font-medium">
+                        Droppr AI is a digital publishing and trend-monitoring platform covering ecommerce, creator economies, consumer technology and emerging online retail behavior. The organization publishes independent editorial reporting on how social platforms and creator communities influence consumer purchasing patterns.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </SectionCard>
             </div>
