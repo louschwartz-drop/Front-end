@@ -164,52 +164,93 @@ export default function BlogListing() {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {blogs.map((blog, idx) => (
-                                <Link 
-                                    href={`/blog/${blog.slug}`} 
-                                    key={blog._id} 
-                                    className="group flex flex-col h-full bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 overflow-hidden"
-                                >
-                                    <div className="relative h-64 overflow-hidden bg-gray-100">
-                                        <img 
-                                            src={blog.featuredImage || "/press-hero-v2.png"} 
-                                            alt={blog.title}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                        />
-                                        <div className="absolute top-4 left-4">
-                                            {blog.categories.slice(0, 1).map(cat => (
-                                                <span key={cat._id} className="bg-white/90 backdrop-blur-md text-primary text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
-                                                    {cat.name}
+                            {blogs.map((blog, idx) => {
+                                const rReadTime = Math.ceil(blog.content.length / 1000);
+                                const authorInitials = (blog.authorName || 'LS').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                                return (
+                                    <Link
+                                        href={`/blog/${blog.slug}`}
+                                        key={blog._id}
+                                        className="group flex flex-col h-full bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 overflow-hidden"
+                                    >
+                                        {/* Thumbnail */}
+                                        <div className="relative h-56 overflow-hidden bg-gray-100 flex-shrink-0">
+                                            <img
+                                                src={blog.featuredImage || "/press-hero-v2.png"}
+                                                alt={blog.title}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                            />
+                                            {/* Category badges on image */}
+                                            {blog.categories?.length > 0 && (
+                                                <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
+                                                    {blog.categories.slice(0, 2).map(cat => (
+                                                        <span key={cat._id}
+                                                            style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}
+                                                            className="bg-white/95 backdrop-blur-sm text-primary text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest shadow-md">
+                                                            {cat.name}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Card body */}
+                                        <div className="p-6 flex-grow flex flex-col">
+                                            {/* Meta row */}
+                                            <div className="flex items-center gap-1.5 mb-3" style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
+                                                <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest flex items-center gap-1">
+                                                    <Calendar className="w-3 h-3 text-primary/60" />
+                                                    {format(new Date(blog.publishedAt || blog.createdAt), "MMM d, yyyy")}
                                                 </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div className="p-8 flex-grow flex flex-col">
-                                        <div className="flex items-center gap-4 text-xs text-gray-400 mb-4 font-medium">
-                                            <div className="flex items-center gap-1.5">
-                                                <Calendar className="w-3.5 h-3.5 text-primary" />
-                                                {format(new Date(blog.publishedAt || blog.createdAt), "MMM dd, yyyy")}
+                                                <span className="text-gray-200 text-xs">·</span>
+                                                <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest flex items-center gap-1">
+                                                    <Clock className="w-3 h-3 text-primary/60" />
+                                                    {rReadTime}&thinsp;min
+                                                </span>
+                                                {blog.viewCount > 0 && (
+                                                    <>
+                                                        <span className="text-gray-200 text-xs">·</span>
+                                                        <span className="text-[10px] text-gray-400 font-semibold flex items-center gap-0.5">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                            {blog.viewCount > 999 ? `${(blog.viewCount / 1000).toFixed(1)}k` : blog.viewCount}
+                                                        </span>
+                                                    </>
+                                                )}
                                             </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <Clock className="w-3.5 h-3.5 text-primary" />
-                                                {Math.ceil(blog.content.length / 1000)} min read
+
+                                            {/* Title */}
+                                            <h2 style={{
+                                                fontFamily: 'var(--font-serif, Georgia, serif)',
+                                                fontSize: '19px',
+                                                fontWeight: 700,
+                                                lineHeight: 1.3,
+                                                letterSpacing: '-0.01em',
+                                                color: '#0a0e1a',
+                                                marginBottom: '10px'
+                                            }} className="line-clamp-2 group-hover:text-primary transition-colors">
+                                                {blog.title}
+                                            </h2>
+
+                                            {/* Excerpt */}
+                                            <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed mb-4 flex-grow"
+                                               style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
+                                                {blog.excerpt || "Read the latest updates and announcements from DropPR.ai."}
+                                            </p>
+
+                                            {/* Footer CTA + author */}
+                                            <div className="pt-3 border-t border-gray-50 flex items-center justify-between mt-auto">
+                                                <span className="inline-flex items-center gap-1.5 text-primary font-bold text-[10px] uppercase tracking-widest">
+                                                    Read Article
+                                                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform" />
+                                                </span>
+                                                <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                                    <span className="text-white text-[8px] font-black">{authorInitials}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <h2 className="text-xl font-bold text-gray-900 mb-4 line-clamp-2 group-hover:text-primary transition-colors leading-snug">
-                                            {blog.title}
-                                        </h2>
-                                        <p className="text-gray-500 mb-8 line-clamp-3 text-sm leading-relaxed">
-                                            {blog.excerpt || "Read the latest updates and announcements from the industry leaders in AI and media distribution."}
-                                        </p>
-                                        <div className="mt-auto flex items-center justify-between">
-                                            <span className="inline-flex items-center gap-2 text-primary font-bold text-sm">
-                                                Read Article 
-                                                <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
-                                            </span>
-                                        </div>
-                                    </div>
-                                </Link>
-                            ))}
+                                    </Link>
+                                );
+                            })}
                         </div>
                     )}
 

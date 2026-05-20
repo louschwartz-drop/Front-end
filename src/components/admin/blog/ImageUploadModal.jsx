@@ -60,14 +60,33 @@ export default function ImageUploadModal({
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            if (e.target?.result) {
-                setImagePreview(e.target.result);
-                setImageFile(file);
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        
+        img.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+            const minWidth = aspectRatio === 1 ? 200 : 600;
+            const minHeight = aspectRatio === 1 ? 200 : 300;
+            
+            if (img.naturalWidth < minWidth || img.naturalHeight < minHeight) {
+                toast.error(`Image resolution too low (${img.naturalWidth}x${img.naturalHeight}). Please upload an image with at least ${minWidth}x${minHeight} resolution.`);
+                return;
             }
+
+            const reader = new FileReader();
+            reader.onload = (readerEvent) => {
+                if (readerEvent.target?.result) {
+                    setImagePreview(readerEvent.target.result);
+                    setImageFile(file);
+                }
+            };
+            reader.readAsDataURL(file);
         };
-        reader.readAsDataURL(file);
+        img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            toast.error("Invalid image file");
+        };
+        img.src = objectUrl;
     };
 
     const onImageLoad = () => {
@@ -141,36 +160,50 @@ export default function ImageUploadModal({
             const img = imgRef.current;
             const container = containerRef.current;
 
-            const outputSize = 1200; // High quality output
+            const cw = container.clientWidth;
+            const ch = container.clientHeight;
+
+            const naturalWidth = img.naturalWidth;
+            const naturalHeight = img.naturalHeight;
+
+            // Crop dimensions mapping original image pixels
+            const w_orig = cw / zoom;
+            const h_orig = ch / zoom;
+
+            // Bounding box offsets relative to center
+            const x_orig = (naturalWidth - w_orig) / 2 - (position.x / zoom);
+            const y_orig = (naturalHeight - h_orig) / 2 - (position.y / zoom);
+
+            // Output resolution scales dynamically to preserve original pixels, capped at 2048px
+            let targetWidth = Math.round(w_orig);
+            if (targetWidth > 2048) {
+                targetWidth = 2048;
+            }
+            const targetHeight = Math.round(targetWidth / aspectRatio);
+
             const canvas = document.createElement("canvas");
-            canvas.width = outputSize;
-            canvas.height = outputSize / aspectRatio;
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
             const ctx = canvas.getContext("2d");
             if (!ctx) throw new Error("Canvas context not available");
 
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            const cw = container.clientWidth;
-            const visibleFrameSize = cw - 20;
-            const previewToOutputScale = outputSize / visibleFrameSize;
-
-            const naturalWidth = img.naturalWidth;
-            const naturalHeight = img.naturalHeight;
-
-            const drawWidth = naturalWidth * zoom * previewToOutputScale;
-            const drawHeight = naturalHeight * zoom * previewToOutputScale;
-
-            const userX = position.x * previewToOutputScale;
-            const userY = position.y * previewToOutputScale;
-
-            const centerX = (canvas.width - drawWidth) / 2;
-            const centerY = (canvas.height - drawHeight) / 2;
-
-            ctx.drawImage(img, centerX + userX, centerY + userY, drawWidth, drawHeight);
+            ctx.drawImage(
+                img, 
+                x_orig, 
+                y_orig, 
+                w_orig, 
+                h_orig, 
+                0, 
+                0, 
+                canvas.width, 
+                canvas.height
+            );
 
             const blob = await new Promise((resolve) =>
-                canvas.toBlob(resolve, "image/jpeg", 0.9)
+                canvas.toBlob(resolve, "image/jpeg", 0.95)
             );
             if (!blob) throw new Error("Failed to create image blob");
 

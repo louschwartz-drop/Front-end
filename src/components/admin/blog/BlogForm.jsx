@@ -31,9 +31,14 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
         slug: "",
         content: "",
         excerpt: "",
+        description: "",
         featuredImage: "",
         categories: [],
         status: "draft",
+        authorName: "Lou Schwartz",
+        authorRole: "Founder · DropPR.ai",
+        authorBio: "Lou Schwartz writes about digital media, advertising, SEO, AI search, and the future of online discovery. He is Chief Forensic Officer of Signal Law Group and has spent more than two decades across securities law, M&A, capital markets, and senior executive leadership in technology-driven businesses. He has led hundreds of transactions, raised more than $500 million in capital, and served as CEO, board chair, and senior executive across multiple market cycles.",
+        authorImage: "",
         seo: {
             title: "",
             description: "",
@@ -42,6 +47,7 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
     });
     const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const [isAuthorImageModalOpen, setIsAuthorImageModalOpen] = useState(false);
     const [isAIGenerated, setIsAIGenerated] = useState(false);
 
     useEffect(() => {
@@ -84,9 +90,14 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
             slug: data.slug || "",
             content: data.content || "",
             excerpt: data.excerpt || "",
+            description: data.description || "",
             featuredImage: data.featuredImage || "",
             categories: (data.categories || []).map(c => c._id || c),
             status: data.status || "draft",
+            authorName: data.authorName || "Lou Schwartz",
+            authorRole: data.authorRole || "Founder · DropPR.ai",
+            authorBio: data.authorBio || "Lou Schwartz writes about digital media, advertising, SEO, AI search, and the future of online discovery. He is Chief Forensic Officer of Signal Law Group and has spent more than two decades across securities law, M&A, capital markets, and senior executive leadership in technology-driven businesses. He has led hundreds of transactions, raised more than $500 million in capital, and served as CEO, board chair, and senior executive across multiple market cycles.",
+            authorImage: data.authorImage || "",
             seo: {
                 title: data.metaTitle || data.title || "",
                 description: data.metaDescription || data.excerpt || "",
@@ -286,6 +297,18 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
                         </div>
 
                         <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Description <span className="normal-case font-normal text-gray-300">(shows under title on published page)</span></label>
+                            <textarea
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
+                                rows={3}
+                                placeholder="A compelling italic summary shown directly beneath the article title..."
+                                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium text-gray-900 resize-none leading-relaxed italic"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Content</label>
                             <div className="relative">
                                 <BlogRichTextEditor 
@@ -415,6 +438,82 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
                         </div>
                     </div>
 
+                    {/* Author Details Card */}
+                    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 border-b border-gray-100 pb-4">Author Details</h3>
+                        
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Author Photo</label>
+                            {formData.authorImage ? (
+                                <div className="relative rounded-2xl overflow-hidden aspect-square border border-gray-300 shadow-inner group max-w-[120px]">
+                                    <img src={formData.authorImage} className="w-full h-full object-cover" alt="Author" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setIsAuthorImageModalOpen(true)}
+                                            className="p-1.5 bg-white text-gray-900 rounded-full hover:bg-gray-100 transition-colors"
+                                        >
+                                            <ImageIcon size={14} />
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setFormData(prev => ({ ...prev, authorImage: "" }))}
+                                            className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button 
+                                    type="button" 
+                                    onClick={() => setIsAuthorImageModalOpen(true)}
+                                    className="w-[120px] aspect-square border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all group"
+                                >
+                                    <Plus size={20} />
+                                    <span className="text-[9px] font-black uppercase tracking-widest">Add Photo</span>
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Author Name</label>
+                            <input
+                                name="authorName"
+                                value={formData.authorName}
+                                onChange={handleChange}
+                                placeholder="Lou Schwartz"
+                                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold text-sm text-gray-900"
+                                required
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Author Role</label>
+                            <input
+                                name="authorRole"
+                                value={formData.authorRole}
+                                onChange={handleChange}
+                                placeholder="Founder · DropPR.ai"
+                                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold text-sm text-gray-900"
+                                required
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Author Biography</label>
+                            <textarea
+                                name="authorBio"
+                                value={formData.authorBio}
+                                onChange={handleChange}
+                                rows={4}
+                                placeholder="Enter author bio..."
+                                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium text-xs text-gray-900 resize-none leading-relaxed"
+                                required
+                            />
+                        </div>
+                    </div>
+
                     <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-6">
                         <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                             <h3 className="text-xs font-black uppercase tracking-widest text-gray-900">Categories</h3>
@@ -478,6 +577,14 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
                 onClose={() => setIsImageModalOpen(false)}
                 onUploadSuccess={(url) => setFormData(prev => ({ ...prev, featuredImage: url }))}
                 aspectRatio={1200 / 630}
+            />
+
+            <ImageUploadModal 
+                isOpen={isAuthorImageModalOpen}
+                onClose={() => setIsAuthorImageModalOpen(false)}
+                onUploadSuccess={(url) => setFormData(prev => ({ ...prev, authorImage: url }))}
+                aspectRatio={1}
+                title="Adjust Author Profile Photo"
             />
         </form>
     );

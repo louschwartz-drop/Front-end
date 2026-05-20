@@ -1,240 +1,480 @@
 import { blogService } from "@/lib/api/user/blogs";
 import { format } from "date-fns";
-import { Calendar, User, Clock, ChevronLeft, Tag, ArrowRight, X, Sparkles } from "lucide-react";
+import { Calendar, Clock, ArrowRight, X, Eye } from "lucide-react";
 import Link from "next/link";
 import Header from "@/components/landingPage/Header";
 import Footer from "@/components/landingPage/Footer";
 import Button from "@/components/ui/Button";
 
 async function getBlog(slug) {
-    try {
-        const data = await blogService.getBlogBySlug(slug);
-        return data.data;
-    } catch (error) {
-        return null;
-    }
+  try {
+    const data = await blogService.getBlogBySlug(slug);
+    return data.data;
+  } catch (error) {
+    return null;
+  }
 }
 
-async function getRelatedBlogs(categorySlug, currentBlogId) {
-    try {
-        const data = await blogService.getPublishedBlogs({ 
-            limit: 4, 
-            category: categorySlug 
-        });
-        return data.data.filter(b => b._id !== currentBlogId).slice(0, 3);
-    } catch (error) {
-        return [];
+async function getRelatedBlogs(currentBlogId, categorySlug) {
+  try {
+    // Try category-matched first
+    if (categorySlug) {
+      const data = await blogService.getPublishedBlogs({
+        limit: 4,
+        category: categorySlug,
+      });
+      const matched = data.data
+        .filter((b) => b._id !== currentBlogId)
+        .slice(0, 3);
+      if (matched.length >= 2) return matched;
     }
+    // Fallback: just get latest blogs regardless of category
+    const data = await blogService.getPublishedBlogs({ limit: 5 });
+    return data.data.filter((b) => b._id !== currentBlogId).slice(0, 3);
+  } catch (error) {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }) {
-    const { slug } = await params;
-    const blog = await getBlog(slug);
+  const { slug } = await params;
+  const blog = await getBlog(slug);
 
-    if (!blog) {
-        return {
-            title: "Blog Not Found - DropPR.ai",
-        };
-    }
+  if (!blog) {
+    return { title: "Blog Not Found - DropPR.ai" };
+  }
 
-    return {
-        title: `${blog.metaTitle || blog.title} - DropPR.ai Blog`,
-        description: blog.metaDescription || blog.excerpt,
-        keywords: blog.metaKeywords || blog.tags?.join(", ") || "",
-        openGraph: {
-            title: blog.title,
-            description: blog.excerpt,
-            images: [blog.featuredImage],
-            type: "article",
-            publishedTime: blog.publishedAt || blog.createdAt,
-            authors: [blog.author?.name || "Admin"],
-        },
-        twitter: {
-            card: "summary_large_image",
-            title: blog.title,
-            description: blog.excerpt,
-            images: [blog.featuredImage],
-        },
-    };
+  return {
+    title: `${blog.metaTitle || blog.title} - DropPR.ai Blog`,
+    description: blog.metaDescription || blog.excerpt,
+    keywords: blog.metaKeywords || blog.tags?.join(", ") || "",
+    openGraph: {
+      title: blog.title,
+      description: blog.excerpt,
+      images: [blog.featuredImage],
+      type: "article",
+      publishedTime: blog.publishedAt || blog.createdAt,
+      authors: [blog.author?.name || "Admin"],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: blog.title,
+      description: blog.excerpt,
+      images: [blog.featuredImage],
+    },
+  };
 }
 
 export default async function BlogDetail({ params }) {
-    const { slug } = await params;
-    const blog = await getBlog(slug);
-    
-    let relatedBlogs = [];
-    if (blog && blog.categories?.length > 0) {
-        relatedBlogs = await getRelatedBlogs(blog.categories[0].slug, blog._id);
-    }
+  const { slug } = await params;
+  const blog = await getBlog(slug);
 
-    if (!blog) {
-        return (
-            <div className="min-h-screen flex flex-col bg-white">
-                <Header />
-                <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-                    <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-8">
-                        <X size={40} className="text-gray-200" />
-                    </div>
-                    <h1 className="text-5xl font-black text-gray-900 mb-4 tracking-tighter">Article Not Found</h1>
-                    <p className="text-gray-500 font-bold mb-10 max-w-sm">The blog post you are looking for doesn't exist or has been moved to a new location.</p>
-                    <Link href="/blog">
-                        <Button className="bg-primary text-white font-black h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
-                            Explore Other Articles
-                        </Button>
-                    </Link>
-                </div>
-                <Footer />
-            </div>
-        );
-    }
-
-    const readTime = Math.ceil(blog.content.length / 1000);
-
+  if (!blog) {
     return (
-        <div className="min-h-screen bg-white selection:bg-primary/10">
-            <Header />
-
-            <main className="pt-32 pb-32">
-                <article className="relative">
-                    {/* Go Back Button */}
-                    <div className="max-w-5xl mx-auto px-6 mb-12">
-                        <Link href="/blog" className="group inline-flex items-center gap-2 text-gray-400 hover:text-primary transition-all font-black uppercase tracking-widest text-[10px]">
-                            <div className="w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center group-hover:border-primary/20 group-hover:bg-primary/5 transition-all">
-                                <ChevronLeft size={16} />
-                            </div>
-                            Go Back to Listing
-                        </Link>
-                    </div>
-
-                    {/* Hero Section */}
-                    <header className="max-w-5xl mx-auto px-6 mb-16 text-center">
-                        <div className="flex flex-wrap justify-center gap-2 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                            {blog.categories.map(cat => (
-                                <span key={cat._id} className="px-5 py-1.5 bg-primary/5 text-primary rounded-full text-[10px] font-black uppercase tracking-[0.2em]">
-                                    {cat.name}
-                                </span>
-                            ))}
-                        </div>
-                        
-                        <h1 className="text-5xl md:text-7xl font-black text-gray-900 tracking-tighter leading-[1] mb-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-                            {blog.title}
-                        </h1>
-
-                        <div className="flex flex-wrap items-center justify-center gap-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] animate-in fade-in slide-in-from-bottom-8 duration-1000">
-                            <div className="flex items-center gap-2">
-                                <Calendar size={16} className="text-primary/30" />
-                                <span>{format(new Date(blog.publishedAt || blog.createdAt), "MMMM dd, yyyy")}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Clock size={16} className="text-primary/30" />
-                                <span>{readTime} min read</span>
-                            </div>
-                        </div>
-                    </header>
-
-                    {/* Centered Rectangular Featured Image */}
-                    <div className="max-w-[800px] mx-auto mb-20 animate-in fade-in zoom-in-95 duration-1000 px-6">
-                        <div className="aspect-[16/9] rounded-[2.5rem] overflow-hidden shadow-2xl">
-                            <img 
-                                src={blog.featuredImage || null} 
-                                alt={blog.title}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Article Content Layout */}
-                    <div className="max-w-7xl mx-auto px-6 flex justify-center">
-                        {/* Article Main Content */}
-                        <div className="w-full max-w-4xl animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300">
-                            <div className="prose prose-xl prose-blue max-w-none 
-                                prose-p:text-gray-600 prose-p:font-medium prose-p:leading-[1.8] 
-                                prose-headings:font-black prose-headings:text-gray-900 prose-headings:tracking-tighter
-                                prose-h2:text-4xl prose-h2:mt-16 prose-h2:mb-8
-                                prose-h3:text-2xl prose-h3:mt-12 prose-h3:mb-6
-                                prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-primary/5 prose-blockquote:rounded-2xl prose-blockquote:px-10 prose-blockquote:py-8 prose-blockquote:not-italic prose-blockquote:text-gray-900 prose-blockquote:font-bold
-                                prose-img:rounded-[2.5rem] prose-img:shadow-2xl
-                                prose-ul:space-y-4 prose-li:font-medium prose-li:text-gray-600
-                            ">
-                                <div dangerouslySetInnerHTML={{ __html: blog.content }} />
-                            </div>
-
-                            {/* Tags */}
-                            <div className="mt-20 pt-10 border-t border-gray-100 flex flex-wrap gap-3">
-                                {blog.tags?.map(tag => (
-                                    <span key={tag} className="px-5 py-2.5 bg-gray-50 text-gray-500 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100">
-                                        #{tag}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </article>
-
-                {/* Related Blogs Section */}
-                {relatedBlogs.length > 0 && (
-                    <section className="mt-32 py-32 bg-gray-50/50 border-y border-gray-100">
-                        <div className="max-w-7xl mx-auto px-6">
-                            <div className="flex items-center justify-between mb-16">
-                                <div className="space-y-2">
-                                    <h2 className="text-4xl font-black text-gray-900 tracking-tighter">Related Articles</h2>
-                                    <p className="text-gray-400 font-medium text-sm">More insights on similar topics you might enjoy.</p>
-                                </div>
-                                <Link href="/blog" className="group flex items-center gap-3 text-primary font-black uppercase tracking-widest text-[10px] hover:gap-5 transition-all">
-                                    View All Posts <ArrowRight size={16} />
-                                </Link>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {relatedBlogs.map((rBlog) => (
-                                    <Link 
-                                        href={`/blog/${rBlog.slug}`} 
-                                        key={rBlog._id} 
-                                        className="group flex flex-col h-full bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 overflow-hidden"
-                                    >
-                                        <div className="relative h-56 overflow-hidden bg-gray-100">
-                                            <img 
-                                                src={rBlog.featuredImage || "/press-hero-v2.png"} 
-                                                alt={rBlog.title}
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                            />
-                                            <div className="absolute top-4 left-4">
-                                                {rBlog.categories.slice(0, 1).map(cat => (
-                                                    <span key={cat._id} className="bg-white/90 backdrop-blur-md text-primary text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
-                                                        {cat.name}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div className="p-8 flex-grow flex flex-col">
-                                            <div className="flex items-center gap-4 text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Calendar className="w-3.5 h-3.5 text-primary" />
-                                                    {format(new Date(rBlog.publishedAt || rBlog.createdAt), "MMM dd, yyyy")}
-                                                </div>
-                                                <div className="flex items-center gap-1.5">
-                                                    <Clock className="w-3.5 h-3.5 text-primary" />
-                                                    {Math.ceil(rBlog.content.length / 1000)} min read
-                                                </div>
-                                            </div>
-                                            <h3 className="text-xl font-bold text-gray-900 mb-4 line-clamp-2 group-hover:text-primary transition-colors leading-snug">
-                                                {rBlog.title}
-                                            </h3>
-                                            <div className="mt-auto flex items-center justify-between">
-                                                <span className="inline-flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest">
-                                                    Read Article 
-                                                    <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-                )}
-            </main>
-
-            <Footer />
+      <div className="min-h-screen flex flex-col bg-white">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-8">
+            <X size={40} className="text-gray-200" />
+          </div>
+          <h1 className="text-5xl font-black text-gray-900 mb-4 tracking-tighter">
+            Article Not Found
+          </h1>
+          <p className="text-gray-500 font-bold mb-10 max-w-sm">
+            The blog post you are looking for doesn't exist or has been moved.
+          </p>
+          <Link href="/blog">
+            <Button className="bg-primary text-white font-black h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
+              Explore Other Articles
+            </Button>
+          </Link>
         </div>
+        <Footer />
+      </div>
     );
+  }
+
+  const readTime = Math.ceil(blog.content.length / 1000);
+  const categorySlug =
+    blog.categories?.length > 0 ? blog.categories[0].slug : null;
+  const relatedBlogs = await getRelatedBlogs(blog._id, categorySlug);
+  const authorInitials = (blog.authorName || "Lou Schwartz")
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <div
+      className="min-h-screen selection:bg-primary/10"
+      style={{ background: "#fafaf7" }}
+    >
+      <Header />
+
+      <main className="pt-28 pb-8">
+        <article className="relative">
+          {/* ── Article Header ── */}
+          <header className="max-w-3xl mx-auto px-6 mt-8 mb-0 animate-in fade-in slide-in-from-bottom-6 duration-700">
+            {/* Title */}
+            <h1
+              style={{
+                fontFamily: "var(--font-serif, Georgia, serif)",
+                fontWeight: 700,
+                fontSize: "46px",
+                lineHeight: 1.08,
+                letterSpacing: "-0.025em",
+                marginBottom: "20px",
+                color: "#0a0e1a",
+              }}
+            >
+              {blog.title}
+            </h1>
+
+            {/* Description — italic serif under title */}
+            {blog.description && (
+              <p
+                style={{
+                  fontSize: "22px",
+                  lineHeight: 1.45,
+                  color: "#5f5f5f",
+                  fontStyle: "italic",
+                  marginBottom: "32px",
+                  fontFamily: "Charter, Georgia, serif",
+                }}
+              >
+                {blog.description}
+              </p>
+            )}
+
+            {/* Excerpt fallback */}
+            {!blog.description && blog.excerpt && (
+              <p
+                style={{
+                  fontFamily: "var(--font-serif, Georgia, serif)",
+                  fontStyle: "italic",
+                  lineHeight: 1.6,
+                }}
+                className="text-xl text-gray-600 mb-8"
+              >
+                {blog.excerpt}
+              </p>
+            )}
+
+            <hr className="border-gray-200 mb-6" />
+
+            {/* Author Row */}
+            <div className="flex items-center gap-4 mb-6">
+              {/* Avatar */}
+              <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {blog.authorImage ? (
+                  <img
+                    src={blog.authorImage}
+                    alt={blog.authorName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-white text-xs font-black">
+                    {authorInitials}
+                  </span>
+                )}
+              </div>
+              {/* Meta */}
+              <div>
+                <p className="text-sm font-bold text-gray-900 leading-tight">
+                  By {blog.authorName || "Lou Schwartz"}
+                </p>
+                <div className="flex items-center gap-0 mt-0.5">
+                  <span className="text-xs text-gray-500">
+                    {blog.authorRole || "Founder · DropPR.ai"}
+                  </span>
+                  <span className="text-xs text-gray-300 mx-2">·</span>
+                  <span className="text-xs text-gray-500">
+                    {readTime}&thinsp;min read
+                  </span>
+                  <span className="text-xs text-gray-300 mx-2">·</span>
+                  <span className="text-xs text-gray-500">
+                    Published&nbsp;
+                    {format(
+                      new Date(blog.publishedAt || blog.createdAt),
+                      "MMMM d, yyyy",
+                    )}
+                  </span>
+                  {blog.viewCount > 0 && (
+                    <>
+                      <span className="text-xs text-gray-300 mx-2">·</span>
+                      <span className="text-xs text-gray-500 flex items-center gap-1">
+                        <Eye size={11} className="text-gray-400" />
+                        {blog.viewCount.toLocaleString()}&thinsp;views
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <hr className="border-gray-200" />
+          </header>
+
+          {/* Featured Image */}
+          {blog.featuredImage && (
+            <div className="max-w-3xl mx-auto px-6 mt-6 mb-8 animate-in fade-in zoom-in-95 duration-1000">
+              <div className="w-full overflow-hidden rounded-2xl shadow-xl">
+                <img
+                  src={blog.featuredImage}
+                  alt={blog.title}
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Article Body */}
+          <div className="max-w-3xl mx-auto px-6">
+            <div className="w-full animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300">
+              {/* Drop-cap wrapper — gives the first p its own containing block */}
+              <div className="blog-content">
+                <div dangerouslySetInnerHTML={{ __html: blog.content }} />
+              </div>
+
+              {/* Tags */}
+              {blog.tags?.length > 0 && (
+                <div className="mt-20 pt-10 border-t border-gray-100 flex flex-wrap gap-3">
+                  {blog.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-5 py-2.5 bg-gray-50 text-gray-500 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Author Bio Card */}
+              <div className="mt-16 pt-10 border-t border-gray-200">
+                <div className="flex gap-5 items-start">
+                  <div
+                    className="w-16 h-16 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 40% 35%, #5a2a27 0%, #2c1210 100%)",
+                    }}
+                  >
+                    {blog.authorImage ? (
+                      <img
+                        src={blog.authorImage}
+                        alt={blog.authorName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white font-black text-lg tracking-wide">
+                        {authorInitials}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p
+                      style={{
+                        fontFamily: "var(--font-serif, Georgia, serif)",
+                        fontWeight: 700,
+                        fontSize: "1.1rem",
+                        color: "#0a0e1a",
+                        marginBottom: "0.2rem",
+                      }}
+                    >
+                      {blog.authorName || "Lou Schwartz"}
+                    </p>
+                    <p
+                      className="text-xs font-black uppercase tracking-widest mb-3"
+                      style={{ color: "#0A5CFF" }}
+                    >
+                      {blog.authorRole || "Founder · DropPR.ai"}
+                    </p>
+                    {blog.authorBio && (
+                      <p
+                        style={{
+                          fontFamily: "var(--font-serif, Georgia, serif)",
+                          fontSize: "0.95rem",
+                          lineHeight: 1.7,
+                          color: "#374151",
+                        }}
+                      >
+                        {blog.authorBio}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+
+        {relatedBlogs.length > 0 && (
+          <section
+            style={{
+              background: "#fafaf7",
+              borderTop: "1px solid #e8e4de",
+              marginTop: "3rem",
+            }}
+          >
+            <div className="max-w-6xl mx-auto px-6 py-10">
+              {/* Heading */}
+              <div className="flex items-end justify-between mb-10">
+                <div>
+                  <p
+                    style={{
+                      fontFamily: "'Helvetica Neue', Arial, sans-serif",
+                      fontSize: "10px",
+                      letterSpacing: "0.2em",
+                      textTransform: "uppercase",
+                      color: "#0A5CFF",
+                      fontWeight: 700,
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Keep Reading
+                  </p>
+                  <h2
+                    style={{
+                      fontFamily: "var(--font-serif, Georgia, serif)",
+                      fontSize: "32px",
+                      fontWeight: 700,
+                      lineHeight: 1.1,
+                      letterSpacing: "-0.02em",
+                      color: "#0a0e1a",
+                      margin: 0,
+                    }}
+                  >
+                    More Articles
+                  </h2>
+                </div>
+                <Link
+                  href="/blog"
+                  style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}
+                  className="group flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest hover:gap-3.5 transition-all"
+                >
+                  View All <ArrowRight size={13} />
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {relatedBlogs.map((rBlog) => {
+                  const rReadTime = Math.ceil(rBlog.content.length / 1000);
+                  const rInitials = (rBlog.authorName || "LS")
+                    .split(" ")
+                    .map((w) => w[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase();
+                  return (
+                    <Link
+                      href={`/blog/${rBlog.slug}`}
+                      key={rBlog._id}
+                      className="group flex flex-col h-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-400 overflow-hidden"
+                    >
+                      {/* Thumbnail — no badges on image */}
+                      <div className="relative h-44 overflow-hidden bg-gray-100 flex-shrink-0">
+                        <img
+                          src={rBlog.featuredImage || "/press-hero-v2.png"}
+                          alt={rBlog.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-600"
+                        />
+                      </div>
+
+                      {/* Card body */}
+                      <div
+                        className="p-5 flex-grow flex flex-col"
+                        style={{
+                          fontFamily: "'Helvetica Neue', Arial, sans-serif",
+                        }}
+                      >
+                        {/* Category tags — in body, under thumbnail */}
+                        {rBlog.categories?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-3">
+                            {rBlog.categories.slice(0, 2).map((cat) => (
+                              <span
+                                key={cat._id}
+                                className="text-primary text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border border-primary/20 bg-primary/5"
+                              >
+                                {cat.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Meta row */}
+                        <div className="flex items-center gap-1.5 mb-2.5">
+                          <span className="text-[10px] text-gray-400 font-medium">
+                            {format(
+                              new Date(rBlog.publishedAt || rBlog.createdAt),
+                              "MMM d, yyyy",
+                            )}
+                          </span>
+                          <span className="text-gray-200">·</span>
+                          <span className="text-[10px] text-gray-400 font-medium">
+                            {rReadTime}&thinsp;min read
+                          </span>
+                          {rBlog.viewCount > 0 && (
+                            <>
+                              <span className="text-gray-200">·</span>
+                              <span className="text-[10px] text-gray-400 font-medium flex items-center gap-0.5">
+                                <Eye size={9} className="text-gray-300" />
+                                {rBlog.viewCount > 999
+                                  ? `${(rBlog.viewCount / 1000).toFixed(1)}k`
+                                  : rBlog.viewCount}
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Title — serif */}
+                        <h3
+                          style={{
+                            fontFamily: "var(--font-serif, Georgia, serif)",
+                            fontSize: "17px",
+                            fontWeight: 700,
+                            lineHeight: 1.35,
+                            letterSpacing: "-0.01em",
+                            color: "#0a0e1a",
+                            marginBottom: "8px",
+                          }}
+                          className="line-clamp-2 group-hover:text-primary transition-colors"
+                        >
+                          {rBlog.title}
+                        </h3>
+
+                        {/* Excerpt */}
+                        {rBlog.excerpt && (
+                          <p className="text-[13px] text-gray-500 line-clamp-2 leading-relaxed mb-3">
+                            {rBlog.excerpt}
+                          </p>
+                        )}
+
+                        {/* CTA footer */}
+                        <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between">
+                          <span className="inline-flex items-center gap-1.5 text-primary font-bold text-[10px] uppercase tracking-widest">
+                            Read Article
+                            <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                          </span>
+                          <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center">
+                            <span className="text-white text-[7px] font-black">
+                              {rInitials}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
+      </main>
+
+      <Footer />
+    </div>
+  );
 }

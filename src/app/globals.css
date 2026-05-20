@@ -3,6 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --ink-soft: #5f5f5f;
+  --ink: #0a0e1a;
+  --muted: #6b7280;
 }
 
 @theme inline {
@@ -312,4 +315,402 @@ input[type="button"]:disabled {
 .prose a {
   color: #0A5CFF;
   text-decoration: underline;
-}
+}
+
+/* ============================================
+   DROPPR PREMIUM EDITORIAL BLOG CONTENT STYLES
+   ============================================ */
+
+/* Base typography for blog content */
+.blog-content {
+  font-family: var(--font-serif), Georgia, 'Times New Roman', serif;
+  font-size: 1.125rem;
+  line-height: 1.75;
+  color: #1a1a2e;
+}
+
+.blog-content h1,
+.blog-content h2,
+.blog-content h3,
+.blog-content h4 {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 700;
+  color: #0a0e1a;
+  letter-spacing: -0.02em;
+}
+
+.blog-content h2 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin-top: 3.5rem;
+  margin-bottom: 0.85rem;
+  padding-top: 0;
+  border-top: none;
+  position: relative;
+}
+
+.blog-content h2::before {
+  content: '';
+  display: block;
+  width: 2.5rem;
+  height: 3px;
+  background: #0A5CFF;
+  margin-bottom: 0.85rem;
+  border-radius: 2px;
+}
+
+.blog-content h3 {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  margin-top: 2.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.blog-content p {
+  margin-bottom: 1.5rem;
+  color: #2d3142;
+}
+
+.blog-content a {
+  color: #0A5CFF;
+  border-bottom: 1px solid rgba(10, 92, 255, 0.3);
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+
+.blog-content a:hover {
+  border-color: #0A5CFF;
+}
+
+.blog-content ul {
+  list-style-type: disc;
+  padding-left: 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.blog-content ol {
+  list-style-type: decimal;
+  padding-left: 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.blog-content li {
+  margin-bottom: 0.75rem;
+  color: #2d3142;
+}
+
+.blog-content hr {
+  border: none;
+  border-top: 1px solid #d8d4c8;
+  margin: 3rem 0;
+}
+
+/* Standard blockquote */
+.blog-content blockquote {
+  border-left: 4px solid #0A5CFF;
+  padding: 1rem 1.5rem;
+  background: #f3f7ff;
+  border-radius: 0 0.75rem 0.75rem 0;
+  margin: 2rem 0;
+  font-style: italic;
+  color: #4B5563;
+}
+
+/* Drop cap — first letter of first paragraph
+   Works both with and without the dangerouslySetInnerHTML <div> wrapper */
+.blog-content > p:first-of-type::first-letter,
+.blog-content > div > p:first-of-type::first-letter,
+.blog-content p.drop-cap::first-letter,
+.blog-content p.lede::first-letter {
+  font-size: 4.5rem;
+  float: left;
+  line-height: 0.82;
+  padding: 6px 10px 0 0;
+  font-weight: 700;
+  color: #0A5CFF;
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+
+/* Editorial Pullquote */
+.blog-content aside.pullquote {
+  margin: 3rem 0;
+  padding: 2rem 2.5rem;
+  background: #f4f1ea;
+  border-left: 6px solid #0A5CFF;
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+.blog-content p.pullquote-text {
+  font-size: 26px;
+  line-height: 1.35;
+  color: var(--ink);
+  font-style: italic;
+  font-weight: 500;
+  margin-bottom: 14px;
+  letter-spacing: -0.01em;
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+.blog-content p.pullquote-attr {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-style: normal;
+  font-weight: 600;
+  margin-bottom: 0;
+  border: none;
+}
+
+.blog-content p.pullquote-attr a {
+  color: #5a5e6b;
+  border-bottom: 1px solid #d8d4c8;
+}
+
+/* Stats Row */
+.blog-content .stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin: 3rem 0;
+  padding: 2rem 0;
+  border-top: 2px solid #0a0e1a;
+  border-bottom: 2px solid #0a0e1a;
+}
+
+@media (max-width: 640px) {
+  .blog-content .stat-row {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.blog-content .stat {
+  text-align: left;
+}
+
+.blog-content .stat-num {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #0A5CFF;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+.blog-content .stat-label {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5a5e6b;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+/* Playbook Step List */
+.blog-content ol.step-list {
+  counter-reset: step;
+  margin: 3rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.blog-content ol.step-list li {
+  counter-increment: step;
+  position: relative;
+  padding: 1.25rem 0 1.25rem 4rem;
+  border-bottom: 1px solid #d8d4c8;
+}
+
+.blog-content ol.step-list li::before {
+  content: counter(step, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 1.25rem;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0A5CFF;
+  line-height: 1;
+}
+
+.blog-content ol.step-list li:last-child {
+  border-bottom: none;
+}
+
+.blog-content ol.step-list h4 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0a0e1a;
+  margin-bottom: 0.35rem;
+  margin-top: 0;
+  font-family: var(--font-serif), Georgia, serif;
+  letter-spacing: -0.01em;
+}
+
+.blog-content ol.step-list p {
+  font-size: 0.97rem;
+  color: #5a5e6b;
+  margin-bottom: 0;
+  line-height: 1.6;
+}
+
+/* CTA Block */
+.blog-content section.cta {
+  margin: 4rem 0;
+  padding: 3rem 2.5rem;
+  background: #0a0e1a;
+  color: #fafaf7;
+  text-align: left;
+  border-top: 6px solid #0A5CFF;
+  border-radius: 0.5rem;
+}
+
+.blog-content section.cta .cta-kicker {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #c9a961;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+}
+
+.blog-content section.cta .cta-headline {
+  font-size: 2rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin-bottom: 1.25rem;
+  margin-top: 0;
+  color: #fafaf7;
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+.blog-content section.cta .cta-deck {
+  font-size: 1.1rem;
+  color: #c8ccd6;
+  margin-bottom: 2rem;
+  font-style: italic;
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+.blog-content section.cta .offer-stack {
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 3px solid #c9a961;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+  border-radius: 0 0.25rem 0.25rem 0;
+}
+
+.blog-content section.cta .offer-stack-title {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #c9a961;
+  margin-bottom: 1.25rem;
+  font-weight: 700;
+}
+
+.blog-content section.cta .offer-list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 0;
+}
+
+.blog-content section.cta .offer-list li {
+  padding: 0.75rem 0 0.75rem 2rem;
+  position: relative;
+  font-size: 1rem;
+  color: #fafaf7;
+  font-family: var(--font-serif), Georgia, serif;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 0;
+  line-height: 1.4;
+}
+
+.blog-content section.cta .offer-list li:last-child {
+  border-bottom: none;
+}
+
+.blog-content section.cta .offer-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #c9a961;
+  font-weight: 700;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.blog-content section.cta .offer-list li .value {
+  color: #c9a961;
+  font-weight: 700;
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.blog-content section.cta .cta-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.blog-content section.cta .btn-primary {
+  display: inline-block;
+  padding: 0.875rem 1.75rem;
+  background: #0A5CFF;
+  color: #fafaf7;
+  text-decoration: none;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 2px solid #0A5CFF;
+  transition: all 0.15s;
+  border-radius: 2px;
+}
+
+.blog-content section.cta .btn-primary:hover {
+  background: #0047d4;
+  border-color: #0047d4;
+  color: #fafaf7;
+}
+
+.blog-content section.cta .btn-secondary {
+  display: inline-block;
+  padding: 0.875rem 1.75rem;
+  background: transparent;
+  color: #fafaf7;
+  text-decoration: none;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  transition: all 0.15s;
+  border-radius: 2px;
+}
+
+.blog-content section.cta .btn-secondary:hover {
+  background: #fafaf7;
+  color: #0a0e1a;
+  border-color: #fafaf7;
+}
+
+/* ============================================
+   INLINE STYLE OVERRIDES — from Rich Text Editor
+   The TipTap editor writes <span style="color:#xxx">
+   which always takes precedence over class-based CSS.
+   The root fix is in BlogRichTextEditor.jsx — the color
+   attribute is now explicitly in CustomTextStyle.addAttributes()
+   so colors are saved correctly in the HTML content.
+   ============================================ */
+
