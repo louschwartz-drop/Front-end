@@ -11,8 +11,10 @@ const STANDARD_FOOTER = `
   <p style='margin:4px 0;color:#4b5563;'>Austin, Texas</p>
 </div>
 <div style='margin-top:2.5rem;padding:1.5rem;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;'>
-  <h4 style='margin-top:0;color:#111827;'>About Droppr AI</h4>
-  <p style='margin-bottom:0;color:#374151;line-height:1.7;'>Droppr AI is a digital publishing and trend-monitoring platform covering ecommerce, creator economies, consumer technology and emerging online retail behavior. The organization publishes independent editorial reporting on how social platforms and creator communities influence consumer purchasing patterns.</p>
+  <h4 style='margin-top:0;color:#111827;'>About Drop PR</h4>
+  <p style='margin-bottom:1rem;color:#374151;line-height:1.7;'><a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>Drop PR</a> transforms creator videos, podcasts, product reviews, and brand announcements into professionally written editorial-style articles distributed across a broad network of digital publishers. The platform helps brands, creators, agencies, and e-commerce companies expand search visibility, strengthen AI discoverability, generate backlinks, and extend the lifespan of short-form content beyond social media feeds.</p>
+  <h4 style='margin-top:1.5rem;color:#111827;'>Call to Action</h4>
+  <p style='margin-bottom:0;color:#374151;line-height:1.7;'>Brands, creators, podcasters, and agencies interested in turning content into distributed editorial coverage can learn more at <a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>Drop PR</a>.</p>
 </div>
 `;
 

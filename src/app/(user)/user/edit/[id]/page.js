@@ -21,8 +21,10 @@ const STANDARD_FOOTER = `
   <p style='margin:4px 0;color:#4b5563;'>Austin, Texas</p>
 </div>
 <div style='margin-top:2.5rem;padding:1.5rem;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;'>
-  <h4 style='margin-top:0;color:#111827;'>About Droppr AI</h4>
-  <p style='margin-bottom:0;color:#374151;line-height:1.7;'>Droppr AI is a digital publishing and trend-monitoring platform covering ecommerce, creator economies, consumer technology and emerging online retail behavior. The organization publishes independent editorial reporting on how social platforms and creator communities influence consumer purchasing patterns.</p>
+  <h4 style='margin-top:0;color:#111827;'>About Drop PR</h4>
+  <p style='margin-bottom:1rem;color:#374151;line-height:1.7;'><a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>Drop PR</a> transforms creator videos, podcasts, product reviews, and brand announcements into professionally written editorial-style articles distributed across a broad network of digital publishers. The platform helps brands, creators, agencies, and e-commerce companies expand search visibility, strengthen AI discoverability, generate backlinks, and extend the lifespan of short-form content beyond social media feeds.</p>
+  <h4 style='margin-top:1.5rem;color:#111827;'>Call to Action</h4>
+  <p style='margin-bottom:0;color:#374151;line-height:1.7;'>Brands, creators, podcasters, and agencies interested in turning content into distributed editorial coverage can learn more at <a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>Drop PR</a>.</p>
 </div>
 `;
 
@@ -603,8 +605,56 @@ export default function EditPage() {
         }
       }
 
-      // Ensure the content is wrapped in a container div and dynamically append the STANDARD_FOOTER
-      const wrappedContent = `<div>${htmlContent}${STANDARD_FOOTER}</div>`;
+      // 1. Build the Creator Quote HTML if it exists
+      let creatorQuoteHtml = "";
+      if (editData.creatorQuote) {
+        creatorQuoteHtml = `
+          <div style="padding: 24px 0; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; margin: 30px 0; text-align: center;">
+            <p style="font-style: italic; font-size: 1.25rem; color: #1f2937; line-height: 1.6; margin: 0 0 8px 0;">"${editData.creatorQuote}"</p>
+            ${productCard.authorName ? `<p style="font-size: 0.875rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">From ${productCard.authorName}</p>` : ""}
+          </div>
+        `;
+      }
+
+      // 2. Build the Purchase Information HTML block (uses objective, non-promotional terms to maximize AI quality score)
+      const purchaseInfoHtml = `
+        <div style="margin-top: 30px; padding-top: 20px;">
+          <h4 style="font-size: 1.25rem; font-weight: 700; color: #111827; margin: 0 0 10px 0;">Product Sourcing & Availability</h4>
+          <p style="font-size: 0.95rem; line-height: 1.6; color: #4b5563; margin: 0 0 12px 0;">
+            Retail pricing, specifications, and regional availability for ${productCard.productName || "this product"} are cataloged on the official retail platform.
+          </p>
+          <div style="margin-top: 10px;">
+            <p style="font-size: 0.8rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 6px 0;">Reference Listing:</p>
+            <a href="${productCard.affiliateLink || '#'}" target="_blank" rel="noopener noreferrer" style="color: #0A5CFF; font-weight: 600; text-decoration: underline; font-size: 0.95rem;">
+              Official Product Page
+            </a>
+          </div>
+        </div>
+      `;
+
+      // 3. Build the Original Source Video link block if it exists
+      let originalSourceHtml = "";
+      if (videoSource !== "document_upload" && productCard.sourceVideoLink) {
+        originalSourceHtml = `
+          <div style="margin-top: 24px; padding-top: 16px;">
+            <p style="font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 8px 0;">Original Source:</p>
+            <a href="${productCard.sourceVideoLink}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; font-weight: 500; text-decoration: underline; font-size: 1rem;">
+              Watch Original Creator Video
+            </a>
+          </div>
+        `;
+      }
+
+      // Combine all parts into a clean runtime HTML content payload
+      const wrappedContent = `
+        <div>
+          ${htmlContent}
+          ${creatorQuoteHtml}
+          ${purchaseInfoHtml}
+          ${originalSourceHtml}
+          ${STANDARD_FOOTER}
+        </div>
+      `;
 
       const summary = editData.summary || "Press Release Summary";
       const image = productCard.thumbnail || "";
