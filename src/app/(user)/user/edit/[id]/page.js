@@ -980,9 +980,13 @@ export default function EditPage() {
                       <p className="text-xs text-gray-500">Austin, Texas</p>
                     </div>
                     <div className="bg-gray-50/80 rounded-xl p-4 border border-gray-100">
-                      <h4 className="text-xs font-bold text-gray-900 mb-1">About Droppr AI</h4>
+                      <h4 className="text-xs font-bold text-gray-900 mb-1">About Drop PR</h4>
+                      <p className="text-xs text-gray-600 leading-relaxed font-medium mb-3">
+                        <a href="https://droppr.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold underline hover:text-blue-700">Drop PR</a> transforms creator videos, podcasts, product reviews, and brand announcements into professionally written editorial-style articles distributed across a broad network of digital publishers. The platform helps brands, creators, agencies, and e-commerce companies expand search visibility, strengthen AI discoverability, generate backlinks, and extend the lifespan of short-form content beyond social media feeds.
+                      </p>
+                      <h4 className="text-xs font-bold text-gray-900 mb-1 mt-3">Call to Action</h4>
                       <p className="text-xs text-gray-600 leading-relaxed font-medium">
-                        Droppr AI is a digital publishing and trend-monitoring platform covering ecommerce, creator economies, consumer technology and emerging online retail behavior. The organization publishes independent editorial reporting on how social platforms and creator communities influence consumer purchasing patterns.
+                        Brands, creators, podcasters, and agencies interested in turning content into distributed editorial coverage can learn more at <a href="https://droppr.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold underline hover:text-blue-700">Drop PR</a>.
                       </p>
                     </div>
                   </div>
