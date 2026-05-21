@@ -5,6 +5,7 @@ import Link from "next/link";
 import Header from "@/components/landingPage/Header";
 import Footer from "@/components/landingPage/Footer";
 import Button from "@/components/ui/Button";
+import ShareMenu from "@/components/ui/ShareMenu";
 
 async function getBlog(slug) {
   try {
@@ -115,7 +116,7 @@ export default async function BlogDetail({ params }) {
       <main className="pt-28 pb-8">
         <article className="relative">
           {/* ── Article Header ── */}
-          <header className="max-w-3xl mx-auto px-6 mt-8 mb-0 animate-in fade-in slide-in-from-bottom-6 duration-700">
+          <header className="max-w-4xl mx-auto px-6 mt-8 mb-0 animate-in fade-in slide-in-from-bottom-6 duration-700">
             {/* Title */}
             <h1
               className="text-3xl md:text-[46px] leading-tight md:leading-[1.08]"
@@ -209,6 +210,15 @@ export default async function BlogDetail({ params }) {
                   )}
                 </div>
               </div>
+              
+              <div className="ml-auto z-10 flex items-center gap-2">
+                <ShareMenu 
+                  url={`/blog/${blog.slug}`} 
+                  title={blog.title} 
+                  text={blog.excerpt} 
+                  position="bottom-left"
+                />
+              </div>
             </div>
 
             <hr className="border-gray-200" />
@@ -216,7 +226,7 @@ export default async function BlogDetail({ params }) {
 
           {/* Featured Image */}
           {blog.featuredImage && (
-            <div className="max-w-3xl mx-auto px-6 mt-6 mb-8 animate-in fade-in zoom-in-95 duration-1000">
+            <div className="max-w-4xl mx-auto px-6 mt-6 mb-8 animate-in fade-in zoom-in-95 duration-1000">
               <div className="w-full h-[260px] md:h-[420px] overflow-hidden rounded-2xl border border-gray-100 bg-gray-50">
                 <img
                   src={blog.featuredImage}
@@ -228,7 +238,7 @@ export default async function BlogDetail({ params }) {
           )}
 
           {/* Article Body */}
-          <div className="max-w-3xl mx-auto px-6">
+          <div className="max-w-4xl mx-auto px-6">
             <div className="w-full animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300">
               {/* Drop-cap wrapper — gives the first p its own containing block */}
               <div className="blog-content">
@@ -241,7 +251,7 @@ export default async function BlogDetail({ params }) {
                   {blog.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-5 py-2.5 bg-gray-50 text-gray-500 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100"
+                      className="px-5 py-2.5 bg-gray-50 text-gray-500 rounded-2xl text-xs font-black uppercase tracking-widest border border-gray-100"
                     >
                       #{tag}
                     </span>
@@ -370,10 +380,10 @@ export default async function BlogDetail({ params }) {
                     <Link
                       href={`/blog/${rBlog.slug}`}
                       key={rBlog._id}
-                      className="group flex flex-col h-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-400 overflow-hidden"
+                      className="group flex flex-col h-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-400 relative"
                     >
                       {/* Thumbnail — no badges on image */}
-                      <div className="relative h-52 overflow-hidden bg-gray-100 flex-shrink-0">
+                      <div className="relative h-52 overflow-hidden rounded-t-2xl bg-gray-100 flex-shrink-0">
                         <img
                           src={rBlog.featuredImage || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800"}
                           alt={rBlog.title}
@@ -425,6 +435,15 @@ export default async function BlogDetail({ params }) {
                               </span>
                             </>
                           )}
+                          
+                          <div className="ml-auto flex-shrink-0 z-10">
+                            <ShareMenu 
+                              url={`/blog/${rBlog.slug}`} 
+                              title={rBlog.title} 
+                              text={rBlog.excerpt} 
+                              position="bottom-right"
+                            />
+                          </div>
                         </div>
 
                         {/* Title — serif */}

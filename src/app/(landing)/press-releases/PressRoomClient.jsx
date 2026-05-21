@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Calendar, ArrowRight, Newspaper, Tag, Loader2, Search, Globe, Filter } from "lucide-react";
-import { 
-    Select, 
-    SelectGroup, 
-    SelectValue, 
-    SelectTrigger, 
-    SelectContent, 
-    SelectItem 
+import {
+    Select,
+    SelectGroup,
+    SelectValue,
+    SelectTrigger,
+    SelectContent,
+    SelectItem
 } from "@/components/ui/Select";
 import LoginModal from "@/components/landingPage/LoginModal";
 import { publicPressReleaseService } from "@/lib/api/public/press-releases";
@@ -32,35 +32,21 @@ const CATEGORIES = [
     { id: "general", name: "General" },
 ];
 
-const LANGUAGES = [
-    { code: "en", name: "English" },
-    { code: "es", name: "Spanish" },
-    { code: "fr", name: "French" },
-    { code: "de", name: "German" },
-];
-
-const TYPES = [
-    { id: "all", name: "All Types" },
-    { id: "1", name: "News" },
-    { id: "2", name: "Articles" },
-    { id: "3", name: "Discussion" },
-];
-
 const StyledSelect = ({ icon: Icon, value, onChange, options, label }) => (
     <div className="relative flex-grow group">
         <Select value={value} onValueChange={onChange}>
-            <SelectTrigger 
-                className="!w-full !h-auto !pl-11 !pr-4 !py-4 !bg-white/10 hover:!bg-white/20 !text-white !text-sm !border-white/20 !rounded-2xl !focus:ring-2 !focus:ring-brand-blue/50 !outline-hidden transition-all backdrop-blur-md relative"
+            <SelectTrigger
+                className="!w-full !h-14 !pl-11 !pr-4 !bg-white/10 hover:!bg-white/20 !text-white !text-sm !border-white/20 !rounded-2xl !focus:ring-2 !focus:ring-primary/50 !outline-hidden transition-all backdrop-blur-md relative"
             >
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 !text-white/60 group-hover:!text-white transition-colors z-10">
                     <Icon className="w-4 h-4" />
                 </div>
                 <SelectValue placeholder={label} />
             </SelectTrigger>
-            <SelectContent className="!bg-brand-dark/95 backdrop-blur-2xl !border-white/10 !text-white !rounded-2xl shadow-2xl z-[2000]">
+            <SelectContent className="!bg-black/60 backdrop-blur-2xl !border-white/10 !text-white !rounded-2xl shadow-2xl z-[2000]">
                 {options.map(opt => (
-                    <SelectItem 
-                        key={opt.code || opt.id} 
+                    <SelectItem
+                        key={opt.code || opt.id}
                         value={opt.code || opt.id}
                         className="hover:!bg-white/10 focus:!bg-white/10 !text-white/80 focus:!text-white cursor-pointer py-3"
                     >
@@ -76,7 +62,7 @@ const normalizePlatformArticle = (campaign) => ({
     id: campaign._id,
     title: campaign.article?.headline || "Untitled Press Release",
     description: campaign.article?.summary || "",
-    image: campaign.productCard?.thumbnail || "/press-hero-v2.png",
+    image: campaign.productCard?.thumbnail || "/fallback-platform.jpeg",
     published: campaign.createdAt,
     author: campaign.productCard?.authorName || campaign.userId?.name || "DropPR Author",
     category: [campaign.article?.productSummary?.category || "Platform"],
@@ -97,11 +83,10 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
     const [hasMore, setHasMore] = useState(true);
     const [country, setCountry] = useState("all");
     const [category, setCategory] = useState("all");
-    const [language, setLanguage] = useState("en");
-    const [type, setType] = useState("all");
+    const [activeTab, setActiveTab] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
     const [showLoginModal, setShowLoginModal] = useState(false);
-    
+
     const observer = useRef();
     const isFirstMount = useRef(true);
 
@@ -129,38 +114,61 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
             setPage(1);
             setHasMore(true);
             try {
-                // 1. Fetch News
-                const newsQuery = new URLSearchParams({
-                    page: '1',
-                    pageSize: '12',
-                    keywords: searchTerm || "press release AI",
-                    country,
-                    category,
-                    language,
-                    type
-                });
-                
-                // 2. Fetch Platform Articles
-                const platformPromise = publicPressReleaseService.getPlatformPressReleases({
-                    search: searchTerm,
-                    category: category,
-                    limit: 20
-                });
+                let fetchNews = true;
+                let fetchPlatform = true;
+                let apiType = 'all';
 
-                const [newsRes, platformData] = await Promise.all([
-                    fetch(`/api/press-releases?${newsQuery}`),
+                if (activeTab === 'news') {
+                    fetchPlatform = false;
+                    apiType = '1';
+                } else if (activeTab === 'discussion') {
+                    fetchPlatform = false;
+                    apiType = '3';
+                } else if (activeTab === 'platform') {
+                    fetchNews = false;
+                }
+
+                // 1. Fetch News
+                let newsResPromise = Promise.resolve({ articles: [] });
+                if (fetchNews) {
+                    const newsQuery = new URLSearchParams({
+                        page: '1',
+                        pageSize: '12',
+                        keywords: searchTerm || "press release AI",
+                        country,
+                        category,
+                        type: apiType
+                    });
+                    newsResPromise = fetch(`/api/press-releases?${newsQuery}`).then(res => res.json());
+                }
+
+                // 2. Fetch Platform Articles
+                let platformPromise = Promise.resolve({ data: [] });
+                if (fetchPlatform) {
+                    platformPromise = publicPressReleaseService.getPlatformPressReleases({
+                        search: searchTerm,
+                        category: category,
+                        limit: 20
+                    });
+                }
+
+                const [newsData, platformData] = await Promise.all([
+                    newsResPromise,
                     platformPromise
                 ]);
 
-                const newsData = await newsRes.json();
-                
                 const normalizedPlatform = (platformData.data || []).map(normalizePlatformArticle);
                 const news = (newsData.articles || []);
-                
+
                 const combined = [...normalizedPlatform, ...news].sort((a, b) => new Date(b.published) - new Date(a.published));
-                
+
                 setArticles(combined);
-                setHasMore(newsData.articles?.length > 0 || platformData.data?.length > 0);
+                
+                if (activeTab === 'platform') {
+                    setHasMore(false);
+                } else {
+                    setHasMore(newsData.articles?.length > 0 || platformData.data?.length > 0);
+                }
             } catch (error) {
                 console.error("Error filtering articles:", error);
             } finally {
@@ -170,7 +178,7 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
 
         const timeoutId = setTimeout(resetAndFetch, 500); // Debounce search
         return () => clearTimeout(timeoutId);
-    }, [searchTerm, country, category, language, type]);
+    }, [searchTerm, country, category, activeTab]);
 
     // Fetch more articles (pagination)
     useEffect(() => {
@@ -179,18 +187,23 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
         const fetchMoreArticles = async () => {
             setLoading(true);
             try {
+                if (activeTab === 'platform') {
+                    setHasMore(false);
+                    setLoading(false);
+                    return;
+                }
+
                 const query = new URLSearchParams({
                     page: page.toString(),
                     pageSize: '12',
                     keywords: searchTerm || "press release AI",
                     country,
                     category,
-                    language,
-                    type
+                    type: activeTab === 'news' ? '1' : (activeTab === 'discussion' ? '3' : 'all')
                 });
                 const res = await fetch(`/api/press-releases?${query}`);
                 const data = await res.json();
-                
+
                 if (data.articles && data.articles.length > 0) {
                     setArticles(prev => [...prev, ...data.articles]);
                     // If we got fewer articles than requested, we've reached the end
@@ -214,69 +227,86 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
     return (
         <>
             {/* Integrated Hero & Filter Section */}
-            <section className="relative pt-32 pb-24 bg-brand-dark overflow-hidden">
-                {/* Background Image */}
+            <section className="relative pt-36 pb-28 bg-black overflow-hidden">
+                {/* Background Image with Black Tint */}
                 <div className="absolute inset-0 z-0">
-                    <img 
-                        src="/press-hero-v2.png" 
-                        alt="Newsroom background" 
-                        className="w-full h-full object-cover opacity-40"
+                    <img
+                        src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=2000"
+                        alt="Newsroom background"
+                        className="w-full h-full object-cover opacity-70 scale-100"
                     />
-                    <div className="absolute inset-0 bg-linear-to-b from-brand-dark/95 via-brand-dark/80 to-white/5"></div>
+                    <div className="absolute inset-0 bg-black/45"></div>
                 </div>
 
-                <div className="max-w-7xl mx-auto px-4 relative z-10 text-center">
-                    <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 tracking-tight">
-                        Global Press Room
-                    </h1>
-                    <p className="text-xl text-blue-100/80 max-w-2xl mx-auto mb-12 leading-relaxed">
-                        Intelligent news aggregation for the next generation of AI brands.
-                    </p>
+                <div className="container mx-auto px-4 relative z-10 text-center">
+                    <div className="max-w-3xl mx-auto mb-10">
+                        <h1 className="text-4xl md:text-6xl font-bold text-white mb-5 tracking-tight leading-tight" style={{ fontFamily: "var(--font-serif, Georgia, serif)" }}>
+                            Global Press Room
+                        </h1>
+                        <p className="text-base md:text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed" style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
+                            Intelligent news aggregation for the next generation of AI brands.
+                        </p>
+                    </div>
 
                     {/* Search & Filters Container */}
-                    <div className="max-w-6xl mx-auto bg-white/5 backdrop-blur-2xl p-4 rounded-[2.5rem] border border-white/10 shadow-2xl space-y-4">
+                    <div className="max-w-6xl mx-auto w-full bg-white/5 backdrop-blur-2xl p-4 rounded-[2.5rem] border border-white/10 shadow-2xl space-y-4">
                         {/* Search Input */}
                         <div className="relative w-full group">
-                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/40 group-hover:text-brand-blue transition-colors w-5 h-5" />
-                            <input 
-                                type="text" 
+                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/40 group-hover:text-primary transition-colors w-5 h-5" />
+                            <input
+                                type="text"
                                 placeholder="Search by keywords (e.g., 'OpenAI', 'Tech Funding')..."
-                                className="w-full pl-14 pr-6 py-5 bg-white/5 text-white text-lg placeholder:text-white/30 border border-white/10 rounded-2xl focus:ring-2 focus:ring-brand-blue/50 outline-hidden transition-all"
+                                className="w-full h-14 pl-14 pr-6 bg-white/5 text-white text-lg placeholder:text-white/30 border border-white/10 rounded-2xl focus:ring-2 focus:ring-primary/50 outline-hidden transition-all"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
 
-                        {/* Filters Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            <StyledSelect 
-                                icon={Globe} 
-                                value={country} 
-                                onChange={setCountry} 
-                                options={COUNTRIES} 
-                                label="Country"
-                            />
-                            <StyledSelect 
-                                icon={Tag} 
-                                value={category} 
-                                onChange={setCategory} 
-                                options={CATEGORIES} 
-                                label="Category"
-                            />
-                            <StyledSelect 
-                                icon={Globe} 
-                                value={language} 
-                                onChange={setLanguage} 
-                                options={LANGUAGES} 
-                                label="Language"
-                            />
-                            <StyledSelect 
-                                icon={Filter} 
-                                value={type} 
-                                onChange={setType} 
-                                options={TYPES} 
-                                label="Type"
-                            />
+                        {/* Filters & Pills Row */}
+                        <div className="flex flex-col xl:flex-row items-center gap-4 w-full">
+                            {/* Dropdowns - First Half */}
+                            <div className="flex flex-col sm:flex-row w-full xl:w-1/2 gap-3">
+                                <StyledSelect
+                                    icon={Globe}
+                                    value={country}
+                                    onChange={setCountry}
+                                    options={COUNTRIES}
+                                    label="Country"
+                                />
+                                <StyledSelect
+                                    icon={Tag}
+                                    value={category}
+                                    onChange={setCategory}
+                                    options={CATEGORIES}
+                                    label="Category"
+                                />
+                            </div>
+
+                            {/* Divider */}
+                            <div className="hidden xl:block w-px h-10 bg-white/10 mx-1"></div>
+                            <div className="block xl:hidden w-full h-px bg-white/10 my-1"></div>
+
+                            {/* Custom Pills (Type) Filter - Second Half */}
+                            <div className="flex flex-wrap items-center justify-center xl:justify-start gap-2.5 w-full xl:w-1/2">
+                                {[
+                                    { id: "all", label: "All" },
+                                    { id: "news", label: "News Articles" },
+                                    { id: "discussion", label: "Discussion" },
+                                    { id: "platform", label: "DropPR Press Releases" }
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`flex-grow xl:flex-grow-0 px-4 h-14 rounded-2xl text-sm font-semibold transition-all duration-300 border backdrop-blur-md flex items-center justify-center whitespace-nowrap ${
+                                            activeTab === tab.id
+                                                ? "bg-primary text-white border-primary shadow-lg shadow-primary/30 scale-105"
+                                                : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border-white/10"
+                                        }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -288,7 +318,7 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                         {articles.map((article, index) => {
                             const isLastElement = articles.length === index + 1;
                             return (
-                                <a 
+                                <a
                                     key={`${article.id}-${index}`}
                                     ref={isLastElement ? lastArticleElementRef : null}
                                     href={article.url}
@@ -298,16 +328,19 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                                 >
                                     {/* Article Image */}
                                     <div className="relative h-64 overflow-hidden bg-gray-100">
-                                        <img 
-                                            src={article.image !== "None" && article.image ? article.image : "/press-hero-v2.png"} 
+                                        <img
+                                            src={article.image !== "None" && article.image ? article.image : "/fallback-platform.jpeg"}
                                             alt={article.title}
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                            onError={(e) => { e.target.src = "/press-hero-v2.png"; }}
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = "/fallback-platform.jpeg";
+                                            }}
                                         />
                                         <div className="absolute top-4 left-4 flex gap-2">
                                             {article.isPlatform && (
-                                                <span className="bg-primary text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
-                                                    Platform
+                                                <span className="bg-primary text-white text-[10px] font-bold px-3 py-1.5 rounded-full tracking-widest shadow-lg">
+                                                    Drop PR
                                                 </span>
                                             )}
                                             <span className="bg-white/90 backdrop-blur-md text-brand-dark text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
@@ -339,7 +372,7 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
 
                                         <div className="mt-auto flex items-center justify-between">
                                             <span className="inline-flex items-center gap-2 text-brand-blue font-bold text-sm">
-                                                Read Article 
+                                                Read Article
                                                 <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                                             </span>
                                         </div>
@@ -379,14 +412,14 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                 <div className="container mx-auto px-4">
                     <div className="max-w-4xl mx-auto bg-linear-to-r from-brand-dark to-brand-blue rounded-3xl p-8 md:p-12 text-center text-white shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-                        
+
                         <h2 className="text-3xl md:text-4xl font-extrabold mb-6">
                             Want to see your brand here?
                         </h2>
                         <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
                             Use DropPR.ai to turn your content into professional press releases and distribute them across our global media network.
                         </p>
-                        <button 
+                        <button
                             onClick={() => setShowLoginModal(true)}
                             className="inline-flex items-center gap-2 px-10 py-4 bg-white text-brand-dark font-bold rounded-xl hover:shadow-xl transition-all scale-100 hover:scale-105"
                         >
@@ -398,8 +431,8 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
             </section>
 
             {/* Login Modal Integration */}
-            <LoginModal 
-                isOpen={showLoginModal} 
+            <LoginModal
+                isOpen={showLoginModal}
                 onClose={() => setShowLoginModal(false)}
                 onSuccess={() => {
                     setShowLoginModal(false);

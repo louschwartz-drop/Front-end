@@ -14,7 +14,9 @@ import {
     SelectItem 
 } from "@/components/ui/Select";
 import LoginModal from "@/components/landingPage/LoginModal";
+import userAuthStore from "@/store/userAuthStore";
 import Button from "@/components/ui/Button";
+import ShareMenu from "@/components/ui/ShareMenu";
 import Header from "@/components/landingPage/Header";
 import Footer from "@/components/landingPage/Footer";
 import { format } from "date-fns";
@@ -53,6 +55,7 @@ const sortOptions = [
 
 export default function BlogListing() {
     const router = useRouter();
+    const { isAuthenticated } = userAuthStore();
     const [blogs, setBlogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -123,7 +126,7 @@ export default function BlogListing() {
                     <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center">
                         <div className="max-w-3xl mx-auto mb-10">
                             <h1 className="text-4xl md:text-6xl font-bold text-white mb-5 tracking-tight leading-tight" style={{ fontFamily: "var(--font-serif, Georgia, serif)" }}>
-                                Latest <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">Insights</span> & AI <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-indigo-300">Transformations</span>
+                                Latest <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">Blog Insights</span> & AI <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-indigo-300">Transformations</span>
                             </h1>
                             <p className="text-base md:text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed" style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
                                 Discover how artificial intelligence is redefining professional public relations and brand storytelling.
@@ -180,7 +183,15 @@ export default function BlogListing() {
                     {loading ? (
                         <div className="py-40 flex flex-col items-center justify-center gap-6">
                             <div className="w-12 h-12 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-                            <p className="font-black text-gray-300 uppercase tracking-widest text-[10px]">Filtering Knowledge...</p>
+                            <p className="font-black text-gray-300 uppercase tracking-widest text-[10px]">Loading Blogs...</p>
+                        </div>
+                    ) : blogs.length === 0 ? (
+                        <div className="py-32 flex flex-col items-center justify-center text-center">
+                            <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                                <Search className="w-10 h-10 text-gray-300" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-2">No blogs found matching your search</h3>
+                            <p className="text-gray-500">Try adjusting your filters or search terms.</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -191,10 +202,10 @@ export default function BlogListing() {
                                     <Link
                                         href={`/blog/${blog.slug}`}
                                         key={blog._id}
-                                        className="group flex flex-col h-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-400 overflow-hidden"
+                                        className="group flex flex-col h-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-400 relative"
                                     >
                                         {/* Thumbnail */}
-                                        <div className="relative h-52 overflow-hidden bg-gray-100 flex-shrink-0">
+                                        <div className="relative h-52 overflow-hidden rounded-t-2xl bg-gray-100 flex-shrink-0">
                                             <img
                                                 src={blog.featuredImage || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800"}
                                                 alt={blog.title}
@@ -239,6 +250,15 @@ export default function BlogListing() {
                                                         </span>
                                                     </>
                                                 )}
+                                                
+                                                <div className="ml-auto flex-shrink-0 z-10">
+                                                    <ShareMenu 
+                                                        url={`/blog/${blog.slug}`} 
+                                                        title={blog.title} 
+                                                        text={blog.excerpt} 
+                                                        position="bottom-right"
+                                                    />
+                                                </div>
                                             </div>
                             
 
@@ -316,7 +336,13 @@ export default function BlogListing() {
                                 Use DropPR.ai to turn your content into professional press releases and distribute them across our global media network.
                             </p>
                             <button 
-                                onClick={() => setShowLoginModal(true)}
+                                onClick={() => {
+                                    if (isAuthenticated) {
+                                        router.push("/user/dashboard/create");
+                                    } else {
+                                        setShowLoginModal(true);
+                                    }
+                                }}
                                 className="inline-flex items-center gap-2 px-10 py-4 bg-white text-brand-dark font-bold rounded-xl hover:shadow-xl transition-all scale-100 hover:scale-105"
                             >
                                 Start Publishing Now

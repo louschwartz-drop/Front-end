@@ -220,8 +220,8 @@ export default async function ArticleDetailsPage({ params }) {
                                         Published {article.published ? new Date(article.published).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }) : "Recently"}
                                     </span>
                                     {article.isPlatform && (
-                                        <span className="inline-flex items-center gap-1 text-[10px] text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-100 font-bold uppercase tracking-tight ml-2">
-                                            Platform Verified
+                                        <span className="inline-flex items-center gap-1 text-[10px] text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-100 font-bold tracking-tight ml-2">
+                                            Drop PR Verified
                                         </span>
                                     )}
                                 </div>
@@ -429,8 +429,8 @@ export default async function ArticleDetailsPage({ params }) {
                                 {relatedCampaigns.map((rc) => {
                                     const rcTitle = rc.article?.headline || "Untitled";
                                     const rcSummary = rc.article?.summary || "";
-                                    const rcImage = rc.productCard?.thumbnail || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80";
-                                    const rcAuthor = rc.productCard?.authorName || rc.userId?.name || "DropPR Author";
+                                    const rcImage = rc.productCard?.thumbnail || "/fallback-platform.jpeg";
+                                    const rcAuthor = rc.productCard?.authorName || rc.userId?.name || "Drop PR Author";
                                     const rcDate = rc.createdAt;
                                     const rcInitials = rcAuthor.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
@@ -446,10 +446,14 @@ export default async function ArticleDetailsPage({ params }) {
                                                     src={rcImage}
                                                     alt={rcTitle}
                                                     className="w-full h-full object-cover block group-hover:scale-105 transition-transform duration-500"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = "/fallback-platform.jpeg";
+                                                    }}
                                                 />
                                                 <div className="absolute top-3 left-3">
-                                                    <span className="bg-primary text-white text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest shadow-md">
-                                                        Platform
+                                                    <span className="bg-primary text-white text-[9px] font-bold px-2.5 py-1 rounded-full tracking-widest shadow-md">
+                                                        Drop PR
                                                     </span>
                                                 </div>
                                             </div>

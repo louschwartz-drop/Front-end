@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import LoginModal from "@/components/landingPage/LoginModal";
+import userAuthStore from "@/store/userAuthStore";
 
 export default function PressReleaseCta() {
     const [showLoginModal, setShowLoginModal] = useState(false);
     const router = useRouter();
+    const { isAuthenticated } = userAuthStore();
 
     return (
         <>
@@ -21,7 +23,13 @@ export default function PressReleaseCta() {
                         Use DropPR.ai to turn your content into professional press releases and distribute them across our global media network.
                     </p>
                     <button 
-                        onClick={() => setShowLoginModal(true)}
+                        onClick={() => {
+                            if (isAuthenticated) {
+                                router.push("/user/dashboard/create");
+                            } else {
+                                setShowLoginModal(true);
+                            }
+                        }}
                         className="inline-flex items-center gap-2 px-8 md:px-10 py-3 md:py-4 bg-white text-brand-dark font-bold rounded-xl hover:shadow-xl transition-all scale-100 hover:scale-105 relative z-10 cursor-pointer"
                     >
                         Start Publishing Now

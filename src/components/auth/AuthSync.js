@@ -20,6 +20,8 @@ export default function AuthSync() {
       
       if (!state.isAuthenticated || !state.user) {
         state.setAuth(session.user, session.accessToken);
+        // Force redirect to the main creation page after syncing session
+        window.location.href = "/user/dashboard/create";
       }
     }
   }, [session, status]);

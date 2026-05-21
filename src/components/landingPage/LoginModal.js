@@ -69,7 +69,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
 
       // trigger next-auth signin
       // Removing redirect: false so the browser actually navigates to the provider's auth page
-      await signIn(provider);
+      await signIn(provider, shouldRedirect ? { callbackUrl: "/user/dashboard/create" } : undefined);
 
       // Note: Full logic for social sync will happen in api/auth/[...nextauth] 
       // and we will handle the session in a wrapper or useEffect elsewhere,
@@ -129,11 +129,27 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
         });
         const data = await res.json();
         if (data.success) {
-          // Store the temp token and move to OTP step
-          setOtpToken(data.token);
-          setOtpValue("");
-          setAuthMode("otp");
-          setResendCooldown(60);
+          if (data.data?.isEmailVerified) {
+            // Already verified (e.g. social merge), just sign in via NextAuth
+            const result = await signIn("credentials", {
+              email,
+              password,
+              redirect: false,
+            });
+            if (result?.error) {
+              setLocalError(result.error);
+            } else {
+              onSuccess?.();
+              onClose();
+              if (shouldRedirect) window.location.href = "/user/dashboard/create";
+            }
+          } else {
+            // Store the temp token and move to OTP step
+            setOtpToken(data.token);
+            setOtpValue("");
+            setAuthMode("otp");
+            setResendCooldown(60);
+          }
         } else {
           setLocalError(data.message);
         }
@@ -217,6 +233,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[850px] p-0 overflow-hidden bg-white border-none shadow-2xl max-h-[95vh] sm:max-h-[80vh] overflow-y-auto">
+        <DialogTitle className="sr-only">Login or Create Account</DialogTitle>
         <div className="flex flex-col md:flex-row h-full min-h-0 md:min-h-[550px]">
 
           {/* Left Column: Branding & Features - HIDDEN ON MOBILE */}

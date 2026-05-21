@@ -6,14 +6,14 @@ import { Plus, Edit2, Trash2, Check, X, Tag, PlusCircle, Calendar, Percent, Doll
 import Button from "@/components/ui/Button";
 import { toast } from "react-toastify";
 import { promoService } from "@/lib/api/admin/promo";
+import { pricingService } from "@/lib/api/admin/pricing";
 import { z } from "zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 
 // Zod validation schema
 const promoSchema = z.object({
     code: z.string()
-        .min(3, "Code must be at least 3 characters")
-        .regex(/^[A-Z0-9]+$/, "Code must contained only uppercase letters and numbers (no spaces)"),
+        .min(3, "Code must be at least 3 characters"),
     discountType: z.enum(["percentage", "fixed"]),
     discountValue: z.number().min(0, "Value cannot be negative"),
     expiryDate: z.string().min(1, "Expiry date is required").refine((date) => {
@@ -24,12 +24,15 @@ const promoSchema = z.object({
     }, "Expiry date cannot be in the past"),
     usageLimit: z.number().nullable(),
     allowedReleasesCount: z.number().nullable(),
+    applicablePlanName: z.string().nullable(),
+    allowMultipleUsesPerUser: z.boolean(),
     description: z.string().optional(),
     isActive: z.boolean(),
 });
 
 export default function PromoCodesPage() {
     const [promoCodes, setPromoCodes] = useState([]);
+    const [planNames, setPlanNames] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPromo, setEditingPromo] = useState(null);
@@ -41,21 +44,32 @@ export default function PromoCodesPage() {
         expiryDate: "",
         usageLimit: "",
         allowedReleasesCount: "",
+        applicablePlanName: "",
+        allowMultipleUsesPerUser: false,
         description: "",
         isActive: true
     });
 
     useEffect(() => {
-        loadPromoCodes();
+        loadData();
     }, []);
 
-    const loadPromoCodes = async () => {
+    const loadData = async () => {
         try {
             setLoading(true);
-            const res = await promoService.getAll();
-            if (res.success) setPromoCodes(res.data);
+            const [promoRes, pricingRes] = await Promise.all([
+                promoService.getAll(),
+                pricingService.getAll()
+            ]);
+            
+            if (promoRes.success) setPromoCodes(promoRes.data);
+            
+            if (pricingRes.success) {
+                const uniqueNames = Array.from(new Set(pricingRes.data.map(p => p.name)));
+                setPlanNames(uniqueNames);
+            }
         } catch (error) {
-            toast.error("Failed to load promo codes");
+            toast.error("Failed to load data");
         } finally {
             setLoading(false);
         }
@@ -72,6 +86,8 @@ export default function PromoCodesPage() {
                 expiryDate: promo.expiryDate ? new Date(promo.expiryDate).toISOString().split('T')[0] : "",
                 usageLimit: promo.usageLimit || "",
                 allowedReleasesCount: promo.allowedReleasesCount || "",
+                applicablePlanName: promo.applicablePlanName || "",
+                allowMultipleUsesPerUser: promo.allowMultipleUsesPerUser || false,
                 description: promo.description || "",
                 isActive: promo.isActive
             });
@@ -84,6 +100,8 @@ export default function PromoCodesPage() {
                 expiryDate: "",
                 usageLimit: "",
                 allowedReleasesCount: "",
+                applicablePlanName: "",
+                allowMultipleUsesPerUser: false,
                 description: "",
                 isActive: true
             });
@@ -97,6 +115,7 @@ export default function PromoCodesPage() {
             discountValue: Number(formData.discountValue),
             usageLimit: formData.usageLimit === "" ? null : Number(formData.usageLimit),
             allowedReleasesCount: formData.allowedReleasesCount === "" ? null : Number(formData.allowedReleasesCount),
+            applicablePlanName: formData.applicablePlanName === "" ? null : formData.applicablePlanName,
         };
 
         const result = promoSchema.safeParse(dataToValidate);
@@ -129,7 +148,7 @@ export default function PromoCodesPage() {
             if (res.success) {
                 toast.success(editingPromo ? "Promo code updated!" : "Promo code created!");
                 setIsModalOpen(false);
-                loadPromoCodes();
+                loadData();
             } else {
                 toast.error(res.message || "Operation failed");
             }
@@ -144,7 +163,7 @@ export default function PromoCodesPage() {
             const res = await promoService.delete(id);
             if (res.success) {
                 toast.success("Promo code deleted");
-                loadPromoCodes();
+                loadData();
             }
         } catch (error) {
             toast.error("Failed to delete promo code");
@@ -156,7 +175,7 @@ export default function PromoCodesPage() {
             const res = await promoService.toggleStatus(id);
             if (res.success) {
                 toast.success(res.message);
-                loadPromoCodes();
+                loadData();
             }
         } catch (error) {
             toast.error("Failed to toggle status");
@@ -233,7 +252,14 @@ export default function PromoCodesPage() {
                                     </div>
                                     <div className="flex items-center gap-2 text-xs text-blue-600 font-bold bg-blue-50 p-2 rounded-lg col-span-2">
                                         <Info className="w-3 h-3" />
-                                        <span>Plan Type: {promo.allowedReleasesCount ? `${promo.allowedReleasesCount} Article(s)` : 'All Plans'}</span>
+                                        <span>Releases Count: {promo.allowedReleasesCount ? `${promo.allowedReleasesCount} Article(s)` : 'All'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-purple-600 font-bold bg-purple-50 p-2 rounded-lg col-span-2">
+                                        <Info className="w-3 h-3" />
+                                        <span>Plan Name: {promo.applicablePlanName ? promo.applicablePlanName : 'All Plans'}</span>
+                                        <span className="ml-auto bg-white px-2 py-0.5 rounded shadow-sm border border-purple-100 whitespace-nowrap">
+                                            {promo.allowMultipleUsesPerUser ? "Multiple Uses" : "Single Use"}
+                                        </span>
                                     </div>
                                 </div>
 
@@ -276,19 +302,23 @@ export default function PromoCodesPage() {
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="bg-white rounded-xl p-6 w-full max-w-lg shadow-2xl my-8 overflow-hidden relative"
+                            className="bg-white rounded-xl w-full max-w-lg shadow-2xl my-8 flex flex-col relative max-h-[90vh] overflow-hidden"
                         >
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50 pointer-events-none"></div>
                             
-                            <div className="flex justify-between items-center mb-6 relative">
-                                <div>
-                                    <h2 className="text-2xl font-black text-gray-900">{editingPromo ? "Edit Promo Code" : "New Promo Code"}</h2>
-                                    <p className="text-gray-500 text-xs">Configure your discount settings below.</p>
+                            <div className="p-6 pb-4 border-b border-gray-100 flex-shrink-0 relative z-10">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <h2 className="text-2xl font-black text-gray-900">{editingPromo ? "Edit Promo Code" : "New Promo Code"}</h2>
+                                        <p className="text-gray-500 text-xs">Configure your discount settings below.</p>
+                                    </div>
+                                    <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                        <X className="w-6 h-6 text-gray-400" />
+                                    </button>
                                 </div>
-                                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                    <X className="w-6 h-6 text-gray-400" />
-                                </button>
                             </div>
+
+                            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
 
                             <form onSubmit={handleSubmit} className="space-y-4 relative">
                                 <div>
@@ -370,22 +400,58 @@ export default function PromoCodesPage() {
                                         <p className="text-[9px] text-gray-400 mt-1 ml-1 leading-tight">Leave empty for unlimited</p>
                                     </div>
                                     <div className="flex flex-col">
-                                        <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Allowed Plan Type</label>
+                                        <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Allowed Releases Limit</label>
                                         <Select
                                             value={formData.allowedReleasesCount === null || formData.allowedReleasesCount === "" ? "all" : formData.allowedReleasesCount.toString()}
                                             onValueChange={(val) => setFormData({ ...formData, allowedReleasesCount: val === "all" ? "" : Number(val) })}
                                         >
                                             <SelectTrigger className="rounded-lg h-[46px] border-gray-200 bg-gray-50">
-                                                <SelectValue placeholder="All Plans" />
+                                                <SelectValue placeholder="All" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="all">All Plans</SelectItem>
+                                                <SelectItem value="all">All</SelectItem>
                                                 <SelectItem value="1">1 Article</SelectItem>
                                                 <SelectItem value="3">3 Articles</SelectItem>
                                                 <SelectItem value="5">5 Articles</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <p className="text-[9px] text-gray-400 mt-1 ml-1 leading-tight">Restrict to 1, 3, or 5 releases</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col">
+                                        <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Applicable Plan Name</label>
+                                        <Select
+                                            value={formData.applicablePlanName === null || formData.applicablePlanName === "" ? "all" : formData.applicablePlanName}
+                                            onValueChange={(val) => setFormData({ ...formData, applicablePlanName: val === "all" ? "" : val })}
+                                        >
+                                            <SelectTrigger className="rounded-lg h-[46px] border-gray-200 bg-gray-50">
+                                                <SelectValue placeholder="All Plans" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All Plans</SelectItem>
+                                                {planNames.map(name => (
+                                                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-[9px] text-gray-400 mt-1 ml-1 leading-tight">Restrict to specific plan names like Boost</p>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Multiple Uses</label>
+                                        <div className="flex items-center h-[46px] px-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                            <label className="relative inline-flex items-center cursor-pointer w-full justify-between">
+                                                <span className="text-sm font-medium text-gray-700">Allow Multiple Uses</span>
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="sr-only peer"
+                                                    checked={formData.allowMultipleUsesPerUser}
+                                                    onChange={e => setFormData({ ...formData, allowMultipleUsesPerUser: e.target.checked })}
+                                                />
+                                                <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -403,13 +469,14 @@ export default function PromoCodesPage() {
                                     </div>
                                 </div>
 
-                                <div className="pt-2 flex gap-3">
+                                <div className="pt-4 flex gap-3 sticky bottom-0 bg-white z-10 border-t border-gray-100 pt-4 mt-2">
                                     <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)} className="flex-1 rounded-lg">Cancel</Button>
                                     <Button type="submit" className="flex-1 font-black rounded-lg shadow-lg shadow-primary/20">
                                         {editingPromo ? "Save Changes" : "Create Code"}
                                     </Button>
                                 </div>
                             </form>
+                            </div>
                         </motion.div>
                     </div>
                 )}
