@@ -118,11 +118,10 @@ export default async function BlogDetail({ params }) {
           <header className="max-w-3xl mx-auto px-6 mt-8 mb-0 animate-in fade-in slide-in-from-bottom-6 duration-700">
             {/* Title */}
             <h1
+              className="text-3xl md:text-[46px] leading-tight md:leading-[1.08]"
               style={{
                 fontFamily: "var(--font-serif, Georgia, serif)",
                 fontWeight: 700,
-                fontSize: "46px",
-                lineHeight: 1.08,
                 letterSpacing: "-0.025em",
                 marginBottom: "20px",
                 color: "#0a0e1a",
@@ -134,9 +133,8 @@ export default async function BlogDetail({ params }) {
             {/* Description — italic serif under title */}
             {blog.description && (
               <p
+                className="text-lg md:text-[22px] leading-normal md:leading-[1.45]"
                 style={{
-                  fontSize: "22px",
-                  lineHeight: 1.45,
                   color: "#5f5f5f",
                   fontStyle: "italic",
                   marginBottom: "32px",
@@ -155,7 +153,7 @@ export default async function BlogDetail({ params }) {
                   fontStyle: "italic",
                   lineHeight: 1.6,
                 }}
-                className="text-xl text-gray-600 mb-8"
+                className="text-lg md:text-xl text-gray-600 mb-8"
               >
                 {blog.excerpt}
               </p>
@@ -219,11 +217,11 @@ export default async function BlogDetail({ params }) {
           {/* Featured Image */}
           {blog.featuredImage && (
             <div className="max-w-3xl mx-auto px-6 mt-6 mb-8 animate-in fade-in zoom-in-95 duration-1000">
-              <div className="w-full overflow-hidden rounded-2xl shadow-xl">
+              <div className="w-full h-[260px] md:h-[420px] overflow-hidden rounded-2xl border border-gray-100 bg-gray-50">
                 <img
                   src={blog.featuredImage}
                   alt={blog.title}
-                  className="w-full h-auto object-cover"
+                  className="w-full h-full object-cover block"
                 />
               </div>
             </div>
@@ -375,11 +373,11 @@ export default async function BlogDetail({ params }) {
                       className="group flex flex-col h-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-400 overflow-hidden"
                     >
                       {/* Thumbnail — no badges on image */}
-                      <div className="relative h-44 overflow-hidden bg-gray-100 flex-shrink-0">
+                      <div className="relative h-52 overflow-hidden bg-gray-100 flex-shrink-0">
                         <img
-                          src={rBlog.featuredImage || "/press-hero-v2.png"}
+                          src={rBlog.featuredImage || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800"}
                           alt={rBlog.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-600"
+                          className="w-full h-full object-cover block group-hover:scale-105 transition-transform duration-600"
                         />
                       </div>
 
@@ -458,10 +456,15 @@ export default async function BlogDetail({ params }) {
                             Read Article
                             <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                           </span>
-                          <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center">
-                            <span className="text-white text-[7px] font-black">
-                              {rInitials}
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-wider">
+                              Published by : {rBlog.authorName || "Lou Schwartz"}
                             </span>
+                            <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center">
+                              <span className="text-white text-[7px] font-black">
+                                {rInitials}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>

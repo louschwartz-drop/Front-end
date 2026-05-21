@@ -316,7 +316,7 @@ const editorCss = `
     .ProseMirror li { margin-bottom: 0.75rem; color: #2d3142; }
     .ProseMirror blockquote { border-left: 4px solid #0A5CFF; padding: 1rem 1.5rem; font-style: italic; color: #4B5563; margin: 2rem 0; background: #f3f7ff; border-radius: 0 0.75rem 0.75rem 0; }
     .ProseMirror hr { border: none; border-top: 1px solid #d8d4c8; margin: 3rem 0; }
-    .ProseMirror img { max-width: 100%; height: auto; border-radius: 1rem; margin: 2rem 0; cursor: pointer; transition: all 0.2s; display: block; }
+    .ProseMirror img { max-width: 100%; height: auto; border-radius: 8px; margin: 2rem 0; cursor: pointer; transition: all 0.2s; display: block; }
     .ProseMirror img.ProseMirror-selectednode { outline: 3px solid #0A5CFF; outline-offset: 4px; box-shadow: 0 0 20px rgba(10, 92, 255, 0.2); }
 
     /* Droppr Premium Editorial Blog Styles inside Editor */

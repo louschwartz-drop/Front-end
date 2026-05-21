@@ -117,9 +117,7 @@ export default function BlogList() {
                         </Select>
                     </div>
 
-                    <Button onClick={fetchBlogs} className="h-10 px-4 bg-gray-900 text-white rounded-xl font-black uppercase tracking-widest text-[10px]">
-                        Filter
-                    </Button>
+
                 </div>
             </div>
 

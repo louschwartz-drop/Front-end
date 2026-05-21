@@ -45,6 +45,12 @@ const StyledSelect = ({ icon: Icon, value, onChange, options, label }) => (
     </div>
 );
 
+const sortOptions = [
+    { _id: "latest", name: "Newest First", slug: "latest" },
+    { _id: "oldest", name: "Oldest First", slug: "oldest" },
+    { _id: "views", name: "Most Popular", slug: "views" }
+];
+
 export default function BlogListing() {
     const router = useRouter();
     const [blogs, setBlogs] = useState([]);
@@ -52,6 +58,7 @@ export default function BlogListing() {
     const [search, setSearch] = useState("");
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState("all");
+    const [sortBy, setSortBy] = useState("latest");
     const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0 });
     const [showLoginModal, setShowLoginModal] = useState(false);
 
@@ -69,7 +76,7 @@ export default function BlogListing() {
 
     useEffect(() => {
         fetchBlogs();
-    }, [pagination.page, selectedCategory]);
+    }, [pagination.page, selectedCategory, sortBy]);
 
     const fetchBlogs = async () => {
         try {
@@ -78,7 +85,8 @@ export default function BlogListing() {
                 page: pagination.page,
                 limit: pagination.limit,
                 search,
-                category: selectedCategory === "all" ? undefined : selectedCategory
+                category: selectedCategory === "all" ? undefined : selectedCategory,
+                sort: sortBy === "latest" ? undefined : sortBy
             });
             setBlogs(data.data);
             setPagination(prev => ({ ...prev, total: data.pagination.total }));
@@ -100,29 +108,30 @@ export default function BlogListing() {
             <Header />
             
             <main className="relative">
-                {/* Restored Centered Robot Hero */}
-                {/* Integrated Hero & Filter Section */}
-                <section className="relative pt-32 pb-24 bg-brand-dark overflow-hidden">
-                    {/* Background Image */}
+                {/* Redesigned Premium Black Fade Hero with Centered Content */}
+                <section className="relative pt-36 pb-28 bg-black overflow-hidden">
+                    {/* Modern Office Teamwork Background with Reduced Black Overlay */}
                     <div className="absolute inset-0 z-0">
                         <img 
-                            src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=2000" 
-                            alt="AI Robot" 
-                            className="w-full h-full object-cover opacity-40"
+                            src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=2000" 
+                            alt="Modern Office Teamwork" 
+                            className="w-full h-full object-cover opacity-60 scale-100"
                         />
-                        <div className="absolute inset-0 bg-linear-to-b from-brand-dark/95 via-brand-dark/80 to-white/5"></div>
+                        <div className="absolute inset-0 bg-black/45"></div>
                     </div>
 
-                    <div className="container mx-auto px-4 relative z-10 text-center">
-                        <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 tracking-tight">
-                            Latest <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-indigo-400">Insights</span> & AI <span className="text-primary">Transformations</span>
-                        </h1>
-                        <p className="text-xl text-blue-100/80 max-w-2xl mx-auto mb-12 leading-relaxed">
-                            Discover how artificial intelligence is redefining professional public relations and brand storytelling.
-                        </p>
+                    <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center">
+                        <div className="max-w-3xl mx-auto mb-10">
+                            <h1 className="text-4xl md:text-6xl font-bold text-white mb-5 tracking-tight leading-tight" style={{ fontFamily: "var(--font-serif, Georgia, serif)" }}>
+                                Latest <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">Insights</span> & AI <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-indigo-300">Transformations</span>
+                            </h1>
+                            <p className="text-base md:text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed" style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
+                                Discover how artificial intelligence is redefining professional public relations and brand storytelling.
+                            </p>
+                        </div>
 
-                        {/* Search & Filters Container */}
-                        <div className="max-w-4xl mx-auto bg-white/5 backdrop-blur-2xl p-4 rounded-[2.5rem] border border-white/10 shadow-2xl space-y-4">
+                        {/* Search & Double Filters Container */}
+                        <div className="max-w-5xl mx-auto w-full bg-white/5 backdrop-blur-2xl p-4 rounded-[2.5rem] border border-white/10 shadow-2xl">
                             <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-3">
                                 {/* Search Input */}
                                 <div className="relative flex-grow group">
@@ -137,7 +146,7 @@ export default function BlogListing() {
                                 </div>
 
                                 {/* Category Filter */}
-                                <div className="w-full md:w-64">
+                                <div className="w-full md:w-52">
                                     <StyledSelect 
                                         icon={Tag} 
                                         value={selectedCategory} 
@@ -147,7 +156,18 @@ export default function BlogListing() {
                                     />
                                 </div>
 
-                                <button type="submit" className="h-14 px-10 bg-primary text-white font-bold rounded-2xl hover:shadow-xl transition-all scale-100 hover:scale-105">
+                                {/* Sort Filter */}
+                                <div className="w-full md:w-52">
+                                    <StyledSelect 
+                                        icon={Filter} 
+                                        value={sortBy} 
+                                        onChange={setSortBy} 
+                                        options={sortOptions} 
+                                        label="Sort By"
+                                    />
+                                </div>
+
+                                <button type="submit" className="h-14 px-8 bg-primary text-white font-bold rounded-2xl hover:shadow-xl transition-all scale-100 hover:scale-105 shrink-0">
                                     Search
                                 </button>
                             </form>
@@ -171,27 +191,24 @@ export default function BlogListing() {
                                     <Link
                                         href={`/blog/${blog.slug}`}
                                         key={blog._id}
-                                        className="group flex flex-col h-full bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 overflow-hidden"
+                                        className="group flex flex-col h-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-400 overflow-hidden"
                                     >
                                         {/* Thumbnail */}
-                                        <div className="relative h-56 overflow-hidden bg-gray-100 flex-shrink-0">
+                                        <div className="relative h-52 overflow-hidden bg-gray-100 flex-shrink-0">
                                             <img
-                                                src={blog.featuredImage || "/press-hero-v2.png"}
+                                                src={blog.featuredImage || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800"}
                                                 alt={blog.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                                className="w-full h-full object-cover block group-hover:scale-105 transition-transform duration-700"
                                             />
-                                            {/* Category badges on image */}
-                                            {blog.categories?.length > 0 && (
-                                                <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
-                                                    {blog.categories.slice(0, 2).map(cat => (
-                                                        <span key={cat._id}
-                                                            style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}
-                                                            className="bg-white/95 backdrop-blur-sm text-primary text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest shadow-md">
-                                                            {cat.name}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
+                                        </div>
+
+                                        {/* Category tags — in body, under thumbnail */}
+                                        <div className="px-6 pt-6 flex flex-wrap gap-1.5">
+                                          {blog.categories?.length > 0 && blog.categories.slice(0, 2).map((cat) => (
+                                            <span key={cat._id} className="text-primary text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border border-primary/20 bg-primary/5">
+                                              {cat.name}
+                                            </span>
+                                          ))}
                                         </div>
 
                                         {/* Card body */}
@@ -217,6 +234,7 @@ export default function BlogListing() {
                                                     </>
                                                 )}
                                             </div>
+                            
 
                                             {/* Title */}
                                             <h2 style={{
@@ -243,8 +261,13 @@ export default function BlogListing() {
                                                     Read Article
                                                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform" />
                                                 </span>
-                                                <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0">
-                                                    <span className="text-white text-[8px] font-black">{authorInitials}</span>
+                                                <div className="flex items-center gap-2 flex-shrink-0">
+                                                    <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider" style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
+                                                        Published by : {blog.authorName || "Lou Schwartz"}
+                                                    </span>
+                                                    <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                                        <span className="text-white text-[8px] font-black">{authorInitials}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

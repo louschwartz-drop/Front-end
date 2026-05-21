@@ -405,6 +405,14 @@ input[type="button"]:disabled {
   margin: 3rem 0;
 }
 
+.blog-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 2.5rem auto;
+  display: block;
+}
+
 /* Standard blockquote */
 .blog-content blockquote {
   border-left: 4px solid #0A5CFF;
@@ -429,6 +437,39 @@ input[type="button"]:disabled {
   font-weight: 700;
   color: #0A5CFF;
   font-family: var(--font-serif), Georgia, serif;
+}
+
+@media (max-width: 768px) {
+  .blog-content {
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+  .blog-content h2 {
+    font-size: 1.5rem;
+    margin-top: 2.25rem;
+    margin-bottom: 0.65rem;
+  }
+  .blog-content h2::before {
+    width: 2rem;
+    height: 2.5px;
+    margin-bottom: 0.65rem;
+  }
+  .blog-content h3 {
+    font-size: 1.25rem;
+    margin-top: 1.75rem;
+    margin-bottom: 0.5rem;
+  }
+  .blog-content blockquote {
+    padding: 0.75rem 1rem;
+    margin: 1.5rem 0;
+  }
+  .blog-content > p:first-of-type::first-letter,
+  .blog-content > div > p:first-of-type::first-letter,
+  .blog-content p.drop-cap::first-letter,
+  .blog-content p.lede::first-letter {
+    font-size: 3.5rem;
+    padding: 4px 8px 0 0;
+  }
 }
 
 
