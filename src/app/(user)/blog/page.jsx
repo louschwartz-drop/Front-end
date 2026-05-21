@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { blogService } from "@/lib/api/user/blogs";
-import { Search, Calendar, ArrowRight, Loader2, Sparkles, Clock, ChevronRight, Tag, Filter, Globe, Newspaper } from "lucide-react";
+import { Search, Calendar, ArrowRight, Loader2, Sparkles, Clock, ChevronRight, Tag, Filter, Globe, Newspaper, Eye } from "lucide-react";
 import { 
     Select, 
     SelectGroup, 
@@ -203,12 +203,18 @@ export default function BlogListing() {
                                         </div>
 
                                         {/* Category tags — in body, under thumbnail */}
-                                        <div className="px-6 pt-6 flex flex-wrap gap-1.5">
+                                        <div className="px-6 pt-6 flex flex-wrap gap-1.5 items-center">
                                           {blog.categories?.length > 0 && blog.categories.slice(0, 2).map((cat) => (
                                             <span key={cat._id} className="text-primary text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border border-primary/20 bg-primary/5">
                                               {cat.name}
                                             </span>
                                           ))}
+                                          {blog.viewCount >= 50 && (
+                                            <span className="text-primary text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-primary/25 bg-blue-50/80 flex items-center gap-1 shadow-2xs">
+                                              <Sparkles className="w-2.5 h-2.5 text-primary/80 animate-pulse" />
+                                              Popular
+                                            </span>
+                                          )}
                                         </div>
 
                                         {/* Card body */}
@@ -227,8 +233,8 @@ export default function BlogListing() {
                                                 {blog.viewCount > 0 && (
                                                     <>
                                                         <span className="text-gray-200 text-xs">·</span>
-                                                        <span className="text-[10px] text-gray-400 font-semibold flex items-center gap-0.5">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                        <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest flex items-center gap-1">
+                                                            <Eye className="w-3 h-3 text-primary/60" />
                                                             {blog.viewCount > 999 ? `${(blog.viewCount / 1000).toFixed(1)}k` : blog.viewCount}
                                                         </span>
                                                     </>

@@ -202,7 +202,7 @@ export default async function BlogDetail({ params }) {
                     <>
                       <span className="text-xs text-gray-300 mx-2">·</span>
                       <span className="text-xs text-gray-500 flex items-center gap-1">
-                        <Eye size={11} className="text-gray-400" />
+                        <Eye size={12} className="text-primary/60" />
                         {blog.viewCount.toLocaleString()}&thinsp;views
                       </span>
                     </>
