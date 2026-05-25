@@ -59,6 +59,11 @@ export const campaignService = {
         return response.data;
     },
 
+    updateVisibility: async (campaignId, userPreference) => {
+        const response = await api.patch(`/user/campaigns/${campaignId}/visibility`, { userPreference });
+        return response.data;
+    },
+
     // AI Edits
     performAiEdit: async (campaignId, actionId, feedback = null) => {
         const response = await api.post(`/user/campaigns/${campaignId}/ai-edit`, { actionId, feedback });

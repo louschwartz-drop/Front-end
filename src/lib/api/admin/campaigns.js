@@ -15,4 +15,8 @@ export const adminCampaignService = {
         const response = await apiAdmin.get(`/admin/campaigns/${id}`);
         return response.data;
     },
+    updateAdminVisibility: async (campaignId, adminOverride) => {
+        const response = await apiAdmin.patch(`/admin/campaigns/${campaignId}/visibility`, { adminOverride });
+        return response.data;
+    },
 };

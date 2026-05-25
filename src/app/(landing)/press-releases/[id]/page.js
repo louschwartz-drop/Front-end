@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, Calendar, User, Tag, Share2, Globe } from "lucide-react";
 import { BLOCKQUOTE_STYLES } from "@/components/editor/blockquoteStyles";
 import PressReleaseCta from "./PressReleaseCta";
+import FallbackImage from "./FallbackImage";
 
 const STANDARD_FOOTER = `
 <div style='margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5e7eb;'>
@@ -338,7 +339,7 @@ export default async function ArticleDetailsPage({ params }) {
                                 </h4>
                                 <p className="text-sm text-gray-600 italic leading-relaxed">
                                     If you&apos;ve seen the video and wondered whether{" "}
-                                    {displayProduct.productName} could fit into your own routine,
+                                    {displayProduct?.productName || "it"} could fit into your own routine,
                                     product details, pricing, and availability are available through
                                     the official product page.
                                 </p>
@@ -442,14 +443,11 @@ export default async function ArticleDetailsPage({ params }) {
                                         >
                                             {/* Card Image */}
                                             <div className="relative h-44 overflow-hidden bg-gray-100">
-                                                <img
+                                                <FallbackImage
                                                     src={rcImage}
+                                                    fallbackSrc="/fallback-platform.jpeg"
                                                     alt={rcTitle}
                                                     className="w-full h-full object-cover block group-hover:scale-105 transition-transform duration-500"
-                                                    onError={(e) => {
-                                                        e.target.onerror = null;
-                                                        e.target.src = "/fallback-platform.jpeg";
-                                                    }}
                                                 />
                                                 <div className="absolute top-3 left-3">
                                                     <span className="bg-primary text-white text-[9px] font-bold px-2.5 py-1 rounded-full tracking-widest shadow-md">

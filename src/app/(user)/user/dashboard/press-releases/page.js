@@ -11,6 +11,7 @@ import FullArticlePreview from "@/components/user/FullArticlePreview";
 import DistributionStatusModal from "@/components/user/DistributionStatusModal";
 import Pagination from "@/components/ui/Pagination";
 import VideoModal from "@/components/ui/VideoModal";
+import { campaignService } from "@/lib/api/user/campaigns";
 
 export default function UserPressReleasesPage() {
     const [releases, setReleases] = useState([]);
@@ -82,6 +83,25 @@ export default function UserPressReleasesPage() {
         const value = e.target.value;
         setSearchTerm(value);
         debouncedSearch(value);
+    };
+
+    const handleToggleVisibility = async (campaignId, currentPreference) => {
+        try {
+            // Default is true if undefined, so toggling means false if it was true/undefined
+            const newPreference = currentPreference === false ? true : false;
+            const res = await campaignService.updateVisibility(campaignId, newPreference);
+            if (res.success) {
+                setReleases(prev => prev.map(r =>
+                    r.campaign?._id === campaignId
+                        ? { ...r, campaign: { ...r.campaign, visibility: { ...r.campaign.visibility, userPreference: newPreference } } }
+                        : r
+                ));
+                toast.success(newPreference ? "Press Release is now visible on Droppr" : "Press Release hidden from Droppr");
+            }
+        } catch (error) {
+            console.error("Error updating visibility:", error);
+            toast.error("Failed to update visibility");
+        }
     };
 
 
@@ -317,6 +337,24 @@ export default function UserPressReleasesPage() {
                                         >
                                             <Link className="w-4 h-4 md:w-5 md:h-5 group-hover/btn:scale-110 transition-transform" />
                                         </button>
+                                    )}
+
+                                    {/* Visibility Toggle */}
+                                    {release.campaign && (
+                                        <div className="flex flex-col items-center justify-center ml-2 border-l pl-3">
+                                            <span className="text-[8px] md:text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                                Droppr Feed
+                                            </span>
+                                            <button
+                                                onClick={() => handleToggleVisibility(release.campaign._id, release.campaign.visibility?.userPreference)}
+                                                className={`relative inline-flex h-4 w-8 md:h-5 md:w-9 items-center rounded-full transition-colors focus:outline-none ${release.campaign.visibility?.userPreference !== false ? 'bg-primary' : 'bg-gray-300'}`}
+                                                title={release.campaign.visibility?.userPreference !== false ? "Visible on Droppr Press Room" : "Hidden from Droppr Press Room"}
+                                            >
+                                                <span
+                                                    className={`inline-block h-3 w-3 md:h-4 md:w-4 transform rounded-full bg-white transition-transform ${release.campaign.visibility?.userPreference !== false ? 'translate-x-4 md:translate-x-5' : 'translate-x-1'}`}
+                                                />
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             </motion.div>

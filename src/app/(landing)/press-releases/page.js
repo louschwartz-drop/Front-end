@@ -1,7 +1,8 @@
+import React from "react";
 import Header from "@/components/landingPage/Header";
 import Footer from "@/components/landingPage/Footer";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import PressRoomClient from "./PressRoomClient";
 
 async function getPressReleases() {
@@ -33,7 +34,7 @@ async function getPlatformArticles() {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL;
     try {
         const res = await fetch(`${baseUrl}/public/press-releases?limit=12`, {
-            next: { revalidate: 300 } // Cache for 5 mins
+            cache: 'no-store' // Fetch fresh data to reflect visibility toggles instantly
         });
         if (!res.ok) return [];
         const data = await res.json();
@@ -56,12 +57,12 @@ export default async function PressReleasesPage() {
     ]);
 
     return (
-        <>
+        <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
             {/* Articles Grid (Client Component) with integrated Hero/Filters & CTA */}
             <PressRoomClient 
                 initialNews={newsArticles} 
                 initialPlatform={platformArticles} 
             />
-        </>
+        </React.Suspense>
     );
 }

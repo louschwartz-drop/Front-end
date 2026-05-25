@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
     FileText, Eye, Clock, CheckCircle, Search, Filter, 
-    ChevronLeft, ChevronRight, Play, User, Globe, Activity, Flag, Calendar, X
+    ChevronLeft, ChevronRight, Play, User, Globe, Activity, Flag, Calendar, X, Shield, EyeOff
 } from "lucide-react";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
@@ -15,6 +15,8 @@ import { adminPressReleaseService } from "@/lib/api/admin/press-releases";
 import DistributionStatusModal from "@/components/user/DistributionStatusModal";
 import Pagination from "@/components/ui/Pagination";
 import FullArticlePreview from "@/components/user/FullArticlePreview";
+import VisibilityModal from "@/components/admin/VisibilityModal";
+import { adminCampaignService } from "@/lib/api/admin/campaigns";
 
 export default function AdminPressReleasesPage() {
     const [releases, setReleases] = useState([]);
@@ -32,7 +34,13 @@ export default function AdminPressReleasesPage() {
         campaignId: null,
         title: "",
     });
+    const [visibilityModal, setVisibilityModal] = useState({
+        show: false,
+        campaignId: null,
+        currentOverride: null,
+    });
     const [statusFilter, setStatusFilter] = useState("all");
+    const [visibilityFilter, setVisibilityFilter] = useState("all");
     const [dateFilter, setDateFilter] = useState("");
 
     const loadReleases = async (page = 1, search = "") => {
@@ -43,6 +51,7 @@ export default function AdminPressReleasesPage() {
                 limit: 10,
                 search,
                 status: statusFilter !== "all" ? statusFilter : undefined,
+                visibility: visibilityFilter !== "all" ? visibilityFilter : undefined,
                 date: dateFilter || undefined
             };
             const res = await adminPressReleaseService.getAll(params);
@@ -66,12 +75,12 @@ export default function AdminPressReleasesPage() {
             setCurrentPage(1);
             loadReleases(1, query);
         }, 500),
-        [statusFilter, dateFilter]
+        [statusFilter, visibilityFilter, dateFilter]
     );
 
     useEffect(() => {
         loadReleases(currentPage, searchTerm);
-    }, [currentPage, statusFilter, dateFilter]);
+    }, [currentPage, statusFilter, visibilityFilter, dateFilter]);
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
@@ -81,6 +90,7 @@ export default function AdminPressReleasesPage() {
 
     const clearFilters = () => {
         setStatusFilter("all");
+        setVisibilityFilter("all");
         setDateFilter("");
         setSearchTerm("");
         setCurrentPage(1);
@@ -107,6 +117,24 @@ export default function AdminPressReleasesPage() {
 
     const handlePublishToSyndicate = (releaseId) => {
         toast.info("Publish to Syndicate functionality is coming soon.");
+    };
+
+    const handleUpdateVisibility = async (newOverride) => {
+        try {
+            const res = await adminCampaignService.updateAdminVisibility(visibilityModal.campaignId, newOverride);
+            if (res.success) {
+                setReleases(prev => prev.map(r =>
+                    r.campaign?._id === visibilityModal.campaignId
+                        ? { ...r, campaign: { ...r.campaign, visibility: { ...r.campaign.visibility, adminOverride: newOverride } } }
+                        : r
+                ));
+                toast.success("Admin visibility override updated");
+                setVisibilityModal({ show: false, campaignId: null, currentOverride: null });
+            }
+        } catch (error) {
+            console.error("Error updating admin visibility:", error);
+            toast.error("Failed to update visibility");
+        }
     };
 
     const getRelativeTime = (date) => {
@@ -187,6 +215,30 @@ export default function AdminPressReleasesPage() {
                             {f.id !== "all" && (
                                 <div className={`w-2 h-2 rounded-full bg-${f.color}-500 shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />
                             )}
+                            {f.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mr-1">Visibility:</span>
+                    {[
+                        { id: "all", label: "All" },
+                        { id: "user_preference", label: "User Pref" },
+                        { id: "force_show", label: "Force Show" },
+                        { id: "force_hide", label: "Force Hide" }
+                    ].map((f) => (
+                        <button
+                            key={f.id}
+                            onClick={() => {
+                                setVisibilityFilter(f.id);
+                                setCurrentPage(1);
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider border transition-all ${visibilityFilter === f.id
+                                ? "bg-primary/10 text-primary border-primary/30"
+                                : "bg-white text-gray-500 border-gray-100 hover:border-gray-300"
+                                }`}
+                        >
                             {f.label}
                         </button>
                     ))}
@@ -292,6 +344,24 @@ export default function AdminPressReleasesPage() {
                                                     {release.distributionStatus.total} Websites
                                                 </span>
                                             )}
+                                            {release.campaign && (
+                                                <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full border font-bold ${
+                                                    release.campaign.visibility?.adminOverride === true ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                                    release.campaign.visibility?.adminOverride === false ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                                    release.campaign.visibility?.userPreference === false ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                    'bg-blue-50 text-blue-600 border-blue-100'
+                                                }`}>
+                                                    {release.campaign.visibility?.adminOverride === true ? (
+                                                        <><Eye className="w-2.5 h-2.5" /> Visibility: Force Show</>
+                                                    ) : release.campaign.visibility?.adminOverride === false ? (
+                                                        <><EyeOff className="w-2.5 h-2.5" /> Visibility: Force Hide</>
+                                                    ) : release.campaign.visibility?.userPreference === false ? (
+                                                        <><EyeOff className="w-2.5 h-2.5" /> Visibility: User Hidden</>
+                                                    ) : (
+                                                        <><Eye className="w-2.5 h-2.5" /> Visibility: User Preference</>
+                                                    )}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -319,6 +389,17 @@ export default function AdminPressReleasesPage() {
                                             <Activity className="w-3.5 h-3.5" />
                                             <span className="text-[9px] font-black uppercase tracking-tight">Check Status</span>
                                         </button>
+
+                                        {release.campaign && (
+                                            <button
+                                                onClick={() => setVisibilityModal({ show: true, campaignId: release.campaign._id, currentOverride: release.campaign.visibility?.adminOverride ?? null })}
+                                                className="px-2 py-1.5 hover:bg-white hover:shadow-sm rounded-lg transition-all text-gray-600 hover:text-gray-900 flex items-center gap-1 border-l border-gray-200 ml-1 pl-2"
+                                                title="Override visibility in Press Room"
+                                            >
+                                                <Shield className="w-3.5 h-3.5" />
+                                                <span className="text-[9px] font-black uppercase tracking-tight">Visibility</span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>
@@ -360,6 +441,14 @@ export default function AdminPressReleasesPage() {
                             : r
                     ));
                 }}
+            />
+
+            {/* Visibility Modal */}
+            <VisibilityModal
+                isOpen={visibilityModal.show}
+                onClose={() => setVisibilityModal({ show: false, campaignId: null, currentOverride: null })}
+                onUpdate={handleUpdateVisibility}
+                currentOverride={visibilityModal.currentOverride}
             />
         </div>
     );

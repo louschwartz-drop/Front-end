@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/Select";
 import LoginModal from "@/components/landingPage/LoginModal";
 import { publicPressReleaseService } from "@/lib/api/public/press-releases";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import Link from "next/link";
 
 const COUNTRIES = [
     { code: "all", name: "Global / All" },
@@ -72,19 +73,26 @@ const normalizePlatformArticle = (campaign) => ({
 
 export default function PressRoomClient({ initialNews, initialPlatform }) {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+    
     const [articles, setArticles] = useState(() => {
+        // If there are URL filters, don't use the initial un-filtered data
+        const hasFilters = Array.from(searchParams.keys()).length > 0;
+        if (hasFilters) return [];
+
         const platform = (initialPlatform || []).map(normalizePlatformArticle);
         const news = (initialNews || []);
         // Sort combined initial results by date
         return [...platform, ...news].sort((a, b) => new Date(b.published) - new Date(a.published));
     });
     const [page, setPage] = useState(1);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(() => Array.from(searchParams.keys()).length > 0);
     const [hasMore, setHasMore] = useState(true);
-    const [country, setCountry] = useState("all");
-    const [category, setCategory] = useState("all");
-    const [activeTab, setActiveTab] = useState("all");
-    const [searchTerm, setSearchTerm] = useState("");
+    const [country, setCountry] = useState(searchParams.get("country") || "all");
+    const [category, setCategory] = useState(searchParams.get("category") || "all");
+    const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "all");
+    const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
     const [showLoginModal, setShowLoginModal] = useState(false);
 
     const observer = useRef();
@@ -101,13 +109,30 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
         if (node) observer.current.observe(node);
     }, [loading, hasMore]);
 
+    // Sync URL when filters change
+    const updateUrl = useCallback(() => {
+        const params = new URLSearchParams(searchParams);
+        if (country !== "all") params.set("country", country); else params.delete("country");
+        if (category !== "all") params.set("category", category); else params.delete("category");
+        if (activeTab !== "all") params.set("tab", activeTab); else params.delete("tab");
+        if (searchTerm) params.set("q", searchTerm); else params.delete("q");
+
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }, [country, category, activeTab, searchTerm, pathname, router, searchParams]);
+
     // Fetch articles when filters change
     useEffect(() => {
-        // Skip first fetch on mount since we have initialArticles
+        // Skip first fetch on mount since we have initialArticles, 
+        // UNLESS there are search params (meaning we navigated back and need filtered data)
         if (isFirstMount.current) {
             isFirstMount.current = false;
-            return;
+            const hasFilters = Array.from(searchParams.keys()).length > 0;
+            if (!hasFilters) {
+                return;
+            }
         }
+
+        updateUrl();
 
         const resetAndFetch = async () => {
             setLoading(true);
@@ -317,13 +342,17 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {articles.map((article, index) => {
                             const isLastElement = articles.length === index + 1;
+                            
+                            const Wrapper = article.isPlatform ? Link : "a";
+                            const wrapperProps = article.isPlatform 
+                                ? { href: article.url } 
+                                : { href: article.url, target: "_blank", rel: "noopener noreferrer" };
+
                             return (
-                                <a
+                                <Wrapper
                                     key={`${article.id}-${index}`}
                                     ref={isLastElement ? lastArticleElementRef : null}
-                                    href={article.url}
-                                    target={article.isPlatform ? "_self" : "_blank"}
-                                    rel={article.isPlatform ? "" : "noopener noreferrer"}
+                                    {...wrapperProps}
                                     className="group bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 overflow-hidden flex flex-col h-full"
                                 >
                                     {/* Article Image */}
@@ -377,11 +406,11 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                                             </span>
                                         </div>
                                     </div>
-                                </a>
+                                </Wrapper>
                             );
                         })}
                     </div>
-                ) : (
+                ) : !loading ? (
                     <div className="py-20 text-center">
                         <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
                             <Newspaper className="w-10 h-10 text-gray-300" />
@@ -389,7 +418,7 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                         <h3 className="text-2xl font-bold text-gray-900 mb-2">No Articles Found</h3>
                         <p className="text-gray-500">Try adjusting your filters or search terms.</p>
                     </div>
-                )}
+                ) : null}
 
                 {loading && (
                     <div className="flex justify-center mt-20">

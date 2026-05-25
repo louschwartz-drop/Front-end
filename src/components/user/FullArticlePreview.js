@@ -273,7 +273,7 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                             </h4>
                             <p className="text-sm md:text-lg text-gray-600 italic leading-relaxed">
                                 If you've seen the video and wondered whether{" "}
-                                {displayProduct.productName} could fit into your own routine,
+                                {displayProduct?.productName || "it"} could fit into your own routine,
                                 product details, pricing, and availability are available through
                                 the official product page.
                             </p>

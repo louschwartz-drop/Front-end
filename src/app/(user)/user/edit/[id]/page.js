@@ -693,14 +693,19 @@ export default function EditPage() {
         console.log(`[Frontend AI Summary] ${aiAnalysisData.summary}`);
       }
 
-      if (aiAnalysisData && aiAnalysisData.score >= 70) {
+      const isSuccess = response?.data?.success !== false;
+      const isGoodScore = aiAnalysisData && aiAnalysisData.score > 70;
+
+      if (isSuccess && isGoodScore) {
         // Score is good, proceed directly to publish modal
         handleInitiatePublish();
       } else {
-        // Score is low, show the AI improvement modal
+        // Score is low or filters failed, show the AI improvement modal
         setShowAiScoreSheet(true);
-        if (aiAnalysisData && aiAnalysisData.score < 70) {
-          toast.warn("AI Quality Score is too low for publication. Please improve the content.");
+        if (aiAnalysisData && aiAnalysisData.score <= 70) {
+          toast.warn("SEO Quality Score is too low for publication. Please improve the content.");
+        } else if (!isSuccess) {
+          toast.warn("Validation failed. Please review improvement suggestions.");
         }
       }
     } catch (error) {
@@ -1156,28 +1161,67 @@ export default function EditPage() {
                     {aiAnalysis.score}
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-sm sm:text-lg">AI Content Score</h3>
-                    <p className="text-[9px] text-gray-500 font-bold tracking-tight">XPR Media Quality Analysis</p>
+                    <h3 className="font-bold text-gray-900 text-sm sm:text-lg">SEO Score</h3>
+                    <p className="text-[9px] text-gray-500 font-bold tracking-tight">SEO Quality Analysis</p>
                   </div>
                 </div>
                 <button onClick={() => setShowAiScoreSheet(false)} className="text-gray-400 hover:text-gray-600 p-1">✕</button>
               </div>
 
               <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-h-[60vh] overflow-y-auto">
+                {/* AI Improvement Suggestions */}
+                {aiAnalysis.improvementSuggestions && aiAnalysis.improvementSuggestions.length > 0 ? (
+                  <div className="space-y-3">
+                    <h4 className="text-[10px] font-bold text-gray-400 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      SEO Improvement Suggestions (Actionable)
+                    </h4>
+                    <div className="space-y-2">
+                      {aiAnalysis.improvementSuggestions.map((suggestion, idx) => (
+                        <div key={idx} className="flex items-start gap-2 p-2.5 bg-red-50 border border-red-100 rounded-lg">
+                          <span className="text-red-500 font-bold mt-0.5">•</span>
+                          <span className="text-xs sm:text-sm text-gray-800 font-semibold leading-relaxed">{suggestion}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  aiAnalysis.suggestedEdits && aiAnalysis.suggestedEdits.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-[10px] font-bold text-gray-400 flex items-center gap-2">
+                        <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        Improvement Suggestions
+                      </h4>
+                      <div className="space-y-2">
+                        {aiAnalysis.suggestedEdits.map((edit, idx) => (
+                          <div key={idx} className="flex items-start gap-2 p-2.5 bg-amber-50/30 border border-amber-100/50 rounded-lg">
+                            <span className="text-amber-500 font-bold mt-0.5">•</span>
+                            <span className="text-xs sm:text-sm text-gray-800 font-medium leading-relaxed">{edit}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                )}
+
                 {/* Score Meaning */}
-                <div className={`rounded-lg p-4 sm:p-5 border-2 ${aiAnalysis.score < 70 ? "bg-red-50 border-red-200" : "bg-blue-50/50 border-blue-100"
+                <div className={`rounded-lg p-4 sm:p-5 border-2 ${aiAnalysis.score <= 70 ? "bg-red-50 border-red-200" : "bg-blue-50/50 border-blue-100"
                   }`}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-[9px] font-bold text-gray-400">Analysis Summary</span>
-                    {aiAnalysis.score < 70 && <span className="text-[9px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded shadow-sm">IMPROVEMENT REQUIRED</span>}
+                    {aiAnalysis.score <= 70 && <span className="text-[9px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded shadow-sm">IMPROVEMENT REQUIRED</span>}
                   </div>
-                  <p className={`text-sm sm:text-[15px] leading-relaxed font-bold ${aiAnalysis.score < 70 ? "text-red-900" : "text-blue-900 italic"}`}>
-                    {aiAnalysis.score < 70
-                      ? `Publish Blocked: Your score is ${aiAnalysis.score}/100. XPR Media requires a minimum score of 70.`
+                  <p className={`text-sm sm:text-[15px] leading-relaxed font-bold ${aiAnalysis.score <= 70 ? "text-red-900" : "text-blue-900 italic"}`}>
+                    {aiAnalysis.score <= 70
+                      ? `Publish Blocked: Your SEO Score is ${aiAnalysis.score}/100. SEO standards require a minimum score of 70.`
                       : `"${aiAnalysis.summary || "Your article meets the quality standards for publication."}"`
                     }
                   </p>
-                  {aiAnalysis.summary && aiAnalysis.score < 70 && (
+                  {aiAnalysis.summary && aiAnalysis.score <= 70 && (
                     <p className="mt-3 text-xs sm:text-sm text-red-700 font-medium leading-relaxed bg-white/50 p-3 rounded-lg border border-red-100">
                       <strong>Focus:</strong> {aiAnalysis.summary}
                     </p>
@@ -1192,20 +1236,19 @@ export default function EditPage() {
                   <span className="text-[11px] font-bold text-gray-500">Classification</span>
                 </div>
 
-                {/* Suggested Edits */}
-                {aiAnalysis.suggestedEdits && aiAnalysis.suggestedEdits.length > 0 && (
-                  <div className="space-y-3">
+                {/* Technical Validation Details / Raw Errors */}
+                {aiAnalysis.failedFilters && aiAnalysis.failedFilters.length > 0 && (
+                  <div className="space-y-3 pt-3 border-t border-gray-100">
                     <h4 className="text-[10px] font-bold text-gray-400 flex items-center gap-2">
-                      <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Improvement Suggestions
+                      Technical Validation Details
                     </h4>
-                    <div className="space-y-2">
-                      {aiAnalysis.suggestedEdits.map((edit, idx) => (
-                        <div key={idx} className="flex items-start gap-2 p-2.5 bg-amber-50/30 border border-amber-100/50 rounded-lg">
-                          <span className="text-amber-500 font-bold mt-0.5">•</span>
-                          <span className="text-xs sm:text-sm text-gray-800 font-medium leading-relaxed">{edit}</span>
+                    <div className="space-y-1">
+                      {aiAnalysis.failedFilters.map((filter, idx) => (
+                        <div key={idx} className="text-xs text-gray-500 bg-gray-50/80 px-3 py-1.5 rounded-md border border-gray-100/50">
+                          {filter}
                         </div>
                       ))}
                     </div>
@@ -1221,7 +1264,7 @@ export default function EditPage() {
                   Edit
                 </button>
                 <div className="flex gap-2 sm:gap-3">
-                  {aiAnalysis.score < 70 && (
+                  {aiAnalysis.score <= 70 && (
                     <button
                       disabled={regenerating}
                       onClick={async () => {
@@ -1259,7 +1302,7 @@ export default function EditPage() {
                       {regenerating ? "Improving..." : "Improve with AI"}
                     </button>
                   )}
-                  {aiAnalysis.score >= 70 && (
+                  {aiAnalysis.score > 70 && (
                     <button
                       onClick={handleInitiatePublish}
                       className="bg-gray-900 text-white px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold hover:bg-gray-800 transition-all shadow-md"
