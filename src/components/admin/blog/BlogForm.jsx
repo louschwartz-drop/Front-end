@@ -35,9 +35,9 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
         featuredImage: "",
         categories: [],
         status: "draft",
-        authorName: "Lou Schwartz",
+        authorName: "Hayden Hollis",
         authorRole: "Founder · DropPR.ai",
-        authorBio: "Lou Schwartz writes about digital media, advertising, SEO, AI search, and the future of online discovery. He is Chief Forensic Officer of Signal Law Group and has spent more than two decades across securities law, M&A, capital markets, and senior executive leadership in technology-driven businesses. He has led hundreds of transactions, raised more than $500 million in capital, and served as CEO, board chair, and senior executive across multiple market cycles.",
+        authorBio: "Hayden Hollis writes about digital media, advertising, SEO, AI search, and the future of online discovery. He is Chief Forensic Officer of Signal Law Group and has spent more than two decades across securities law, M&A, capital markets, and senior executive leadership in technology-driven businesses. He has led hundreds of transactions, raised more than $500 million in capital, and served as CEO, board chair, and senior executive across multiple market cycles.",
         authorImage: "",
         seo: {
             title: "",
@@ -94,9 +94,9 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
             featuredImage: data.featuredImage || "",
             categories: (data.categories || []).map(c => c._id || c),
             status: data.status || "draft",
-            authorName: data.authorName || "Lou Schwartz",
+            authorName: data.authorName || "Hayden Hollis",
             authorRole: data.authorRole || "Founder · DropPR.ai",
-            authorBio: data.authorBio || "Lou Schwartz writes about digital media, advertising, SEO, AI search, and the future of online discovery. He is Chief Forensic Officer of Signal Law Group and has spent more than two decades across securities law, M&A, capital markets, and senior executive leadership in technology-driven businesses. He has led hundreds of transactions, raised more than $500 million in capital, and served as CEO, board chair, and senior executive across multiple market cycles.",
+            authorBio: data.authorBio || "Hayden Hollis writes about digital media, advertising, SEO, AI search, and the future of online discovery. He is Chief Forensic Officer of Signal Law Group and has spent more than two decades across securities law, M&A, capital markets, and senior executive leadership in technology-driven businesses. He has led hundreds of transactions, raised more than $500 million in capital, and served as CEO, board chair, and senior executive across multiple market cycles.",
             authorImage: data.authorImage || "",
             seo: {
                 title: data.metaTitle || data.title || "",
@@ -228,37 +228,37 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
     );
 
     return (
-        <form onSubmit={handleSubmit} className="mx-auto pb-20 px-4 md:px-0">
-            <div className="flex justify-between items-center mb-8">
-                <div className="flex items-center gap-4">
-                    <Link href="/admin/blogs" className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+        <form onSubmit={handleSubmit} className="mx-auto pb-20 px-0">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8 border-b border-gray-100 pb-5 md:pb-0 md:border-b-0">
+                <div className="flex items-center gap-3 md:gap-4">
+                    <Link href="/admin/blogs" className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 shrink-0">
                         <ChevronLeft size={20} />
                     </Link>
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">{isEditing ? "Edit Post" : "New Blog Post"}</h1>
-                        <p className="text-gray-600 mt-1 text-sm font-medium">Draft, design, and optimize your article</p>
+                    <div className="min-w-0">
+                        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900">{isEditing ? "Edit Post" : "New Blog Post"}</h1>
+                        <p className="text-gray-500 mt-1 text-xs md:text-sm font-medium truncate">Draft, design, and optimize your article</p>
                     </div>
                 </div>
-                <div className="flex gap-3">
-                    <Link href="/admin/blogs">
-                        <Button variant="ghost" className="h-11 px-6 rounded-xl font-bold border border-gray-300 hover:bg-gray-50 text-gray-700">
+                <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto">
+                    <Link href="/admin/blogs" className="flex-1 md:flex-none">
+                        <Button variant="ghost" type="button" className="w-full h-10 px-4 rounded-xl font-bold border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs sm:text-sm">
                             Cancel
                         </Button>
                     </Link>
                     <Button 
                         type="button"
                         onClick={() => setIsGenerateModalOpen(true)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 px-6 rounded-xl shadow-lg shadow-indigo-200 flex items-center gap-2"
+                        className="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-10 px-4 rounded-xl shadow-lg shadow-indigo-100 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
                     >
-                        <Sparkles size={18} /> AI Write
+                        <Sparkles size={16} /> AI Write
                     </Button>
                     <Button 
                         type="submit" 
                         disabled={loading}
-                        className="bg-primary hover:bg-primary/90 text-white font-bold h-11 px-8 rounded-xl shadow-lg shadow-primary/20 flex items-center gap-2"
+                        className="flex-1 md:flex-none bg-primary hover:bg-primary/90 text-white font-bold h-10 px-5 rounded-xl shadow-lg shadow-primary/10 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
                     >
-                        {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                        {isEditing ? "Update Post" : "Publish Post"}
+                        {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                        {isEditing ? "Update" : "Publish"}
                     </Button>
                 </div>
             </div>
@@ -266,7 +266,7 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Content */}
                 <div className="lg:col-span-2 space-y-8">
-                    <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                    <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Post Title</label>
                             <input
@@ -274,23 +274,23 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
                                 value={formData.title}
                                 onChange={handleChange}
                                 placeholder="Enter an engaging title..."
-                                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold text-xl text-gray-900"
+                                className="w-full px-3 py-2.5 sm:px-4 sm:py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold text-lg sm:text-xl text-gray-900"
                                 required
                             />
                         </div>
 
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Slug / URL</label>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 min-w-0">
                                 <input
                                     name="slug"
                                     value={formData.slug}
                                     onChange={handleChange}
                                     placeholder="post-url-slug"
-                                    className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-mono text-sm text-gray-900"
+                                    className="flex-1 min-w-0 px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-mono text-sm text-gray-900"
                                     required
                                 />
-                                <Button type="button" onClick={generateSlug} variant="ghost" className="h-11 px-4 rounded-xl text-xs font-bold border border-gray-200">
+                                <Button type="button" onClick={generateSlug} variant="ghost" className="shrink-0 h-10 px-3 sm:px-4 rounded-xl text-xs font-bold border border-gray-200 whitespace-nowrap">
                                     Generate
                                 </Button>
                             </div>
@@ -330,7 +330,7 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
 
                     <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-6">
                         <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 border-b border-gray-100 pb-4">SEO Optimization</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Meta Title</label>
                                 <input
@@ -342,16 +342,16 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Keywords ({formData.seo.keywords.split(",").filter(Boolean).length}/5)</label>
-                                <div className="flex gap-2">
+                                <div className="flex flex-wrap gap-2">
                                     <input
                                         value={keywordInput}
                                         onChange={(e) => setKeywordInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addKeyword())}
                                         placeholder="Add keyword..."
-                                        className="flex-1 px-4 py-2.5 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium text-gray-900"
+                                        className="flex-1 min-w-0 px-3 py-2.5 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium text-gray-900 text-sm"
                                         disabled={formData.seo.keywords.split(",").filter(Boolean).length >= 5}
                                     />
-                                    <Button type="button" onClick={addKeyword} className="h-11 px-4 rounded-xl bg-gray-900 text-white font-bold text-xs" disabled={formData.seo.keywords.split(",").filter(Boolean).length >= 5}>
+                                    <Button type="button" onClick={addKeyword} className="h-10 px-4 rounded-xl bg-gray-900 text-white font-bold text-xs shrink-0" disabled={formData.seo.keywords.split(",").filter(Boolean).length >= 5}>
                                         Add
                                     </Button>
                                 </div>
@@ -482,7 +482,7 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
                                 name="authorName"
                                 value={formData.authorName}
                                 onChange={handleChange}
-                                placeholder="Lou Schwartz"
+                                placeholder="Hayden Hollis"
                                 className="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold text-sm text-gray-900"
                                 required
                             />

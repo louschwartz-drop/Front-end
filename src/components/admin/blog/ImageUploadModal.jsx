@@ -230,8 +230,8 @@ export default function ImageUploadModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[480px] rounded-2xl p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none">
-                <div className="px-6 pt-6 ">
+            <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[480px] max-h-[90vh] overflow-y-auto rounded-2xl p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none">
+                <div className="px-4 sm:px-6 pt-4 sm:pt-6 ">
                     <DialogHeader>
                         <DialogTitle className="text-xl font-bold text-gray-900 tracking-tight flex items-center pb-2 gap-3">
                             <Move className="text-primary" size={24} />
@@ -311,7 +311,7 @@ export default function ImageUploadModal({
                             </div>
 
                             <div className="flex flex-col gap-4">
-                                <div className="flex items-center gap-6 px-4 py-2 bg-gray-50/50 rounded-xl border border-gray-100/50">
+                                <div className="flex flex-wrap items-center gap-2 sm:gap-6 px-3 sm:px-4 py-2 bg-gray-50/50 rounded-xl border border-gray-100/50">
                                     <Button
                                         type="button"
                                         variant="ghost"
@@ -374,7 +374,7 @@ export default function ImageUploadModal({
                     )}
                 </div>
 
-                <div className="bg-gray-50 px-6 py-6 flex gap-4">
+                <div className="bg-gray-50 px-4 sm:px-6 py-4 sm:py-6 flex gap-3 sm:gap-4">
                     <Button
                         type="button"
                         variant="ghost"

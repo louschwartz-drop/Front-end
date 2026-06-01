@@ -32,7 +32,7 @@ export default function PreviewPublishModal({
 
     const handlePublishNow = async () => {
         if (availablePlans.length === 0) {
-            toast.error("No releases available. Please purchase a plan.");
+            toast.error("No releases credits available. Please purchase a plan.");
             return;
         }
 

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Eye, Link, CheckCircle, Search, Filter, ChevronLeft, ChevronRight, Play, Activity, Clock, Flag } from "lucide-react";
+import { FileText, Eye, Link, CheckCircle, Search, Filter, ChevronLeft, ChevronRight, Play, Activity, Clock, Flag, ExternalLink, Globe, File, FileAudio, Video } from "lucide-react";
 import { toast } from "react-toastify";
 import Button from "@/components/ui/Button";
 import debounce from "lodash/debounce";
@@ -12,6 +12,7 @@ import DistributionStatusModal from "@/components/user/DistributionStatusModal";
 import Pagination from "@/components/ui/Pagination";
 import VideoModal from "@/components/ui/VideoModal";
 import { campaignService } from "@/lib/api/user/campaigns";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/Select";
 
 export default function UserPressReleasesPage() {
     const [releases, setReleases] = useState([]);
@@ -20,6 +21,9 @@ export default function UserPressReleasesPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalResults, setTotalResults] = useState(0);
+    const [filter, setFilter] = useState("all");
+    const [generationType, setGenerationType] = useState("all");
+    const [planName, setPlanName] = useState("all");
     const [previewModal, setPreviewModal] = useState({
         show: false,
         campaign: null,
@@ -30,7 +34,6 @@ export default function UserPressReleasesPage() {
         title: "",
     });
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [filter, setFilter] = useState("all"); // all, in-progress, finished, pending
     const [videoModal, setVideoModal] = useState({
         show: false,
         url: "",
@@ -50,7 +53,10 @@ export default function UserPressReleasesPage() {
             const res = await pressReleaseService.getAll(userId, {
                 page,
                 limit: 10,
-                search
+                search,
+                status: filter,
+                generationType,
+                planName
             });
 
             if (res.success) {
@@ -72,12 +78,12 @@ export default function UserPressReleasesPage() {
             setCurrentPage(1);
             loadReleases(1, query);
         }, 500),
-        [userId]
+        [userId, filter, generationType, planName]
     );
 
     useEffect(() => {
         loadReleases(currentPage, searchTerm);
-    }, [userId, currentPage]);
+    }, [userId, currentPage, filter, generationType, planName]);
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
@@ -96,7 +102,7 @@ export default function UserPressReleasesPage() {
                         ? { ...r, campaign: { ...r.campaign, visibility: { ...r.campaign.visibility, userPreference: newPreference } } }
                         : r
                 ));
-                toast.success(newPreference ? "Press Release is now visible on Droppr" : "Press Release hidden from Droppr");
+                toast.success(newPreference ? "Press Release is now visible on Drop PR" : "Press Release hidden from Drop PR");
             }
         } catch (error) {
             console.error("Error updating visibility:", error);
@@ -142,14 +148,7 @@ export default function UserPressReleasesPage() {
         return past.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     };
 
-    const filteredReleases = releases.filter(release => {
-        if (filter === "all") return true;
-        const label = getStatusLabel(release);
-        if (filter === "in-progress") return label === "IN PROGRESS";
-        if (filter === "finished") return label === "FINISHED";
-        if (filter === "pending") return label === "PENDING" || label === "SUBMITTED_SUCCESSFULLY";
-        return true;
-    });
+    // Removed client-side filter logic since filtering is now server-side.
 
     return (
         <div className="w-full">
@@ -163,7 +162,7 @@ export default function UserPressReleasesPage() {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
                     <input
                         type="text"
-                        placeholder="Search by article headline..."
+                        placeholder="Search by headline..."
                         className="pl-10 md:pl-12 pr-4 md:pr-6 py-2 md:py-3 bg-white border border-gray-200 rounded-xl md:rounded-2xl w-full md:w-80 shadow-sm focus:ring-2 focus:ring-blue-600/20 outline-none transition-all font-medium text-xs md:text-sm"
                         value={searchTerm}
                         onChange={handleSearchChange}
@@ -171,42 +170,63 @@ export default function UserPressReleasesPage() {
                 </div>
             </div>
 
-            {/* Status Filter Bar */}
-            <div className="flex flex-row items-center gap-2 mb-4 sm:mb-6 mt-6 md:mt-8 overflow-x-auto no-scrollbar pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
-                {[
-                    { id: "all", label: "All Press Releases" },
-                    { id: "in-progress", label: "In Progress", color: "amber" },
-                    { id: "finished", label: "Finished", color: "emerald" },
-                    { id: "pending", label: "Queued", color: "blue" }
-                ].map((f) => (
-                    <button
-                        key={f.id}
-                        onClick={() => setFilter(f.id)}
-                        className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] font-bold tracking-widest border transition-all flex items-center gap-2 whitespace-nowrap ${filter === f.id
-                            ? "bg-gray-900 text-white border-gray-900 shadow-sm scale-105"
-                            : "bg-white text-gray-500 border-gray-100 hover:border-gray-300"
-                            } ${f.id === 'all' ? 'ml-4 sm:ml-0' : ''}`}
-                    >
-                        {f.id !== "all" && (
-                            <div className={`w-2 h-2 rounded-full bg-${f.color}-500 shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />
-                        )}
-                        {f.label}
-                        <span className={`ml-1 text-[9px] ${filter === f.id ? "text-gray-400" : "text-gray-300"}`}>
-                            ({releases.filter(r => {
-                                if (f.id === "all") return true;
-                                const label = getStatusLabel(r);
-                                if (f.id === "in-progress") return label === "IN PROGRESS";
-                                if (f.id === "finished") return label === "FINISHED";
-                                if (f.id === "pending") return label === "PENDING" || label === "SUBMITTED_SUCCESSFULLY";
-                                return true;
-                            }).length})
-                        </span>
-                    </button>
-                ))}
+            {/* Filter Controls Row */}
+            <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 mt-6 items-start xl:items-center">
+                <div className="w-full xl:flex-1">
+                    <div className="flex flex-row items-center gap-1.5 sm:gap-2 justify-between sm:justify-start w-full">
+                        {[
+                            { id: "all", label: "All Press Releases" },
+                            { id: "in-progress", label: "In Progress" },
+                            { id: "finished", label: "Finished" },
+                            { id: "pending", label: "Queued" }
+                        ].map((f) => (
+                            <button
+                                key={f.id}
+                                onClick={() => { setFilter(f.id); setCurrentPage(1); }}
+                                className={`px-2 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-[9px] xs:text-[10px] sm:text-xs font-bold tracking-tight sm:tracking-wide border transition-all flex items-center justify-center whitespace-nowrap flex-1 sm:flex-none ${filter === f.id
+                                    ? "bg-gray-900 text-white border-gray-900 shadow-sm"
+                                    : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                                    }`}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="flex flex-row items-center gap-3 w-full xl:w-auto shrink-0">
+                    <div className="w-full sm:w-[180px]">
+                        <Select value={generationType} onValueChange={(val) => { setGenerationType(val); setCurrentPage(1); }}>
+                            <SelectTrigger className="w-full bg-white h-[42px] border-gray-200">
+                                <SelectValue placeholder="All Sources" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Sources</SelectItem>
+                                <SelectItem value="social_link">Social Link</SelectItem>
+                                <SelectItem value="document_upload">Document Upload</SelectItem>
+                                <SelectItem value="local_upload">Local Video/Audio</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="w-full sm:w-[150px]">
+                        <Select value={planName} onValueChange={(val) => { setPlanName(val); setCurrentPage(1); }}>
+                            <SelectTrigger className="w-full bg-white h-[42px] border-gray-200">
+                                <SelectValue placeholder="All Plans" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Plans</SelectItem>
+                                <SelectItem value="Boost">Boost</SelectItem>
+                                <SelectItem value="Boost +">Boost +</SelectItem>
+                                <SelectItem value="Boost Pro">Boost Pro</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
             </div>
 
-            {loading && releases.length === 0 ? (
-                <div className="flex justify-center py-10 md:py-20">
+            {loading ? (
+                <div className="flex justify-center py-16 md:py-24 mt-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
                     <div className="animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-primary"></div>
                 </div>
             ) : releases.length === 0 ? (
@@ -222,18 +242,19 @@ export default function UserPressReleasesPage() {
                     </p>
                 </div>
             ) : (
-                <div className="space-y-4 md:space-y-6">
+                <div className="space-y-4 md:space-y-6 mt-6">
                     <div className="grid grid-cols-1 gap-3 md:gap-4">
-                        {filteredReleases.map((release, index) => (
+                        {releases.map((release, index) => (
                             <motion.div
                                 key={release._id}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                className="bg-white p-2.5 md:p-5 rounded-xl md:rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6"
+                                className="bg-white p-2.5 md:p-5 rounded-xl md:rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col gap-3 md:gap-4"
                             >
-                                <div className="flex items-center gap-2.5 md:gap-5 flex-1 min-w-0">
-                                    <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-20 md:h-20 rounded-lg md:rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200 group-hover:border-blue-200 transition-colors">
+                                <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 md:gap-6 w-full">
+                                    <div className="flex items-center gap-3 md:gap-5 flex-1 min-w-0">
+                                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-lg md:rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200 group-hover:border-blue-200 transition-colors">
                                         {(release.campaign?.productCard?.thumbnail || release.campaign?.videoThumbnail) ? (
                                             <img
                                                 src={release.campaign?.productCard?.thumbnail || release.campaign?.videoThumbnail}
@@ -262,10 +283,28 @@ export default function UserPressReleasesPage() {
                                         <h3 className="text-sm md:text-lg font-bold text-gray-900 mb-1 md:mb-2 truncate group-hover:text-blue-600 transition-colors">
                                             {release.campaign?.article?.headline || "Untitled Press Release"}
                                         </h3>
-                                        <div className="flex flex-wrap items-center gap-x-3 md:gap-x-4 gap-y-1 md:gap-y-2 text-[10px] md:text-sm">
-                                            <span className="flex items-center gap-1 font-bold uppercase tracking-widest text-[8px] md:text-[10px] text-blue-600 bg-blue-50 px-2 md:px-2.5 py-0.5 md:py-1 rounded-full border border-blue-100">
-                                                {release.plan?.name || "Standard Plan"}
-                                            </span>
+                                        <div className="flex flex-wrap items-center gap-x-3 md:gap-x-4 gap-y-2 text-[10px] md:text-sm">
+                                            {release.campaign?.videoSource && (
+                                                <span className="flex items-center gap-1.5 font-medium text-[10px] md:text-[11px] text-slate-700 bg-slate-50 px-2 md:px-2.5 py-1 rounded-md border border-slate-200 shadow-sm">
+                                                    {release.campaign.videoSource === 'social_link' ? <Globe className="w-3 h-3 text-slate-500" /> : release.campaign.videoSource === 'document_upload' ? <File className="w-3 h-3 text-slate-500" /> : release.campaign.audioUrl ? <FileAudio className="w-3 h-3 text-slate-500" /> : <Video className="w-3 h-3 text-slate-500" />}
+                                                    {release.campaign.videoSource === 'social_link' ? 'Article Generated from Social Link' : release.campaign.videoSource === 'document_upload' ? 'Article Generated from Document' : release.campaign.audioUrl ? 'Article Generated from Audio' : 'Article Generated from Video'}
+                                                </span>
+                                            )}
+                                            <div className="flex items-center gap-2">
+                                                <span className="flex items-center gap-1 font-bold uppercase tracking-widest text-[8px] md:text-[10px] text-blue-600 bg-blue-50 px-2 md:px-2.5 py-0.5 md:py-1 rounded-full border border-blue-100">
+                                                    {release.plan?.name || "Standard Plan"}
+                                                </span>
+                                                <span className={`px-2 md:px-2.5 py-0.5 md:py-1 rounded-full text-[8px] md:text-[10px] font-bold tracking-widest border flex items-center gap-1.5 ${getStatusStyle(release.status, release)}`}>
+                                                    {release.distributionStatus?.needsReview && <Flag className="w-2.5 h-2.5 fill-current" />}
+                                                    {getStatusLabel(release)}
+                                                </span>
+                                                {release.distributionStatus && release.distributionStatus.pending > 0 && (
+                                                    <span className="flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-600 rounded-lg border border-amber-100 font-bold text-[8px] sm:text-[10px]">
+                                                        <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                                                        {release.distributionStatus.pending} Pending
+                                                    </span>
+                                                )}
+                                            </div>
                                             <span className="flex items-center gap-1 text-gray-400 font-semibold">
                                                 <Clock className="w-3 h-3 md:w-3.5 md:h-3.5" />
                                                 {new Date(release.createdAt).toLocaleDateString("en-US", {
@@ -274,21 +313,10 @@ export default function UserPressReleasesPage() {
                                                     year: "numeric"
                                                 })}
                                             </span>
-                                            {release.campaign?._id && (
-                                                <span className="flex items-center gap-1 text-gray-500 font-mono text-[8px] sm:text-[10px] bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100" title="Publish GUID / Campaign ID">
-                                                    ID: {release.campaign._id}
-                                                </span>
-                                            )}
                                             {release.distributionStatus && release.distributionStatus.total > 0 && (
                                                 <span className="flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100 font-bold text-[8px] sm:text-[10px]">
                                                     <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                                                     {release.distributionStatus.total} Websites
-                                                </span>
-                                            )}
-                                            {release.distributionStatus && release.distributionStatus.pending > 0 && (
-                                                <span className="flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-600 rounded-lg border border-amber-100 font-bold text-[8px] sm:text-[10px]">
-                                                    <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                                    {release.distributionStatus.pending} Pending
                                                 </span>
                                             )}
                                             {release.distributionStatus?.publishedDate && (
@@ -304,58 +332,86 @@ export default function UserPressReleasesPage() {
                                             )}
                                         </div>
                                     </div>
+                                    </div>
                                 </div>
 
-                                <div className="flex items-center gap-2 border-t md:border-t-0 pt-2.5 md:pt-0">
-                                    <span className={`px-3 md:px-4 py-1 md:py-1.5 rounded-full text-[8px] md:text-[10px] font-bold tracking-widest border mr-1 md:mr-2 flex items-center gap-1.5 ${getStatusStyle(release.status, release)}`}>
-                                        {release.distributionStatus?.needsReview && <Flag className="w-3 h-3 fill-current" />}
-                                        {getStatusLabel(release)}
-                                    </span>
-
-                                    <button
-                                        onClick={() => setPreviewModal({ show: true, campaign: release.campaign })}
-                                        className="p-1.5 md:p-2 hover:bg-gray-100 rounded-lg transition-all text-gray-500 hover:text-blue-600 group/btn"
-                                        title="Preview Article"
-                                    >
-                                        <Eye className="w-4 h-4 md:w-5 md:h-5 group-hover/btn:scale-110 transition-transform" />
-                                    </button>
-
-                                    <button
-                                        onClick={() => setStatusModal({ show: true, campaignId: release.campaign._id, title: release.campaign.article?.headline })}
-                                        className="px-2 md:px-3 py-1.5 md:py-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all text-blue-600 hover:text-blue-700 group/btn flex items-center gap-1.5 border border-blue-100"
-                                        title="Click to check live publication status"
-                                    >
-                                        <Activity className="w-4 h-4 md:w-4 md:h-4 group-hover/btn:scale-110 transition-transform" />
-                                        <span className="text-[10px] md:text-xs font-bold whitespace-nowrap">Check Status</span>
-                                    </button>
-
-                                    {release.campaign?.videoUrl && (
-                                        <button
-                                            onClick={() => setVideoModal({ show: true, url: release.campaign.videoUrl })}
-                                            className="p-1.5 md:p-2 hover:bg-gray-100 rounded-lg transition-all text-gray-500 hover:text-blue-600 group/btn"
-                                            title="View Source Video"
-                                        >
-                                            <Link className="w-4 h-4 md:w-5 md:h-5 group-hover/btn:scale-110 transition-transform" />
-                                        </button>
-                                    )}
-
-                                    {/* Visibility Toggle */}
-                                    {release.campaign && (
-                                        <div className="flex flex-col items-center justify-center ml-2 border-l pl-3">
-                                            <span className="text-[8px] md:text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-                                                Droppr Feed
-                                            </span>
-                                            <button
-                                                onClick={() => handleToggleVisibility(release.campaign._id, release.campaign.visibility?.userPreference)}
-                                                className={`relative inline-flex h-4 w-8 md:h-5 md:w-9 items-center rounded-full transition-colors focus:outline-none ${release.campaign.visibility?.userPreference !== false ? 'bg-primary' : 'bg-gray-300'}`}
-                                                title={release.campaign.visibility?.userPreference !== false ? "Visible on Droppr Press Room" : "Hidden from Droppr Press Room"}
-                                            >
-                                                <span
-                                                    className={`inline-block h-3 w-3 md:h-4 md:w-4 transform rounded-full bg-white transition-transform ${release.campaign.visibility?.userPreference !== false ? 'translate-x-4 md:translate-x-5' : 'translate-x-1'}`}
+                                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-end gap-3 border-t pt-3 w-full">
+                                    
+                                    {/* Mobile Top Row: News Room Checkbox & Source Button */}
+                                    <div className="flex md:hidden items-center justify-between w-full gap-2 px-1 pb-1">
+                                        {/* Mobile News Room Checkbox */}
+                                        {release.campaign && (
+                                            <label className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={release.campaign.visibility?.userPreference !== false}
+                                                    onChange={() => handleToggleVisibility(release.campaign._id, release.campaign.visibility?.userPreference)}
+                                                    className="w-3.5 h-3.5 rounded-[4px] text-blue-600 border-gray-300 focus:ring-blue-500 focus:ring-offset-0 shadow-sm cursor-pointer"
                                                 />
+                                                <span className="text-[10px] font-medium text-gray-600 whitespace-nowrap">Show on News Room</span>
+                                            </label>
+                                        )}
+
+                                        {release.campaign?.videoUrl ? (
+                                            <button
+                                                onClick={() => setVideoModal({ show: true, url: release.campaign.videoUrl })}
+                                                className="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all text-gray-700 flex items-center gap-1.5 border border-gray-200 ml-auto"
+                                                title="View Source Link"
+                                            >
+                                                <ExternalLink className="w-3.5 h-3.5" />
+                                                <span className="text-[10px] font-bold whitespace-nowrap">Source</span>
                                             </button>
-                                        </div>
-                                    )}
+                                        ) : <div className="flex-1" />}
+                                    </div>
+
+                                    {/* Primary Action Buttons (Mobile Bottom Row / Desktop Flow) */}
+                                    <div className="flex items-center gap-2 w-full">
+                                        <button
+                                            onClick={() => setPreviewModal({ show: true, campaign: release.campaign })}
+                                            className="flex-1 md:flex-none justify-center px-2 md:px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all text-gray-700 hover:text-gray-900 flex items-center gap-1.5 border border-gray-200"
+                                            title="Preview Article"
+                                        >
+                                            <Eye className="w-4 h-4 md:w-4 md:h-4" />
+                                            <span className="text-[10px] md:text-xs font-bold whitespace-nowrap">Preview Article</span>
+                                        </button>
+
+                                        <button
+                                            onClick={() => setStatusModal({ show: true, campaignId: release.campaign._id, title: release.campaign.article?.headline })}
+                                            className="flex-1 md:flex-none justify-center px-2 md:px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all text-blue-600 hover:text-blue-700 flex items-center gap-1.5 border border-blue-100"
+                                            title="Click to check live publication status"
+                                        >
+                                            <Activity className="w-4 h-4 md:w-4 md:h-4" />
+                                            <span className="text-[10px] md:text-xs font-bold whitespace-nowrap">Check Live Status</span>
+                                        </button>
+
+                                        {/* Desktop-Only Source Button */}
+                                        {release.campaign?.videoUrl && (
+                                            <button
+                                                onClick={() => setVideoModal({ show: true, url: release.campaign.videoUrl })}
+                                                className="hidden md:flex px-2 md:px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all text-gray-700 hover:text-gray-900 items-center gap-1.5 border border-gray-200"
+                                                title="View Source Link"
+                                            >
+                                                <ExternalLink className="w-4 h-4 md:w-4 md:h-4" />
+                                                <span className="text-xs font-bold whitespace-nowrap">Source</span>
+                                            </button>
+                                        )}
+
+                                        {/* Desktop-Only News Room Toggle */}
+                                        {release.campaign && (
+                                            <div className="hidden md:flex items-center ml-auto gap-2">
+                                                <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                                                    Show on News Room
+                                                </span>
+                                                <button
+                                                    onClick={() => handleToggleVisibility(release.campaign._id, release.campaign.visibility?.userPreference)}
+                                                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${release.campaign.visibility?.userPreference !== false ? 'bg-primary' : 'bg-gray-300'}`}
+                                                    title={release.campaign.visibility?.userPreference !== false ? "Visible on Drop PR Newsroom" : "Hidden from Drop PR Newsroom"}
+                                                >
+                                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${release.campaign.visibility?.userPreference !== false ? 'translate-x-4' : 'translate-x-1'}`} />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </motion.div>
                         ))}

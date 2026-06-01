@@ -451,7 +451,7 @@ const MenuBar = ({ editor, showHtml, toggleHtml }) => {
             html = `
                 <aside class="pullquote">
                     <p class="pullquote-text">"Ranking on page one of Google does not guarantee you will appear in AI answers. And appearing in AI answers does not require ranking on page one."</p>
-                    <p class="pullquote-attr">— Lou Schwartz</p>
+                    <p class="pullquote-attr">— Hayden Hollis</p>
                 </aside>
                 <p></p>
             `;
@@ -478,7 +478,7 @@ const MenuBar = ({ editor, showHtml, toggleHtml }) => {
                 <section class="cta">
                     <div class="cta-kicker">Close the Citation Gap</div>
                     <h2 class="cta-headline" style="margin-top:0;">Be cited where the answers are written — not buried in the candidate set.</h2>
-                    <p class="cta-deck">DropPR places your expertise on the publishers AI engines already cite. One upload becomes one editorially-written, publisher-hosted article.</p>
+                    <p class="cta-deck">Drop PR places your expertise on the publishers AI engines already cite. One upload becomes one editorially-written, publisher-hosted article.</p>
                     <div class="offer-stack">
                         <div class="offer-stack-title">Citation Acceleration Stack — Charter Cohort</div>
                         <ul class="offer-list">
@@ -516,7 +516,7 @@ const MenuBar = ({ editor, showHtml, toggleHtml }) => {
 
     return (
         <>
-            <div className="flex flex-wrap items-center gap-0.5 p-1 border-b border-gray-100 bg-white sticky top-0 z-20 transition-all rounded-t-xl">
+            <div className="overflow-x-auto no-scrollbar"><div className="flex items-center gap-0.5 p-1 border-b border-gray-100 bg-white sticky top-0 z-20 transition-all rounded-t-xl min-w-max">
                 {/* History */}
                 <div className="flex items-center gap-0.5 pr-1 mr-1 border-r border-gray-100">
                     <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo() || showHtml} title="Undo">
@@ -771,7 +771,7 @@ const MenuBar = ({ editor, showHtml, toggleHtml }) => {
                 <div className="flex items-center gap-0.5 ml-auto">
                     <ToolbarButton onClick={toggleHtml} isActive={showHtml} title="View HTML Source" className={showHtml ? "ring-1 ring-primary/20" : ""}><Code size={14} /></ToolbarButton>
                 </div>
-            </div>
+            </div></div>
 
             <ImageUploadModal
                 isOpen={isImageModalOpen}
@@ -823,7 +823,7 @@ export default function BlogRichTextEditor({ value, onChange, placeholder }) {
         },
         editorProps: {
             attributes: {
-                class: "prose prose-blue max-w-none p-6 min-h-[350px] focus:outline-none selection:bg-primary/20",
+                class: "prose prose-blue max-w-none p-3 sm:p-6 min-h-[280px] sm:min-h-[350px] focus:outline-none selection:bg-primary/20",
             },
         },
     });
@@ -843,7 +843,7 @@ export default function BlogRichTextEditor({ value, onChange, placeholder }) {
     }
 
     return (
-        <div className="border border-gray-200 rounded-xl overflow-hidden bg-white transition-all shadow-sm">
+        <div className="border border-gray-200 rounded-xl overflow-hidden bg-white transition-all shadow-sm w-full">
             <style dangerouslySetInnerHTML={{ __html: editorCss }} />
             <MenuBar editor={editor} showHtml={showHtml} toggleHtml={() => setShowHtml(!showHtml)} />
             <div className="max-h-[600px] overflow-y-auto no-scrollbar scroll-smooth">

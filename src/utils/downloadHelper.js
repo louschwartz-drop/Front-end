@@ -1,5 +1,6 @@
 import api from "@/lib/api/axios";
 import { BLOCKQUOTE_STYLES } from "@/components/editor/blockquoteStyles";
+import html2pdf from "html2pdf.js";
 
 /**
  * Utility to download campaign articles (Word) using Axios
@@ -61,15 +62,26 @@ export const printArticleAsPdf = ({ displayData, displayProduct, standardFooter,
             </div>
         </div>`;
 
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>${displayData.headline || "Press Release"}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; color: #111827; background: #fff; padding: 40px; max-width: 800px; margin: 0 auto; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    const htmlContent = `
+        <div class="pdf-container">
+            <h1>${displayData.headline || "Press Release"}</h1>
+            ${displayData.summary ? `<div class="summary">${displayData.summary}</div>` : ""}
+            ${productBlock}
+            <div class="body-content">
+                ${stripFooter(displayData.body || "")}
+                ${standardFooter}
+            </div>
+        </div>
+    `;
+
+    // Create a temporary container
+    const element = document.createElement('div');
+    element.innerHTML = htmlContent;
+
+    // Add inline styles directly to the element to ensure html2pdf catches them
+    const style = document.createElement('style');
+    style.innerHTML = `
+        .pdf-container { font-family: 'Inter', sans-serif; color: #111827; background: #fff; padding: 20px; max-width: 800px; margin: 0 auto; }
         h1 { font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: 1.25rem; }
         .summary { border-left: 4px solid #0A5CFF; padding: 8px 16px; font-style: italic; font-weight: 600; color: #1f2937; background: #f9fafb; margin-bottom: 1.5rem; }
         .product-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px; margin: 1.5rem 0; }
@@ -83,31 +95,20 @@ export const printArticleAsPdf = ({ displayData, displayProduct, standardFooter,
         .body-content { font-size: 1rem; line-height: 1.8; color: #374151; margin-top: 1.5rem; }
         .body-content p { margin-bottom: 1rem; }
         ${BLOCKQUOTE_STYLES}
-        @media print {
-            body { padding: 15mm; }
-            @page { margin: 15mm; size: A4; }
-        }
-    </style>
-</head>
-<body>
-    <h1>${displayData.headline || "Press Release"}</h1>
-    ${displayData.summary ? `<div class="summary">${displayData.summary}</div>` : ""}
-    ${productBlock}
-    <div class="body-content">
-        ${stripFooter(displayData.body || "")}
-        ${standardFooter}
-    </div>
-    <script>
-        window.onload = function() { setTimeout(function() { window.print(); }, 600); };
-    </script>
-</body>
-</html>`;
+    `;
+    element.appendChild(style);
 
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) {
-        alert("Please allow popups for this site to download PDF.");
-        return;
-    }
-    printWindow.document.write(html);
-    printWindow.document.close();
+    const safeFilename = displayData.headline 
+        ? displayData.headline.substring(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase() 
+        : 'article';
+
+    const opt = {
+        margin:       15,
+        filename:     `article-${safeFilename}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    return html2pdf().set(opt).from(element).save();
 };

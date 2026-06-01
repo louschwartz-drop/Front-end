@@ -189,12 +189,13 @@ export default function PromoCodesPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            {/* ── Page Header ── */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Promo Codes</h1>
-                    <p className="text-gray-500">Create and manage discounts for your users.</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Promo Codes</h1>
+                    <p className="text-sm sm:text-base text-gray-500 mt-1">Create and manage discounts for your users.</p>
                 </div>
-                <Button onClick={() => handleOpenModal()} className="flex items-center gap-2">
+                <Button onClick={() => handleOpenModal()} className="w-full sm:w-auto flex items-center justify-center gap-2 h-11 px-5 rounded-xl shadow-lg">
                     <PlusCircle className="w-4 h-4" /> Add New Promo
                 </Button>
             </div>
@@ -208,79 +209,83 @@ export default function PromoCodesPage() {
                     />
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {promoCodes.map((promo) => (
                         <motion.div
                             key={promo._id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className={`p-6 bg-white rounded-xl shadow-sm border-2 transition-all ${promo.isActive ? 'border-gray-100' : 'border-red-100 bg-red-50/10'}`}
+                            className={`p-6 bg-white rounded-xl shadow-sm border-2 transition-all flex flex-col justify-between ${promo.isActive ? 'border-gray-100' : 'border-red-100 bg-red-50/10'}`}
                         >
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="flex items-center gap-2">
-                                    <div className={`p-2 rounded-lg ${promo.isActive ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-400'}`}>
-                                        <Tag className="w-4 h-4" />
+                            <div>
+                                <div className="flex justify-between items-start mb-4 gap-2">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className={`p-2 rounded-lg flex-shrink-0 ${promo.isActive ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-400'}`}>
+                                            <Tag className="w-4 h-4" />
+                                        </div>
+                                        <h3 className="text-lg font-black text-gray-900 tracking-tight truncate">{promo.code}</h3>
                                     </div>
-                                    <h3 className="text-lg font-black text-gray-900 tracking-tight">{promo.code}</h3>
+                                    <div className="flex gap-1 flex-shrink-0">
+                                        <button onClick={() => handleOpenModal(promo)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors">
+                                            <Edit2 className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => handleDelete(promo._id)} className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    <button onClick={() => handleOpenModal(promo)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors">
-                                        <Edit2 className="w-4 h-4" />
-                                    </button>
-                                    <button onClick={() => handleDelete(promo._id)} className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors">
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+
+                                <div className="space-y-4">
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-3xl font-black text-primary">
+                                            {promo.discountType === 'percentage' ? `${promo.discountValue}%` : `$${promo.discountValue}`}
+                                        </span>
+                                        <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">OFF</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="flex items-center gap-2 text-xs text-gray-500 font-medium bg-gray-50 p-2 rounded-lg">
+                                            <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                            <span className="truncate">Exp: {new Date(promo.expiryDate).toLocaleDateString()}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-gray-500 font-medium bg-gray-50 p-2 rounded-lg">
+                                            <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                            <span className="truncate">Used: {promo.usedCount}{promo.usageLimit ? `/${promo.usageLimit}` : ''}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-blue-600 font-bold bg-blue-50 p-2 rounded-lg sm:col-span-2">
+                                            <Info className="w-3.5 h-3.5 flex-shrink-0" />
+                                            <span className="truncate">Releases Limit: {promo.allowedReleasesCount ? `${promo.allowedReleasesCount} Article(s)` : 'All'}</span>
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs text-purple-600 font-bold bg-purple-50 p-2 rounded-lg sm:col-span-2">
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <Info className="w-3.5 h-3.5 flex-shrink-0" />
+                                                <span className="truncate">Plan: {promo.applicablePlanName ? promo.applicablePlanName : 'All Plans'}</span>
+                                            </div>
+                                            <span className="sm:ml-auto bg-white text-[10px] px-2 py-0.5 rounded shadow-sm border border-purple-100 whitespace-nowrap self-start sm:self-auto">
+                                                {promo.allowMultipleUsesPerUser ? "Multiple Uses" : "Single Use"}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {promo.description && (
+                                        <p className="text-xs text-gray-500 leading-relaxed italic line-clamp-2">"{promo.description}"</p>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-3xl font-black text-primary">
-                                        {promo.discountType === 'percentage' ? `${promo.discountValue}%` : `$${promo.discountValue}`}
+                            <div className="pt-4 mt-4 border-t border-gray-100 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className={`w-2 h-2 rounded-full ${promo.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
+                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${promo.isActive ? 'text-green-600' : 'text-red-600'}`}>
+                                        {promo.isActive ? 'Active' : 'Inactive'}
                                     </span>
-                                    <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">OFF</span>
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="flex items-center gap-2 text-xs text-gray-500 font-medium bg-gray-50 p-2 rounded-lg">
-                                        <Calendar className="w-3 h-3 text-gray-400" />
-                                        <span>Exp: {new Date(promo.expiryDate).toLocaleDateString()}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-gray-500 font-medium bg-gray-50 p-2 rounded-lg">
-                                        <Clock className="w-3 h-3 text-gray-400" />
-                                        <span>Used: {promo.usedCount}{promo.usageLimit ? `/${promo.usageLimit}` : ''}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-blue-600 font-bold bg-blue-50 p-2 rounded-lg col-span-2">
-                                        <Info className="w-3 h-3" />
-                                        <span>Releases Count: {promo.allowedReleasesCount ? `${promo.allowedReleasesCount} Article(s)` : 'All'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-purple-600 font-bold bg-purple-50 p-2 rounded-lg col-span-2">
-                                        <Info className="w-3 h-3" />
-                                        <span>Plan Name: {promo.applicablePlanName ? promo.applicablePlanName : 'All Plans'}</span>
-                                        <span className="ml-auto bg-white px-2 py-0.5 rounded shadow-sm border border-purple-100 whitespace-nowrap">
-                                            {promo.allowMultipleUsesPerUser ? "Multiple Uses" : "Single Use"}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {promo.description && (
-                                    <p className="text-xs text-gray-500 leading-relaxed italic line-clamp-2">"{promo.description}"</p>
-                                )}
-
-                                <div className="pt-2 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`w-2 h-2 rounded-full ${promo.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
-                                        <span className={`text-[10px] font-bold uppercase tracking-wider ${promo.isActive ? 'text-green-600' : 'text-red-600'}`}>
-                                            {promo.isActive ? 'Active' : 'Inactive'}
-                                        </span>
-                                    </div>
-                                    <button
-                                        onClick={() => handleToggleStatus(promo._id)}
-                                        className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all ${promo.isActive ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
-                                    >
-                                        {promo.isActive ? 'Deactivate' : 'Activate'}
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={() => handleToggleStatus(promo._id)}
+                                    className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all ${promo.isActive ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
+                                >
+                                    {promo.isActive ? 'Deactivate' : 'Activate'}
+                                </button>
                             </div>
                         </motion.div>
                     ))}
@@ -306,10 +311,11 @@ export default function PromoCodesPage() {
                         >
                             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50 pointer-events-none"></div>
                             
+                            {/* Modal Header */}
                             <div className="p-6 pb-4 border-b border-gray-100 flex-shrink-0 relative z-10">
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <h2 className="text-2xl font-black text-gray-900">{editingPromo ? "Edit Promo Code" : "New Promo Code"}</h2>
+                                        <h2 className="text-xl sm:text-2xl font-black text-gray-900">{editingPromo ? "Edit Promo Code" : "New Promo Code"}</h2>
                                         <p className="text-gray-500 text-xs">Configure your discount settings below.</p>
                                     </div>
                                     <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -318,164 +324,165 @@ export default function PromoCodesPage() {
                                 </div>
                             </div>
 
+                            {/* Modal Body */}
                             <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
-
-                            <form onSubmit={handleSubmit} className="space-y-4 relative">
-                                <div>
-                                    <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Coupon Code</label>
-                                    <div className="relative">
-                                        <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                        <input
-                                            type="text"
-                                            value={formData.code}
-                                            onChange={handleCodeChange}
-                                            className={`w-full pl-10 p-2.5 bg-gray-50 border ${formErrors.code ? 'border-red-300 ring-2 ring-red-50' : 'border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10'} rounded-lg outline-none transition-all font-bold text-gray-900 uppercase`}
-                                            placeholder="SUMMER20"
-                                        />
-                                    </div>
-                                    {formErrors.code && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{formErrors.code}</p>}
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
+                                <form onSubmit={handleSubmit} className="space-y-5 relative">
                                     <div>
-                                        <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Discount Type</label>
-                                        <Select
-                                            value={formData.discountType}
-                                            onValueChange={(val) => setFormData({ ...formData, discountType: val })}
-                                        >
-                                            <SelectTrigger className="rounded-lg">
-                                                <SelectValue placeholder="Select type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="percentage">Percentage (%)</SelectItem>
-                                                <SelectItem value="fixed">Fixed Price ($)</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Discount Value</label>
+                                        <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Coupon Code</label>
                                         <div className="relative">
-                                            {formData.discountType === 'percentage' ? (
-                                                <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                            ) : (
-                                                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                            )}
+                                            <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                value={formData.code}
+                                                onChange={handleCodeChange}
+                                                className={`w-full pl-10 p-2.5 bg-gray-50 border ${formErrors.code ? 'border-red-300 ring-2 ring-red-50' : 'border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10'} rounded-lg outline-none transition-all font-bold text-gray-900 uppercase`}
+                                                placeholder="SUMMER20"
+                                            />
+                                        </div>
+                                        {formErrors.code && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{formErrors.code}</p>}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Discount Type</label>
+                                            <Select
+                                                value={formData.discountType}
+                                                onValueChange={(val) => setFormData({ ...formData, discountType: val })}
+                                            >
+                                                <SelectTrigger className="rounded-lg bg-gray-50 border-gray-200">
+                                                    <SelectValue placeholder="Select type" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="percentage">Percentage (%)</SelectItem>
+                                                    <SelectItem value="fixed">Fixed Price ($)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Discount Value</label>
+                                            <div className="relative">
+                                                {formData.discountType === 'percentage' ? (
+                                                    <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                ) : (
+                                                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                )}
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={formData.discountValue}
+                                                    onChange={e => setFormData({ ...formData, discountValue: e.target.value })}
+                                                    className={`w-full pl-10 p-2.5 bg-gray-50 border ${formErrors.discountValue ? 'border-red-300 ring-2 ring-red-50' : 'border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10'} rounded-lg outline-none transition-all font-bold text-gray-900`}
+                                                    placeholder={formData.discountType === 'percentage' ? "20" : "50"}
+                                                />
+                                            </div>
+                                            {formErrors.discountValue && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{formErrors.discountValue}</p>}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Expiry Date</label>
+                                            <div className="relative">
+                                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                <input
+                                                    type="date"
+                                                    value={formData.expiryDate}
+                                                    onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
+                                                    className={`w-full pl-10 p-2.5 bg-gray-50 border ${formErrors.expiryDate ? 'border-red-300 ring-2 ring-red-50' : 'border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10'} rounded-lg outline-none transition-all font-bold text-gray-900`}
+                                                />
+                                            </div>
+                                            {formErrors.expiryDate && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{formErrors.expiryDate}</p>}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Total Usage Limit</label>
                                             <input
                                                 type="number"
                                                 min="0"
-                                                value={formData.discountValue}
-                                                onChange={e => setFormData({ ...formData, discountValue: e.target.value })}
-                                                className={`w-full pl-10 p-2.5 bg-gray-50 border ${formErrors.discountValue ? 'border-red-300 ring-2 ring-red-50' : 'border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10'} rounded-lg outline-none transition-all font-bold text-gray-900`}
-                                                placeholder={formData.discountType === 'percentage' ? "20" : "50"}
+                                                value={formData.usageLimit}
+                                                onChange={e => setFormData({ ...formData, usageLimit: e.target.value })}
+                                                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-bold text-gray-900 text-sm"
+                                                placeholder="e.g. 100"
                                             />
+                                            <p className="text-[9px] text-gray-400 mt-1 ml-1 leading-tight">Leave empty for unlimited</p>
                                         </div>
-                                        {formErrors.discountValue && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{formErrors.discountValue}</p>}
+                                        <div className="flex flex-col sm:col-span-2">
+                                            <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Allowed Releases Limit</label>
+                                            <Select
+                                                value={formData.allowedReleasesCount === null || formData.allowedReleasesCount === "" ? "all" : formData.allowedReleasesCount.toString()}
+                                                onValueChange={(val) => setFormData({ ...formData, allowedReleasesCount: val === "all" ? "" : Number(val) })}
+                                            >
+                                                <SelectTrigger className="rounded-lg h-[46px] border-gray-200 bg-gray-50">
+                                                    <SelectValue placeholder="All" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all">All</SelectItem>
+                                                    <SelectItem value="1">1 Article</SelectItem>
+                                                    <SelectItem value="3">3 Articles</SelectItem>
+                                                    <SelectItem value="5">5 Articles</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <p className="text-[9px] text-gray-400 mt-1 ml-1 leading-tight">Restrict to 1, 3, or 5 releases</p>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="flex flex-col">
+                                            <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Applicable Plan Name</label>
+                                            <Select
+                                                value={formData.applicablePlanName === null || formData.applicablePlanName === "" ? "all" : formData.applicablePlanName}
+                                                onValueChange={(val) => setFormData({ ...formData, applicablePlanName: val === "all" ? "" : val })}
+                                            >
+                                                <SelectTrigger className="rounded-lg h-[46px] border-gray-200 bg-gray-50">
+                                                    <SelectValue placeholder="All Plans" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all">All Plans</SelectItem>
+                                                    {planNames.map(name => (
+                                                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <p className="text-[9px] text-gray-400 mt-1 ml-1 leading-tight">Restrict to specific plan names like Boost</p>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Multiple Uses</label>
+                                            <div className="flex items-center h-[46px] px-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                                <label className="relative inline-flex items-center cursor-pointer w-full justify-between">
+                                                    <span className="text-sm font-medium text-gray-700">Allow Multiple Uses</span>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="sr-only peer"
+                                                        checked={formData.allowMultipleUsesPerUser}
+                                                        onChange={e => setFormData({ ...formData, allowMultipleUsesPerUser: e.target.checked })}
+                                                    />
+                                                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary flex-shrink-0"></div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div>
-                                        <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Expiry Date</label>
-                                        <div className="relative">
-                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                            <input
-                                                type="date"
-                                                value={formData.expiryDate}
-                                                onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
-                                                className={`w-full pl-10 p-2.5 bg-gray-50 border ${formErrors.expiryDate ? 'border-red-300 ring-2 ring-red-50' : 'border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10'} rounded-lg outline-none transition-all font-bold text-gray-900`}
-                                            />
-                                        </div>
-                                        {formErrors.expiryDate && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{formErrors.expiryDate}</p>}
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Total Usage Limit</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={formData.usageLimit}
-                                            onChange={e => setFormData({ ...formData, usageLimit: e.target.value })}
-                                            className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-bold text-gray-900"
-                                            placeholder="e.g. 100"
+                                        <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Internal Notes (Optional)</label>
+                                        <textarea
+                                            value={formData.description}
+                                            onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                            className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none h-20 transition-all resize-none font-medium text-gray-600 text-sm"
+                                            placeholder="Add private notes about this promo..."
                                         />
-                                        <p className="text-[9px] text-gray-400 mt-1 ml-1 leading-tight">Leave empty for unlimited</p>
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Allowed Releases Limit</label>
-                                        <Select
-                                            value={formData.allowedReleasesCount === null || formData.allowedReleasesCount === "" ? "all" : formData.allowedReleasesCount.toString()}
-                                            onValueChange={(val) => setFormData({ ...formData, allowedReleasesCount: val === "all" ? "" : Number(val) })}
-                                        >
-                                            <SelectTrigger className="rounded-lg h-[46px] border-gray-200 bg-gray-50">
-                                                <SelectValue placeholder="All" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">All</SelectItem>
-                                                <SelectItem value="1">1 Article</SelectItem>
-                                                <SelectItem value="3">3 Articles</SelectItem>
-                                                <SelectItem value="5">5 Articles</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <p className="text-[9px] text-gray-400 mt-1 ml-1 leading-tight">Restrict to 1, 3, or 5 releases</p>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="flex flex-col">
-                                        <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Applicable Plan Name</label>
-                                        <Select
-                                            value={formData.applicablePlanName === null || formData.applicablePlanName === "" ? "all" : formData.applicablePlanName}
-                                            onValueChange={(val) => setFormData({ ...formData, applicablePlanName: val === "all" ? "" : val })}
-                                        >
-                                            <SelectTrigger className="rounded-lg h-[46px] border-gray-200 bg-gray-50">
-                                                <SelectValue placeholder="All Plans" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">All Plans</SelectItem>
-                                                {planNames.map(name => (
-                                                    <SelectItem key={name} value={name}>{name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <p className="text-[9px] text-gray-400 mt-1 ml-1 leading-tight">Restrict to specific plan names like Boost</p>
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Multiple Uses</label>
-                                        <div className="flex items-center h-[46px] px-3 bg-gray-50 border border-gray-200 rounded-lg">
-                                            <label className="relative inline-flex items-center cursor-pointer w-full justify-between">
-                                                <span className="text-sm font-medium text-gray-700">Allow Multiple Uses</span>
-                                                <input 
-                                                    type="checkbox" 
-                                                    className="sr-only peer"
-                                                    checked={formData.allowMultipleUsesPerUser}
-                                                    onChange={e => setFormData({ ...formData, allowMultipleUsesPerUser: e.target.checked })}
-                                                />
-                                                <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                                            </label>
+                                        <div className="flex items-center gap-1.5 mt-1.5 ml-1">
+                                            <Info className="w-3 h-3 text-gray-400" />
+                                            <p className="text-[9px] text-gray-400">Internal only and will not be shown to customers.</p>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div>
-                                    <label className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-gray-400">Internal Notes (Optional)</label>
-                                    <textarea
-                                        value={formData.description}
-                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none h-20 transition-all resize-none font-medium text-gray-600 text-sm"
-                                        placeholder="Add private notes about this promo..."
-                                    />
-                                    <div className="flex items-center gap-1.5 mt-1.5 ml-1">
-                                        <Info className="w-3 h-3 text-gray-400" />
-                                        <p className="text-[9px] text-gray-400">Internal only and will not be shown to customers.</p>
+                                    {/* Modal Footer */}
+                                    <div className="pt-4 flex flex-col sm:flex-row gap-3 sticky bottom-0 bg-white z-10 border-t border-gray-100 mt-2">
+                                        <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)} className="w-full sm:flex-1 rounded-lg">Cancel</Button>
+                                        <Button type="submit" className="w-full sm:flex-1 font-black rounded-lg shadow-lg shadow-primary/20">
+                                            {editingPromo ? "Save Changes" : "Create Code"}
+                                        </Button>
                                     </div>
-                                </div>
-
-                                <div className="pt-4 flex gap-3 sticky bottom-0 bg-white z-10 border-t border-gray-100 pt-4 mt-2">
-                                    <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)} className="flex-1 rounded-lg">Cancel</Button>
-                                    <Button type="submit" className="flex-1 font-black rounded-lg shadow-lg shadow-primary/20">
-                                        {editingPromo ? "Save Changes" : "Create Code"}
-                                    </Button>
-                                </div>
-                            </form>
+                                </form>
                             </div>
                         </motion.div>
                     </div>

@@ -6,9 +6,9 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import PressRoomClient from "./PressRoomClient";
 
 async function getPressReleases() {
-    // Hardcoded API Key for Press Room
-    const API_KEY = "dXND77Am6Zv7gvZe37eGWWZEmDJwHIXNzAefrIvpqlg7vxqw"; 
-    
+    // Hardcoded API Key for Newsroom
+    const API_KEY = "dXND77Am6Zv7gvZe37eGWWZEmDJwHIXNzAefrIvpqlg7vxqw";
+
     const url = `https://api.currentsapi.services/v1/search?apiKey=${API_KEY}&keywords=press%20release%20AI&language=en`;
 
     try {
@@ -46,7 +46,7 @@ async function getPlatformArticles() {
 }
 
 export const metadata = {
-    title: "Press Room | DropPR.ai - Latest AI News & Industry Updates",
+    title: "Newsroom | DropPR.ai - Latest AI News & Industry Updates",
     description: "Stay updated with the latest press releases, AI advancements, and media distribution news from DropPR.ai and the global tech industry.",
 };
 
@@ -59,9 +59,9 @@ export default async function PressReleasesPage() {
     return (
         <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
             {/* Articles Grid (Client Component) with integrated Hero/Filters & CTA */}
-            <PressRoomClient 
-                initialNews={newsArticles} 
-                initialPlatform={platformArticles} 
+            <PressRoomClient
+                initialNews={newsArticles}
+                initialPlatform={platformArticles}
             />
         </React.Suspense>
     );

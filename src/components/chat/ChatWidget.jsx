@@ -905,7 +905,7 @@ export default function ChatWidget() {
                     </>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <h3 className="font-bold text-sm">DropPR Support</h3>
+                      <h3 className="font-bold text-sm">Drop PR Support</h3>
                       {currentUser && view === 'chat' && (
                         <button
                           onClick={(e) => {

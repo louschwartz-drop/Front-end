@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Share2, Facebook, Twitter, Linkedin, Link2, Copy, Check } from "lucide-react";
 
-export default function ShareMenu({ url, title, text, position = "top-right" }) {
+export default function ShareMenu({ url, title, text, position = "top-right", showText = false, textLabel = "Share" }) {
     const [isOpen, setIsOpen] = useState(false);
     const [copied, setCopied] = useState(false);
     const menuRef = useRef(null);
@@ -66,17 +66,18 @@ export default function ShareMenu({ url, title, text, position = "top-right" }) 
     };
 
     return (
-        <div className="relative inline-block" ref={menuRef}>
+        <div className={`relative inline-block ${isOpen ? "share-menu-open" : ""}`} ref={menuRef}>
             <button 
                 onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     setIsOpen(!isOpen);
                 }}
-                className="p-1.5 text-gray-400 hover:text-primary transition-colors rounded-full hover:bg-gray-100 border border-transparent hover:border-gray-200 bg-white shadow-sm flex items-center justify-center group"
+                className={`text-gray-400 hover:text-primary transition-colors hover:bg-gray-100 border border-transparent hover:border-gray-200 bg-white shadow-sm flex items-center justify-center gap-1.5 group ${showText ? "px-3 py-1.5 rounded-xl text-xs font-bold" : "p-1.5 rounded-full"}`}
                 aria-label="Share"
             >
                 <Share2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                {showText && <span className="text-gray-500 group-hover:text-primary transition-colors text-xs font-semibold">{textLabel}</span>}
             </button>
 
             {isOpen && (

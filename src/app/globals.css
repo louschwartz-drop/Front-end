@@ -754,4 +754,9 @@ input[type="button"]:disabled {
    attribute is now explicitly in CustomTextStyle.addAttributes()
    so colors are saved correctly in the HTML content.
    ============================================ */
+
+/* Fix ShareMenu dropdown stacking issue / blinking screen */
+.relative:has(.share-menu-open) {
+  z-index: 50 !important;
+}
 

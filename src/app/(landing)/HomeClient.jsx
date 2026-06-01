@@ -138,13 +138,11 @@ export default function Home() {
                     transition={{ delay: 0.2, duration: 0.6 }}
                     className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight mb-2"
                   >
-                    Turn Your Videos Into
-                    <br />
-                    Published
+                    PR Just Became
                     <br />
                     <span className="relative">
                       <span className="relative z-10">
-                        Press Articles
+                        Affordable.
                       </span>
                       <div className="absolute -bottom-4 left-0 w-full md:w-[120%] h-[3px] pointer-events-none">
                         <motion.div
@@ -165,9 +163,9 @@ export default function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.6 }}
-                    className="text-xl sm:text-2xl font-bold text-[#fcf9a6] mt-8 mb-6"
+                    className="text-xl sm:text-2xl font-bold text-[#fcf9a6] mt-8 mb-6 leading-relaxed"
                   >
-                    Plans starting at $99
+                    Turn one video into a published article on 1,000+ media sites. See every URL. Build real authority. Starting at $99.
                   </motion.p>
 
                   <motion.p
@@ -176,7 +174,7 @@ export default function Home() {
                     transition={{ delay: 0.4, duration: 0.6 }}
                     className="text-xl sm:text-xl text-blue-100 mb-5 leading-relaxed"
                   >
-                    Upload a video file or paste a link from YouTube, TikTok, Instagram, or your podcast. We turn it into a published article and distribute it across licensed media sites.
+                    Upload a video or paste a link from YouTube, TikTok, Instagram, or your podcast. We turn it into an AP-style article and distribute it across our licensed publisher network — with every live URL delivered to your dashboard.
                   </motion.p>
 
                   <motion.div
@@ -315,10 +313,10 @@ export default function Home() {
                 className="grid md:grid-cols-4 grid-cols-2 gap-8 mb-20"
               >
                 {[
-                  { value: "1500+", label: "Media Outlets" },
-                  { value: "99%", label: "AI Accuracy" },
-                  { value: "10min", label: "Average Processing" },
-                  { value: "24/7", label: "Distribution Support" },
+                  { value: "1,000+", label: "Media Outlets" },
+                  { value: "98%", label: "AI Accuracy" },
+                  { value: "10 min", label: "Average Processing" },
+                  { value: "100%", label: "URL Transparency" },
                 ].map((stat, index) => (
                   <motion.div
                     key={index}
@@ -348,48 +346,47 @@ export default function Home() {
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
                   Stop Renting Attention. Start Owning Authority.
                 </h2>
-                <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
-                  Social media algorithms are volatile, and post half-lives are shrinking to mere minutes. DropPR.ai turns your content into &ldquo;Performance PR.&rdquo; By distributing your videos as editorial articles on legacy media sites, you leverage &ldquo;borrowed authority&rdquo; to rank instantly on Google and secure your place as a trusted citation in AI models.
-                </p>
+                <div className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto space-y-4">
+                  <p>
+                    Traditional PR cost $5,000–$25,000 a month, took 90 days, and rarely told you where you ran. Social posts die in hours. Algorithms shift overnight. AI search now decides who gets discovered — and it cites legacy media, not your feed.
+                  </p>
+                  <p>
+                    DropPR collapses all of it into one product: Performance PR for $99. Your video becomes a published editorial article on real media properties — indexed by Google, surfaced by ChatGPT and Perplexity, and visible in your dashboard with every live URL.
+                  </p>
+                </div>
               </motion.div>
 
               <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
                 {[
                   {
                     icon: "M13 10V3L4 14h7v7l9-11h-7z",
-                    title: "Lightning Fast Distribution",
+                    title: "Affordable by design.",
                     description:
-                      "Get your content published across 1500+ media outlets in minutes, not weeks. Our automated pipeline ensures your press releases reach major publications like TechCrunch,",
+                      "PR pricing finally matches creator and SMB economics. No retainers. No agency markup.",
                   },
                   {
                     icon: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z",
-                    title: "AI-Powered Excellence",
+                    title: "Awareness on demand.",
                     description:
-                      "Advanced AI handles transcription with 98%+ accuracy, intelligent analysis, and professional article generation automatically.",
+                      "Build a name for yourself, launch a product, or amplify a brand — on the outlets that move the needle.",
                   },
                   {
                     icon: "M12 19l9 2-9-18-9 18 9-2zm0 0v-8",
-                    title: "Global Distribution",
+                    title: "Total URL transparency.",
                     description:
-                      "Publish to 1500+ top-tier national and local media outlets including, Yahoo!, AP, USA Today, TechCrunch, Forbes, and Business Insider. Reach audiences you never could before.",
+                      "Every article. Every publisher. Every live link. Delivered to your dashboard, ready to share, cite, and verify.",
                   },
                   {
                     icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
-                    title: "Secure & Private",
+                    title: "Built for AI discovery.",
                     description:
-                      "Enterprise-grade security ensures your content is protected. GDPR, CCPA, and SOC 2 compliant with end-to-end encryption.",
-                  },
-                  {
-                    icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
-                    title: "Easy Integration",
-                    description:
-                      "Seamlessly connect with YouTube, TikTok, Instagram, or upload directly. Works with your existing content workflow.",
+                      "LLMs prioritize authoritative media citations. DropPR embeds you in the data sets they read.",
                   },
                   {
                     icon: "M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01",
-                    title: "You stay in control",
+                    title: "You stay in control.",
                     description:
-                      "You approve every article before distribution. We do not publish without your sign-off.",
+                      "Nothing publishes without your approval.",
                   },
                 ].map((feature, index) => (
                   <motion.div
@@ -456,23 +453,23 @@ export default function Home() {
                 {[
                   {
                     icon: "M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12",
-                    title: "Drop Your Link",
+                    title: "01 — Drop Your Link",
                     description:
-                      "Upload a video or paste a link from any major platform. Our system instantly pulls the key content and prepares it for editorial processing.",
+                      "Upload a video or paste a URL from any major platform.",
                     step: "01",
                   },
                   {
                     icon: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z",
-                    title: "AI Editorial Transformation",
+                    title: "02 — AI Editorial Transformation",
                     description:
-                      "Our AI extracts the facts and drafts a clean AP-style article built for publisher approval, search visibility, and AI discovery.",
+                      "Our system extracts the substance and drafts a clean, AP-style article engineered for publisher approval, search visibility, and AI discovery.",
                     step: "02",
                   },
                   {
                     icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-                    title: "Publish and Distribute",
+                    title: "03 — Publish, Distribute, and Verify",
                     description:
-                      "We publish the finished article across our media network and deliver live URLs you can share, cite, and promote.",
+                      "We push the approved article across our network of 1,000+ outlets and return every live URL to your dashboard — so you can prove the coverage, share it, and use it.",
                     step: "03",
                   },
                 ].map((step, index) => (
@@ -632,10 +629,10 @@ export default function Home() {
                 className="text-center mb-16"
               >
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
-                  If you create content, you should publish it as press
+                  Two Use Cases. One Distribution Engine.
                 </h2>
                 <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
-                  Two powerful use cases. One unstoppable distribution engine.
+                  If you create content, you should publish it as press.
                 </p>
               </motion.div>
 
@@ -664,10 +661,10 @@ export default function Home() {
                       </svg>
                     </div>
                     <h3 className="text-2xl md:text-3xl font-bold mb-4">
-                      For Creators & Affiliates: Evergreen Amplification
+                      For Creators & Affiliates — Evergreen Amplification
                     </h3>
                     <p className="text-blue-100 leading-relaxed text-lg">
-                      Turn your product reviews and insights into high-DA citations. Replace disappearing social feeds with search-indexed media that drives traffic to your affiliate links for years. Turn audience momentum into authority.
+                      Your TikTok disappears in 48 hours. A DropPR article ranks in Google for years. Convert audience momentum into search-indexed authority that drives affiliate traffic, partnership inbound, and credibility long after the original post is gone.
                     </p>
                   </div>
                   <div className="flex items-center gap-4 pt-6 border-t border-white/20">
@@ -700,10 +697,10 @@ export default function Home() {
                       </svg>
                     </div>
                     <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-                      For Brands: Feed the LLMs
+                      For Brands & Founders — Feed the LLMs
                     </h3>
                     <p className="text-gray-600 leading-relaxed text-lg">
-                      AI models like ChatGPT and Perplexity prioritize mentions from authoritative media outlets. DropPR.ai guarantees your brand and creator-led campaigns are surfaced in AI search results by embedding them in the trusted publisher data sets that LLMs rely on. Support product launches with indexed coverage that drives traffic.
+                      When a customer asks ChatGPT, Perplexity, or Google AI Overviews about your category, the answer is built from media citations. DropPR puts your brand, product launch, or founder story inside that citation set — across the outlets AI models actually trust.
                     </p>
                   </div>
                   <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
@@ -787,25 +784,11 @@ export default function Home() {
                 transition={{ duration: 0.6 }}
               >
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-6">
-                  Ready to Share Your Story to the World
+                  Awareness used to be expensive. Now it's $99.
                 </h2>
-                <p className="text-lg sm:text-xl text-blue-100 mb-6 max-w-2xl mx-auto">
-                  Join creators and brands who are amplifying their content with DropPR.ai. Start publishing today and reach millions of readers worldwide.
+                <p className="text-lg sm:text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
+                  Join the creators, founders, and brands turning everyday content into real, traceable media coverage. Upload your first video, approve your article, and see every URL it lands on.
                 </p>
-                <div className="flex flex-col items-center gap-2 mb-10 text-white font-medium text-lg">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Fast turnaround
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Transparent distribution
-                  </div>
-                </div>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <motion.button
                     onClick={handleDropprClick}

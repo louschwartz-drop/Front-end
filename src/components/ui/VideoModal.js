@@ -49,7 +49,7 @@ const VideoModal = ({ isOpen, onClose, videoUrl }) => {
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.9, opacity: 0 }}
-                    className="relative bg-black w-full max-w-4xl aspect-video rounded-2xl overflow-hidden shadow-2xl"
+                    className="relative bg-black w-full max-w-4xl h-[60vh] md:h-auto md:aspect-video rounded-2xl overflow-hidden shadow-2xl"
                 >
                     <button
                         onClick={onClose}

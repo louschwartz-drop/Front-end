@@ -99,7 +99,7 @@ export default async function BlogDetail({ params }) {
   const categorySlug =
     blog.categories?.length > 0 ? blog.categories[0].slug : null;
   const relatedBlogs = await getRelatedBlogs(blog._id, categorySlug);
-  const authorInitials = (blog.authorName || "Lou Schwartz")
+  const authorInitials = (blog.authorName || "Hayden Hollis")
     .split(" ")
     .map((w) => w[0])
     .join("")
@@ -181,7 +181,7 @@ export default async function BlogDetail({ params }) {
               {/* Meta */}
               <div>
                 <p className="text-sm font-bold text-gray-900 leading-tight">
-                  By {blog.authorName || "Lou Schwartz"}
+                  By {blog.authorName || "Hayden Hollis"}
                 </p>
                 <div className="flex items-center gap-0 mt-0.5">
                   <span className="text-xs text-gray-500">
@@ -217,6 +217,7 @@ export default async function BlogDetail({ params }) {
                   title={blog.title} 
                   text={blog.excerpt} 
                   position="bottom-left"
+                  showText={true}
                 />
               </div>
             </div>
@@ -259,6 +260,20 @@ export default async function BlogDetail({ params }) {
                 </div>
               )}
 
+              {/* Share Article Section at the Bottom */}
+              <div className="mt-10 pt-6 border-t border-gray-100 flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-400" style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
+                  Share this article
+                </span>
+                <ShareMenu 
+                  url={`/blog/${blog.slug}`} 
+                  title={blog.title} 
+                  text={blog.excerpt} 
+                  position="top-left"
+                  showText={true}
+                />
+              </div>
+
               {/* Author Bio Card */}
               <div className="mt-16 pt-10 border-t border-gray-200">
                 <div className="flex gap-5 items-start">
@@ -291,7 +306,7 @@ export default async function BlogDetail({ params }) {
                         marginBottom: "0.2rem",
                       }}
                     >
-                      {blog.authorName || "Lou Schwartz"}
+                      {blog.authorName || "Hayden Hollis"}
                     </p>
                     <p
                       className="text-xs font-black uppercase tracking-widest mb-3"
@@ -477,7 +492,7 @@ export default async function BlogDetail({ params }) {
                           </span>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-wider">
-                              Published by : {rBlog.authorName || "Lou Schwartz"}
+                              Published by : {rBlog.authorName || "Hayden Hollis"}
                             </span>
                             <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center">
                               <span className="text-white text-[7px] font-black">

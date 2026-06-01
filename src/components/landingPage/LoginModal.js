@@ -35,6 +35,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const [name, setName] = useState("");
   const [localError, setLocalError] = useState(null);
   const [otpValue, setOtpValue] = useState("");
@@ -90,8 +91,9 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
       setLocalError(null);
 
       if (authMode === "signup") {
-        if (password.length < 6) {
-          setLocalError("Password must be at least 6 characters.");
+        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+        if (!strongPasswordRegex.test(password)) {
+          setLocalError("Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character.");
           setIsLoading(false);
           return;
         }
@@ -151,7 +153,11 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
             setResendCooldown(60);
           }
         } else {
-          setLocalError(data.message);
+          if (data.message?.toLowerCase().includes("exists") || data.message?.toLowerCase().includes("in use")) {
+            setLocalError("Your account is already connected with Google. Please log in with Google.");
+          } else {
+            setLocalError(data.message);
+          }
         }
       }
     } catch (err) {
@@ -232,7 +238,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[850px] p-0 overflow-hidden bg-white border-none shadow-2xl max-h-[95vh] sm:max-h-[80vh] overflow-y-auto">
+      <DialogContent className="w-[92vw] max-w-[400px] md:w-[85vw] md:max-w-[800px] p-0 overflow-hidden bg-white border-none shadow-2xl max-h-[95vh] sm:max-h-[80vh]">
         <DialogTitle className="sr-only">Login or Create Account</DialogTitle>
         <div className="flex flex-col md:flex-row h-full min-h-0 md:min-h-[550px]">
 
@@ -242,7 +248,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
               <div className="mb-6">
                 <Image
                   src="/logo.png"
-                  alt="DropPR"
+                  alt="Drop PR"
                   width={120}
                   height={35}
                   className="brightness-0 invert opacity-90"
@@ -250,7 +256,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
               </div>
 
               <h2 className="text-2xl font-bold mb-3 tracking-tight">
-                Empowering your PR journey.
+                Empowering your Press Release journey.
               </h2>
               <p className="text-slate-400 text-xs leading-relaxed mb-6">
                 Join thousands of creators using DropPR.ai to generate and publish professional articles in seconds.
@@ -283,7 +289,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
           </div>
 
           {/* Right Column: Auth Flows */}
-          <div className="w-full md:w-[60%] px-2 py-4 md:p-6 flex flex-col justify-center bg-white">
+          <div className="w-full md:w-[60%] px-2 py-6 md:p-8 flex flex-col bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 hover:scrollbar-thumb-primary/50 scrollbar-track-transparent">
 
             {/* ── OTP VERIFICATION STEP ── */}
             {authMode === "otp" ? (
@@ -373,7 +379,14 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
                 {/* Social Grid */}
                 <div className="grid grid-cols-2 gap-3 mb-4 px-2">
                   <SocialButton
-                    icon={<Chrome className="w-5 h-5 text-red-500" />}
+                    icon={
+                      <svg width="20" height="20" viewBox="0 0 48 48" className="w-5 h-5">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                      </svg>
+                    }
                     label="Google"
                     onClick={() => handleSocialLogin("google")}
                     isLoading={isLoading}
@@ -484,11 +497,27 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
                 </div>
               )}
 
+              {authMode === "signup" && (
+                <div className="flex items-center gap-2 mt-2 px-1">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    checked={agreeTerms}
+                    onChange={(e) => setAgreeTerms(e.target.checked)}
+                    className="w-4 h-4 shrink-0 rounded text-primary focus:ring-primary border-slate-300 cursor-pointer"
+                    required
+                  />
+                  <label htmlFor="terms" className="text-[10px] text-slate-500 leading-snug">
+                    By checking this, you agree to our <Link href="/terms" className="text-primary hover:underline">Terms & Conditions</Link> and <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
+                  </label>
+                </div>
+              )}
+
               <Button
                 type="submit"
                 variant="primary"
                 className="w-full py-3 rounded-xl font-bold text-sm space-x-2 mt-2"
-                disabled={isLoading}
+                disabled={isLoading || (authMode === "signup" && !agreeTerms)}
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

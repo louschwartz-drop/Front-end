@@ -40,10 +40,26 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/blog"
+                  className="hover:text-white transition-colors"
+                >
+                  Blogs
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/press-releases"
+                  className="hover:text-white transition-colors"
+                >
+                  Newsroom
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/contact"
                   className="hover:text-white transition-colors"
                 >
-                  Contact Us
+                  Contact
                 </Link>
               </li>
               <li>
@@ -51,7 +67,7 @@ export default function Footer() {
                   href="/faq"
                   className="hover:text-white transition-colors"
                 >
-                  FAQs
+                  FAQ
                 </Link>
               </li>
             </ul>

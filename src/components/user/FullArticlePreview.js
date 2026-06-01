@@ -10,7 +10,7 @@ import { BLOCKQUOTE_STYLES } from "@/components/editor/blockquoteStyles";
 export const STANDARD_FOOTER = `
 <div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>
   <h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>
-  <p style='margin:0;font-weight:700;color:#111827;'>Droppr AI Research & Media Desk</p>
+  <p style='margin:0;font-weight:700;color:#111827;'>Drop PR AI Research & Media Desk</p>
   <p style='margin:4px 0;color:#4b5563;'>support@droppr.ai</p>
   <p style='margin:4px 0;color:#4b5563;'>Austin, Texas</p>
 </div>
@@ -66,17 +66,21 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
         setShowDownloadDropdown(false);
 
         if (format === 'pdf') {
+            setIsDownloading(true);
+            
             try {
-                printArticleAsPdf({
+                await printArticleAsPdf({
                     displayData,
                     displayProduct,
                     standardFooter: STANDARD_FOOTER,
                     stripFooter
                 });
-                toast.success("PDF generation started in your browser!");
+                toast.success("PDF generated and downloaded successfully!");
             } catch (error) {
                 console.error("Client-side PDF printing failed:", error);
                 toast.error("Failed to generate PDF. Please try again.");
+            } finally {
+                setIsDownloading(false);
             }
             return;
         }
@@ -91,7 +95,7 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
 
         try {
             await downloadCampaignFile(campaignId, format);
-            toast.success(`${format.toUpperCase()} download started`);
+            toast.success(format === 'word' ? "Word file generated successfully!" : `${format.toUpperCase()} download started`);
         } catch (error) {
             toast.error(`Failed to download ${format}. Please try again.`);
         } finally {

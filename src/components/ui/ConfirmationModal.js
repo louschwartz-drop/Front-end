@@ -89,7 +89,7 @@ export default function ConfirmationModal({
       onClick={handleBackdropClick}
     >
       <div
-        className={`bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 transition-all duration-300 ease-out ${
+        className={`bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] flex flex-col transition-all duration-300 ease-out ${
           isVisible
             ? 'scale-100 opacity-100 translate-y-0'
             : 'scale-95 opacity-0 -translate-y-4'
@@ -115,14 +115,14 @@ export default function ConfirmationModal({
         </div>
 
         {/* Body */}
-        <div className="px-6 py-6">
+        <div className="px-6 py-5 overflow-y-auto flex-1">
           {children || (
             <p className="text-gray-700 leading-relaxed">{message}</p>
           )}
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl flex items-center justify-end gap-3">
+        <div className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl flex flex-wrap items-center justify-end gap-2 sm:gap-3 shrink-0">
           <button
             onClick={onClose}
             disabled={isLoading}

@@ -16,7 +16,7 @@ import RichTextEditor from "@/components/editor/RichTextEditor";
 const STANDARD_FOOTER = `
 <div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>
   <h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>
-  <p style='margin:0;font-weight:700;color:#111827;'>Droppr AI Research & Media Desk</p>
+  <p style='margin:0;font-weight:700;color:#111827;'>Drop PR AI Research & Media Desk</p>
   <p style='margin:4px 0;color:#4b5563;'>support@droppr.ai</p>
   <p style='margin:4px 0;color:#4b5563;'>Austin, Texas</p>
 </div>
@@ -307,7 +307,7 @@ export default function EditPage() {
                     <h4 style="text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">Media Contact:</h4>
                     <p style="margin: 0; font-weight: 700; color: #111827;">${authorText}</p>
                     <p style="margin: 4px 0; color: #4b5563;">${userEmail}</p>
-                    <p style="margin: 0; color: #9ca3af; font-size: 0.75rem;">Source: Droppr AI Newsroom Network</p>
+                    <p style="margin: 0; color: #9ca3af; font-size: 0.75rem;">Source: Drop PR AI Newsroom Network</p>
                   </div>
                 `;
 
@@ -728,7 +728,7 @@ export default function EditPage() {
         setShowAiScoreSheet(false);
         setShowPublishModal(true);
       } else {
-        toast.info("No releases available. Redirecting to pricing...");
+        // toast.info("No releases available. Redirecting to pricing...");
         router.push(`/user/pricing/${campaignId}`);
       }
     } catch (error) {
@@ -808,11 +808,10 @@ export default function EditPage() {
           <button
             onClick={handleManualSave}
             disabled={isSavingManual || isLimitReached}
-            className={`p-1.5 sm:px-3.5 sm:py-1.5 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${
-              isLimitReached
+            className={`p-1.5 sm:px-3.5 sm:py-1.5 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${isLimitReached
                 ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
                 : "bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md disabled:bg-blue-400 disabled:shadow-none"
-            }`}
+              }`}
             title="Save Changes as Version"
           >
             {isSavingManual ? (
@@ -975,12 +974,12 @@ export default function EditPage() {
                     placeholder="Write your beautiful HTML press release body..."
                     maxLength={12000}
                   />
-                  
+
                   {/* Read-only Static News Footer */}
                   <div className="mt-8 pt-6 border-t border-gray-200 text-left opacity-85">
                     <div className="mb-6">
                       <h4 className="text-xs uppercase font-extrabold text-gray-500 tracking-wider mb-2">Media Contact</h4>
-                      <p className="text-sm font-bold text-gray-900">Droppr AI Research & Media Desk</p>
+                      <p className="text-sm font-bold text-gray-900">Drop PR AI Research & Media Desk</p>
                       <p className="text-xs text-gray-600">support@droppr.ai</p>
                       <p className="text-xs text-gray-500">Austin, Texas</p>
                     </div>

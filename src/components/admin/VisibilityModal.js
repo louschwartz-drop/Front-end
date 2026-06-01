@@ -51,7 +51,7 @@ export default function VisibilityModal({ isOpen, onClose, onUpdate, currentOver
 
                     <div className="p-6">
                         <p className="text-sm text-gray-600 mb-6">
-                            Control whether this press release appears in the public Press Room. Admin overrides take precedence over the user's preference.
+                            Control whether this press release appears in the public Newsroom. Admin overrides take precedence over the user's preference.
                         </p>
 
                         <div className="space-y-3">
@@ -92,7 +92,7 @@ export default function VisibilityModal({ isOpen, onClose, onUpdate, currentOver
                                         <span className="font-bold text-gray-900 text-sm">Force Show (Visible)</span>
                                     </div>
                                     <p className="text-xs text-gray-500">
-                                        Force this press release to be publicly visible in the Press Room, overriding the user's settings.
+                                        Force this press release to be publicly visible in the Newsroom, overriding the user's settings.
                                     </p>
                                 </div>
                             </label>
@@ -113,7 +113,7 @@ export default function VisibilityModal({ isOpen, onClose, onUpdate, currentOver
                                         <span className="font-bold text-gray-900 text-sm">Force Hide (Hidden)</span>
                                     </div>
                                     <p className="text-xs text-gray-500">
-                                        Force this press release to be hidden from the Press Room, even if the user wants it visible.
+                                        Force this press release to be hidden from the Newsroom, even if the user wants it visible.
                                     </p>
                                 </div>
                             </label>

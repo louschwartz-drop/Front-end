@@ -7,7 +7,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, Loader2, Send, X, Bot, User } from "lucide-react";
+import { Sparkles, Loader2, Send, Bot, User } from "lucide-react";
 import { adminBlogService } from "@/lib/api/admin/blogs";
 import { toast } from "react-toastify";
 
@@ -31,7 +31,7 @@ export default function GenerateBlogModal({ isOpen, onClose, onGenerateSuccess, 
                 setMessages([
                     {
                         role: "assistant",
-                        content: "Hello! I'm Droppr GPT. Tell me about the blog post you want to create today. Include the topic, category, and any brands to mention."
+                        content: "Hello! I'm Drop PR GPT. Tell me about the blog post you want to create today. Include the topic, category, and any brands to mention."
                     }
                 ]);
             }
@@ -96,8 +96,8 @@ export default function GenerateBlogModal({ isOpen, onClose, onGenerateSuccess, 
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[800px] h-[650px] p-0 border-none bg-white rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden">
-                <DialogHeader className="p-6 border-b border-gray-100 flex flex-row items-center justify-between bg-gray-50/50">
+            <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[800px] max-h-[90vh] h-[90vh] sm:h-[650px] p-0 border-none bg-white rounded-2xl sm:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden">
+                <DialogHeader className="p-4 sm:p-6 border-b border-gray-100 bg-gray-50/50 shrink-0">
                     <DialogTitle className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
                             <Sparkles className="text-white" size={20} />
@@ -107,21 +107,18 @@ export default function GenerateBlogModal({ isOpen, onClose, onGenerateSuccess, 
                             <span className="text-lg font-black text-gray-900 tracking-tight">AI Writing Partner</span>
                         </div>
                     </DialogTitle>
-                    <button onClick={onClose} className="p-2 hover:bg-white rounded-xl transition-all border border-transparent hover:border-gray-200">
-                        <X size={20} className="text-gray-400" />
-                    </button>
                 </DialogHeader>
 
                 <div 
                     ref={scrollRef}
-                    className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar"
+                    className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-4 sm:space-y-8 no-scrollbar min-h-0"
                 >
                     {messages.map((msg, idx) => (
                         <div 
                             key={idx} 
                             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}
                         >
-                            <div className={`flex gap-4 max-w-[80%] ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+                            <div className={`flex gap-3 sm:gap-4 max-w-[90%] ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
                                 <div className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center ${
                                     msg.role === "user" ? "bg-gray-100 text-gray-500" : "bg-primary/10 text-primary"
                                 }`}>
@@ -147,7 +144,7 @@ export default function GenerateBlogModal({ isOpen, onClose, onGenerateSuccess, 
                     ))}
                 </div>
 
-                <div className="p-8 border-t border-gray-100 bg-gray-50/50">
+                <div className="p-4 sm:p-6 border-t border-gray-100 bg-gray-50/50 shrink-0">
                     <div className="relative group">
                         <textarea
                             value={inputValue}

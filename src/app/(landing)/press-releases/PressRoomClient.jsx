@@ -31,6 +31,9 @@ const CATEGORIES = [
     { id: "science", name: "Science" },
     { id: "health", name: "Health" },
     { id: "general", name: "General" },
+    { id: "sports", name: "Sports" },
+    { id: "programming", name: "Programming" },
+    { id: "finance", name: "Finance" },
 ];
 
 const StyledSelect = ({ icon: Icon, value, onChange, options, label }) => (
@@ -65,7 +68,7 @@ const normalizePlatformArticle = (campaign) => ({
     description: campaign.article?.summary || "",
     image: campaign.productCard?.thumbnail || "/fallback-platform.jpeg",
     published: campaign.createdAt,
-    author: campaign.productCard?.authorName || campaign.userId?.name || "DropPR Author",
+    author: campaign.productCard?.authorName || campaign.userId?.name || "Drop PR Author",
     category: [campaign.article?.productSummary?.category || "Platform"],
     url: `/press-releases/${campaign._id}`,
     isPlatform: true
@@ -75,7 +78,7 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const pathname = usePathname();
-    
+
     const [articles, setArticles] = useState(() => {
         // If there are URL filters, don't use the initial un-filtered data
         const hasFilters = Array.from(searchParams.keys()).length > 0;
@@ -188,7 +191,7 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                 const combined = [...normalizedPlatform, ...news].sort((a, b) => new Date(b.published) - new Date(a.published));
 
                 setArticles(combined);
-                
+
                 if (activeTab === 'platform') {
                     setHasMore(false);
                 } else {
@@ -266,7 +269,7 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                 <div className="container mx-auto px-4 relative z-10 text-center">
                     <div className="max-w-3xl mx-auto mb-10">
                         <h1 className="text-4xl md:text-6xl font-bold text-white mb-5 tracking-tight leading-tight" style={{ fontFamily: "var(--font-serif, Georgia, serif)" }}>
-                            Global Press Room
+                            Global Newsroom
                         </h1>
                         <p className="text-base md:text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed" style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
                             Intelligent news aggregation for the next generation of AI brands.
@@ -289,49 +292,52 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
 
                         {/* Filters & Pills Row */}
                         <div className="flex flex-col xl:flex-row items-center gap-4 w-full">
-                            {/* Dropdowns - First Half */}
-                            <div className="flex flex-col sm:flex-row w-full xl:w-1/2 gap-3">
-                                <StyledSelect
-                                    icon={Globe}
-                                    value={country}
-                                    onChange={setCountry}
-                                    options={COUNTRIES}
-                                    label="Country"
-                                />
-                                <StyledSelect
-                                    icon={Tag}
-                                    value={category}
-                                    onChange={setCategory}
-                                    options={CATEGORIES}
-                                    label="Category"
-                                />
-                            </div>
-
-                            {/* Divider */}
-                            <div className="hidden xl:block w-px h-10 bg-white/10 mx-1"></div>
-                            <div className="block xl:hidden w-full h-px bg-white/10 my-1"></div>
-
-                            {/* Custom Pills (Type) Filter - Second Half */}
-                            <div className="flex flex-wrap items-center justify-center xl:justify-start gap-2.5 w-full xl:w-1/2">
+                            {/* Custom Pills (Type) Filter - First Half */}
+                            <div className={`flex flex-wrap items-center justify-center xl:justify-start gap-2.5 w-full ${activeTab === "platform" ? "" : "xl:w-1/2"}`}>
                                 {[
                                     { id: "all", label: "All" },
                                     { id: "news", label: "News Articles" },
                                     { id: "discussion", label: "Discussion" },
-                                    { id: "platform", label: "DropPR Press Releases" }
+                                    { id: "platform", label: "Drop PR Press Releases" }
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`flex-grow xl:flex-grow-0 px-4 h-14 rounded-2xl text-sm font-semibold transition-all duration-300 border backdrop-blur-md flex items-center justify-center whitespace-nowrap ${
-                                            activeTab === tab.id
+                                        className={`flex-grow xl:flex-grow-0 px-4 h-14 rounded-2xl text-sm font-semibold transition-all duration-300 border backdrop-blur-md flex items-center justify-center whitespace-nowrap ${activeTab === tab.id
                                                 ? "bg-primary text-white border-primary shadow-lg shadow-primary/30 scale-105"
                                                 : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border-white/10"
-                                        }`}
+                                            }`}
                                     >
                                         {tab.label}
                                     </button>
                                 ))}
                             </div>
+
+                            {activeTab !== "platform" && (
+                                <>
+                                    {/* Divider */}
+                                    <div className="hidden xl:block w-px h-10 bg-white/10 mx-1"></div>
+                                    <div className="block xl:hidden w-full h-px bg-white/10 my-1"></div>
+
+                                    {/* Dropdowns - Second Half */}
+                                    <div className="flex flex-col sm:flex-row w-full xl:w-1/2 gap-3 justify-end">
+                                        <StyledSelect
+                                            icon={Globe}
+                                            value={country}
+                                            onChange={setCountry}
+                                            options={COUNTRIES}
+                                            label="Country"
+                                        />
+                                        <StyledSelect
+                                            icon={Tag}
+                                            value={category}
+                                            onChange={setCategory}
+                                            options={CATEGORIES}
+                                            label="Category"
+                                        />
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -342,10 +348,10 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {articles.map((article, index) => {
                             const isLastElement = articles.length === index + 1;
-                            
+
                             const Wrapper = article.isPlatform ? Link : "a";
-                            const wrapperProps = article.isPlatform 
-                                ? { href: article.url } 
+                            const wrapperProps = article.isPlatform
+                                ? { href: article.url }
                                 : { href: article.url, target: "_blank", rel: "noopener noreferrer" };
 
                             return (
@@ -375,6 +381,15 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                                             <span className="bg-white/90 backdrop-blur-md text-brand-dark text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
                                                 {article.author || "Industry News"}
                                             </span>
+                                            {article.country && (
+                                                <span className="bg-white/90 backdrop-blur-md text-brand-dark text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
+                                                    {(() => {
+                                                        const code = Array.isArray(article.country) ? article.country[0] : article.country;
+                                                        const match = COUNTRIES.find(c => c.code.toLowerCase() === String(code).toLowerCase());
+                                                        return match ? match.name : code;
+                                                    })()}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
 

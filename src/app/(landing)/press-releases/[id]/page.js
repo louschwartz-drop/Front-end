@@ -9,7 +9,7 @@ import FallbackImage from "./FallbackImage";
 const STANDARD_FOOTER = `
 <div style='margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5e7eb;'>
   <h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:0.5rem;'>Media Contact</h4>
-  <p style='margin:0;font-weight:700;color:#111827;'>Droppr AI Research &amp; Media Desk</p>
+  <p style='margin:0;font-weight:700;color:#111827;'>Drop PR AI Research &amp; Media Desk</p>
   <p style='margin:2px 0;color:#4b5563;'>support@droppr.ai</p>
   <p style='margin:2px 0;color:#4b5563;'>Austin, Texas</p>
 </div>
@@ -22,32 +22,32 @@ const STANDARD_FOOTER = `
 `;
 
 function stripFooter(html) {
-  if (!html) return "";
-  const footerKeywords = [
-    "<div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>",
-    "<div style=\"margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;\">",
-    "<div style='margin-top:3rem;",
-    "<div style=\"margin-top:3rem;",
-    "<h4>Media Contact</h4>",
-    "<h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>",
-    "<h4 style=\"text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;\">Media Contact</h4>",
-    "Media Contact",
-    "<div style='margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5e7eb;'>",
-    "<div style=\"margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5e7eb;\">",
-  ];
+    if (!html) return "";
+    const footerKeywords = [
+        "<div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>",
+        "<div style=\"margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;\">",
+        "<div style='margin-top:3rem;",
+        "<div style=\"margin-top:3rem;",
+        "<h4>Media Contact</h4>",
+        "<h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>",
+        "<h4 style=\"text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;\">Media Contact</h4>",
+        "Media Contact",
+        "<div style='margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5e7eb;'>",
+        "<div style=\"margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5e7eb;\">",
+    ];
 
-  for (const keyword of footerKeywords) {
-    const index = html.indexOf(keyword);
-    if (index !== -1) {
-      let cleanHtml = html.substring(0, index).trim();
-      if (cleanHtml.endsWith("<div>")) {
-        cleanHtml = cleanHtml.slice(0, -5).trim();
-      }
-      return cleanHtml;
+    for (const keyword of footerKeywords) {
+        const index = html.indexOf(keyword);
+        if (index !== -1) {
+            let cleanHtml = html.substring(0, index).trim();
+            if (cleanHtml.endsWith("<div>")) {
+                cleanHtml = cleanHtml.slice(0, -5).trim();
+            }
+            return cleanHtml;
+        }
     }
-  }
 
-  return html;
+    return html;
 }
 
 async function getArticle(id) {
@@ -61,7 +61,7 @@ async function getArticle(id) {
             });
             if (!res.ok) return null;
             const data = await res.json();
-            
+
             const campaign = data.data;
             if (!campaign) return null;
 
@@ -88,7 +88,7 @@ async function getArticle(id) {
     const url = `https://api.currentsapi.services/v1/search?apiKey=${API_KEY}&keywords=press%20release%20AI&country=us&language=en&category=technology&page_size=100`;
 
     try {
-        const res = await fetch(url, { 
+        const res = await fetch(url, {
             next: { revalidate: 3600 }
         });
         const data = await res.json();
@@ -134,7 +134,7 @@ export default async function ArticleDetailsPage({ params }) {
                     <h1 className="text-4xl font-bold mb-4">Article Not Found</h1>
                     <p className="text-gray-600 mb-8">The article you are looking for might have been moved or is no longer available.</p>
                     <Link href="/press-releases" className="text-brand-blue font-bold flex items-center justify-center gap-2">
-                        <ArrowLeft className="w-5 h-5" /> Back to Press Room
+                        <ArrowLeft className="w-5 h-5" /> Back to Newsroom
                     </Link>
                 </main>
                 <Footer />
@@ -144,7 +144,7 @@ export default async function ArticleDetailsPage({ params }) {
 
     const displayProduct = article.campaign?.productCard || {};
     const displayData = article.campaign?.article || {};
-    const authorInitials = (article.author || "DropPR Author")
+    const authorInitials = (article.author || "Drop PR Author")
         .split(" ")
         .map((w) => w[0])
         .join("")
@@ -152,7 +152,7 @@ export default async function ArticleDetailsPage({ params }) {
         .toUpperCase();
 
     return (
-        <div 
+        <div
             className="min-h-screen flex flex-col selection:bg-primary/10"
             style={{ background: "#fafaf7" }}
         >
@@ -166,7 +166,7 @@ export default async function ArticleDetailsPage({ params }) {
                         <nav className="flex items-center gap-2 text-xs text-gray-500 mb-6">
                             <Link href="/" className="hover:text-primary transition-colors">Home</Link>
                             <span>/</span>
-                            <Link href="/press-releases" className="hover:text-primary transition-colors">Press Room</Link>
+                            <Link href="/press-releases" className="hover:text-primary transition-colors">Newsroom</Link>
                             <span>/</span>
                             <span className="text-gray-900 truncate max-w-[200px] md:max-w-md">{article.title}</span>
                         </nav>
@@ -214,7 +214,7 @@ export default async function ArticleDetailsPage({ params }) {
                             <div>
                                 <div className="flex flex-wrap items-center gap-2">
                                     <p className="text-sm font-bold text-gray-900 leading-tight">
-                                        Published by : {article.author || "DropPR Author"}
+                                        Published by : {article.author || "Drop PR Author"}
                                     </p>
                                     <span className="text-xs text-gray-300">·</span>
                                     <span className="text-xs text-gray-500">
@@ -287,7 +287,7 @@ export default async function ArticleDetailsPage({ params }) {
                             {article.isPlatform ? (
                                 <>
                                     {article.body && /\<[a-z][\s\S]*\>/i.test(article.body) ? (
-                                        <div 
+                                        <div
                                             className="html-content-preview article-html"
                                             dangerouslySetInnerHTML={{ __html: `<div>${stripFooter(article.body)}</div>` }}
                                         />
@@ -418,7 +418,7 @@ export default async function ArticleDetailsPage({ params }) {
 
                 {/* ─── Related Press Releases ─── */}
                 {relatedCampaigns.length > 0 && (
-                    <section 
+                    <section
                         className="mt-16 md:mt-20 border-t border-gray-200/60"
                         style={{ background: "#fafaf7" }}
                     >
@@ -527,8 +527,8 @@ export default async function ArticleDetailsPage({ params }) {
 
                 {/* Back Link */}
                 <div className="mt-12 text-center">
-                    <Link 
-                        href="/press-releases" 
+                    <Link
+                        href="/press-releases"
                         className="inline-flex items-center gap-2 text-gray-500 hover:text-primary font-medium transition-colors"
                     >
                         <ArrowLeft className="w-4 h-4" />

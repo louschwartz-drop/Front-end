@@ -5,13 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { blogService } from "@/lib/api/user/blogs";
 import { Search, Calendar, ArrowRight, Loader2, Sparkles, Clock, ChevronRight, Tag, Filter, Globe, Newspaper, Eye } from "lucide-react";
-import { 
-    Select, 
-    SelectGroup, 
-    SelectValue, 
-    SelectTrigger, 
-    SelectContent, 
-    SelectItem 
+import {
+    Select,
+    SelectGroup,
+    SelectValue,
+    SelectTrigger,
+    SelectContent,
+    SelectItem
 } from "@/components/ui/Select";
 import LoginModal from "@/components/landingPage/LoginModal";
 import userAuthStore from "@/store/userAuthStore";
@@ -24,7 +24,7 @@ import { format } from "date-fns";
 const StyledSelect = ({ icon: Icon, value, onChange, options, label }) => (
     <div className="relative flex-grow group">
         <Select value={value} onValueChange={onChange}>
-            <SelectTrigger 
+            <SelectTrigger
                 className="!w-full !h-14 !pl-11 !pr-4 !bg-white/10 hover:!bg-white/20 !text-white !text-sm !border-white/20 !rounded-2xl !focus:ring-2 !focus:ring-primary/50 !outline-hidden transition-all backdrop-blur-md relative"
             >
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 !text-white/60 group-hover:!text-white transition-colors z-10">
@@ -34,8 +34,8 @@ const StyledSelect = ({ icon: Icon, value, onChange, options, label }) => (
             </SelectTrigger>
             <SelectContent className="!bg-brand-dark/95 backdrop-blur-2xl !border-white/10 !text-white !rounded-2xl shadow-2xl z-[2000]">
                 {options.map(opt => (
-                    <SelectItem 
-                        key={opt._id} 
+                    <SelectItem
+                        key={opt._id}
                         value={opt.slug}
                         className="hover:!bg-white/10 focus:!bg-white/10 !text-white/80 focus:!text-white cursor-pointer py-3"
                     >
@@ -109,15 +109,15 @@ export default function BlogListing() {
     return (
         <div className="min-h-screen bg-[#fafafa] selection:bg-primary/10">
             <Header />
-            
+
             <main className="relative">
                 {/* Redesigned Premium Black Fade Hero with Centered Content */}
                 <section className="relative pt-36 pb-28 bg-black overflow-hidden">
                     {/* Modern Office Teamwork Background with Reduced Black Overlay */}
                     <div className="absolute inset-0 z-0">
-                        <img 
-                            src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=2000" 
-                            alt="Modern Office Teamwork" 
+                        <img
+                            src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=2000"
+                            alt="Modern Office Teamwork"
                             className="w-full h-full object-cover opacity-60 scale-100"
                         />
                         <div className="absolute inset-0 bg-black/45"></div>
@@ -126,10 +126,10 @@ export default function BlogListing() {
                     <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center">
                         <div className="max-w-3xl mx-auto mb-10">
                             <h1 className="text-4xl md:text-6xl font-bold text-white mb-5 tracking-tight leading-tight" style={{ fontFamily: "var(--font-serif, Georgia, serif)" }}>
-                                Latest <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">Blog Insights</span> & AI <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-indigo-300">Transformations</span>
+                                Latest Blog Insights
                             </h1>
                             <p className="text-base md:text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed" style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
-                                Discover how artificial intelligence is redefining professional public relations and brand storytelling.
+                                Discover how AI is transforming PR and brand storytelling.
                             </p>
                         </div>
 
@@ -139,8 +139,8 @@ export default function BlogListing() {
                                 {/* Search Input */}
                                 <div className="relative flex-grow group">
                                     <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/40 group-hover:text-primary transition-colors w-5 h-5" />
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         placeholder="Search by topic or keyword..."
                                         className="w-full h-14 pl-14 pr-6 bg-white/5 text-white text-lg placeholder:text-white/30 border border-white/10 rounded-2xl focus:ring-2 focus:ring-primary/50 outline-hidden transition-all"
                                         value={search}
@@ -150,22 +150,22 @@ export default function BlogListing() {
 
                                 {/* Category Filter */}
                                 <div className="w-full md:w-52">
-                                    <StyledSelect 
-                                        icon={Tag} 
-                                        value={selectedCategory} 
-                                        onChange={setSelectedCategory} 
-                                        options={categories} 
+                                    <StyledSelect
+                                        icon={Tag}
+                                        value={selectedCategory}
+                                        onChange={setSelectedCategory}
+                                        options={categories}
                                         label="Category"
                                     />
                                 </div>
 
                                 {/* Sort Filter */}
                                 <div className="w-full md:w-52">
-                                    <StyledSelect 
-                                        icon={Filter} 
-                                        value={sortBy} 
-                                        onChange={setSortBy} 
-                                        options={sortOptions} 
+                                    <StyledSelect
+                                        icon={Filter}
+                                        value={sortBy}
+                                        onChange={setSortBy}
+                                        options={sortOptions}
                                         label="Sort By"
                                     />
                                 </div>
@@ -215,17 +215,17 @@ export default function BlogListing() {
 
                                         {/* Category tags — in body, under thumbnail */}
                                         <div className="px-6 pt-6 flex flex-wrap gap-1.5 items-center">
-                                          {blog.categories?.length > 0 && blog.categories.slice(0, 2).map((cat) => (
-                                            <span key={cat._id} className="text-primary text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border border-primary/20 bg-primary/5">
-                                              {cat.name}
-                                            </span>
-                                          ))}
-                                          {blog.viewCount >= 50 && (
-                                            <span className="text-primary text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-primary/25 bg-blue-50/80 flex items-center gap-1 shadow-2xs">
-                                              <Sparkles className="w-2.5 h-2.5 text-primary/80 animate-pulse" />
-                                              Popular
-                                            </span>
-                                          )}
+                                            {blog.categories?.length > 0 && blog.categories.slice(0, 2).map((cat) => (
+                                                <span key={cat._id} className="text-primary text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border border-primary/20 bg-primary/5">
+                                                    {cat.name}
+                                                </span>
+                                            ))}
+                                            {blog.viewCount >= 50 && (
+                                                <span className="text-primary text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-primary/25 bg-blue-50/80 flex items-center gap-1 shadow-2xs">
+                                                    <Sparkles className="w-2.5 h-2.5 text-primary/80 animate-pulse" />
+                                                    Popular
+                                                </span>
+                                            )}
                                         </div>
 
                                         {/* Card body */}
@@ -250,17 +250,17 @@ export default function BlogListing() {
                                                         </span>
                                                     </>
                                                 )}
-                                                
+
                                                 <div className="ml-auto flex-shrink-0 z-10">
-                                                    <ShareMenu 
-                                                        url={`/blog/${blog.slug}`} 
-                                                        title={blog.title} 
-                                                        text={blog.excerpt} 
+                                                    <ShareMenu
+                                                        url={`/blog/${blog.slug}`}
+                                                        title={blog.title}
+                                                        text={blog.excerpt}
                                                         position="bottom-right"
                                                     />
                                                 </div>
                                             </div>
-                            
+
 
                                             {/* Title */}
                                             <h2 style={{
@@ -277,19 +277,19 @@ export default function BlogListing() {
 
                                             {/* Excerpt */}
                                             <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed mb-4 flex-grow"
-                                               style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
+                                                style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
                                                 {blog.excerpt || "Read the latest updates and announcements from DropPR.ai."}
                                             </p>
 
                                             {/* Footer CTA + author */}
                                             <div className="pt-3 border-t border-gray-50 flex items-center justify-between mt-auto">
                                                 <span className="inline-flex items-center gap-1.5 text-primary font-bold text-[10px] uppercase tracking-widest">
-                                                    Read Article
+                                                    Read Blog
                                                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform" />
                                                 </span>
                                                 <div className="flex items-center gap-2 flex-shrink-0">
                                                     <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider" style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
-                                                        Published by : {blog.authorName || "Lou Schwartz"}
+                                                        Published by : {blog.authorName || "Hayden Hollis"}
                                                     </span>
                                                     <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0">
                                                         <span className="text-white text-[8px] font-black">{authorInitials}</span>
@@ -310,11 +310,10 @@ export default function BlogListing() {
                                 <button
                                     key={i}
                                     onClick={() => setPagination(prev => ({ ...prev, page: i + 1 }))}
-                                    className={`w-10 h-10 rounded-xl font-black text-xs transition-all ${
-                                        pagination.page === i + 1 
-                                        ? "bg-primary text-white shadow-lg scale-110" 
+                                    className={`w-10 h-10 rounded-xl font-black text-xs transition-all ${pagination.page === i + 1
+                                        ? "bg-primary text-white shadow-lg scale-110"
                                         : "bg-white border border-gray-200 text-gray-400 hover:border-primary hover:text-primary"
-                                    }`}
+                                        }`}
                                 >
                                     {i + 1}
                                 </button>
@@ -328,14 +327,14 @@ export default function BlogListing() {
                     <div className="container mx-auto px-4">
                         <div className="max-w-4xl mx-auto bg-linear-to-r from-brand-dark to-brand-blue rounded-3xl p-8 md:p-12 text-center text-white shadow-2xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-                            
+
                             <h2 className="text-3xl md:text-4xl font-extrabold mb-6">
                                 Want to see your brand here?
                             </h2>
                             <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
                                 Use DropPR.ai to turn your content into professional press releases and distribute them across our global media network.
                             </p>
-                            <button 
+                            <button
                                 onClick={() => {
                                     if (isAuthenticated) {
                                         router.push("/user/dashboard/create");
@@ -353,8 +352,8 @@ export default function BlogListing() {
                 </section>
 
                 {/* Login Modal Integration */}
-                <LoginModal 
-                    isOpen={showLoginModal} 
+                <LoginModal
+                    isOpen={showLoginModal}
                     onClose={() => setShowLoginModal(false)}
                     onSuccess={() => {
                         setShowLoginModal(false);

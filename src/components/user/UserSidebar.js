@@ -8,7 +8,7 @@ import userAuthStore from "../../store/userAuthStore";
 export const USER_MENU_ITEMS = [
   {
     href: "/user/dashboard/droppr-gpt",
-    label: "Droppr GPT",
+    label: "Drop PR GPT",
     icon: (
       <svg
         className="w-5 h-5"

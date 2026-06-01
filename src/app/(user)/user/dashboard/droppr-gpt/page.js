@@ -5,25 +5,25 @@ import { toast } from "react-toastify";
 import api from "@/lib/api/axios";
 import userAuthStore from "@/store/userAuthStore";
 import ReactMarkdown from "react-markdown";
-import { 
-  Send, 
-  Plus, 
-  Trash2, 
-  MessageSquare, 
-  Copy, 
-  Check, 
-  Search, 
-  X, 
-  History, 
-  Edit2, 
-  FolderPlus, 
-  Folder, 
-  ChevronDown, 
-  ChevronRight, 
-  AlertTriangle, 
-  Loader2, 
-  Mic, 
-  Square 
+import {
+  Send,
+  Plus,
+  Trash2,
+  MessageSquare,
+  Copy,
+  Check,
+  Search,
+  X,
+  History,
+  Edit2,
+  FolderPlus,
+  Folder,
+  ChevronDown,
+  ChevronRight,
+  AlertTriangle,
+  Loader2,
+  Mic,
+  Square
 } from "lucide-react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -82,7 +82,7 @@ const ScrollingWaveform = ({ stream }) => {
         const average = sum / bufferLength;
         const threshold = 15;
         const cleanValue = Math.max(0, average - threshold);
-        
+
         historyRef.current.shift();
         historyRef.current.push(Math.max(2, cleanValue * 1.8));
       }
@@ -135,7 +135,7 @@ export default function DropprGPTPage() {
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showHistory, setShowHistory] = useState(false);
-  
+
   // Advanced Features State
   const [editingChatId, setEditingChatId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
@@ -361,7 +361,7 @@ export default function DropprGPTPage() {
     const userMsg = { sender: "USER", content: textToSend };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
-    
+
     // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = "52px";
@@ -395,12 +395,12 @@ export default function DropprGPTPage() {
 
         const chunk = decoder.decode(value);
         const lines = chunk.split("\n");
-        
+
         for (const line of lines) {
           if (line.startsWith("data: ")) {
             const dataStr = line.slice(6).trim();
             if (dataStr === "[DONE]") break;
-            
+
             try {
               const data = JSON.parse(dataStr);
               if (data.type === "chunk") {
@@ -523,7 +523,7 @@ export default function DropprGPTPage() {
 
   const suggestionPrompts = [
     "Write a press release for my new AI product",
-    "How can Droppr.ai help my brand authority?",
+    "How can DropPR.ai help my brand authority?",
     "Generate 5 content ideas for a tech startup",
     "Analyze the current trends in digital PR"
   ];
@@ -554,11 +554,10 @@ export default function DropprGPTPage() {
         draggable
         onDragStart={(e) => onDragStart(e, chat._id)}
         onClick={() => handleSelectChat(chat._id)}
-        className={`group flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all ${
-          currentChatId === chat._id 
-            ? "bg-blue-50/50 text-blue-700 border border-blue-50" 
+        className={`group flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all ${currentChatId === chat._id
+            ? "bg-blue-50/50 text-blue-700 border border-blue-50"
             : "hover:bg-gray-50 text-gray-600"
-        }`}
+          }`}
       >
         <div className="flex items-center gap-2.5 overflow-hidden flex-1">
           <MessageSquare size={16} className={`flex-shrink-0 ${currentChatId === chat._id ? "text-blue-600" : "text-gray-400"}`} />
@@ -577,13 +576,13 @@ export default function DropprGPTPage() {
           )}
         </div>
         <div className="flex items-center opacity-0 group-hover:opacity-100 transition-all">
-          <button 
+          <button
             onClick={(e) => { e.stopPropagation(); setEditingChatId(chat._id); setEditTitle(chat.title); }}
             className="p-1.5 hover:text-blue-600 rounded-lg"
           >
             <Edit2 size={13} />
           </button>
-          <button 
+          <button
             onClick={(e) => handleDeleteChat(e, chat._id)}
             className="p-1.5 hover:text-red-500 rounded-lg"
           >
@@ -601,7 +600,7 @@ export default function DropprGPTPage() {
         {/* Mobile Header */}
         <div className="md:hidden flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-50 bg-white z-30">
           <div className="flex items-center gap-2">
-            <h2 className="font-bold text-gray-900 text-lg">Droppr GPT</h2>
+            <h2 className="font-bold text-gray-900 text-lg">Drop PR GPT</h2>
           </div>
           <button onClick={() => setShowHistory(true)} className="p-2 text-gray-500 hover:bg-gray-50 rounded-lg transition-colors">
             <History size={20} />
@@ -616,7 +615,7 @@ export default function DropprGPTPage() {
                 How can I help you today?
               </h1>
               <p className="text-gray-500 mb-8 text-sm md:text-base">Your elite AI partner for journalistic excellence.</p>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 w-full">
                 {suggestionPrompts.map((prompt, i) => (
                   <button key={i} onClick={() => handleSendMessage(prompt)} className="p-3 md:p-4 text-left border border-gray-100 rounded-xl hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 group bg-gray-50/50">
@@ -663,7 +662,7 @@ export default function DropprGPTPage() {
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isStreaming || isTranscribing}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && !isStreaming && (e.preventDefault(), handleSendMessage())}
-                placeholder={isTranscribing ? "Transcribing voice..." : isStreaming ? "Wait for response..." : "Message Droppr GPT..."}
+                placeholder={isTranscribing ? "Transcribing voice..." : isStreaming ? "Wait for response..." : "Message Drop PR GPT..."}
                 className={`w-full bg-gray-50 border border-blue-100 rounded-2xl py-3.5 pl-4 pr-36 focus:ring-1 focus:ring-blue-500 focus:border-blue-400 outline-none resize-none min-h-[52px] max-h-[300px] text-sm transition-all overflow-y-hidden ${isRecording ? "opacity-0 invisible h-[52px]" : ""} ${isStreaming || isTranscribing ? "opacity-50 cursor-not-allowed" : ""}`}
                 rows="1"
               />
@@ -696,9 +695,9 @@ export default function DropprGPTPage() {
                   </button>
                 )}
                 {!isRecording && (
-                  <button 
-                    type="submit" 
-                    disabled={!input.trim() || isStreaming || isTranscribing} 
+                  <button
+                    type="submit"
+                    disabled={!input.trim() || isStreaming || isTranscribing}
                     className={`p-2 rounded-xl transition-all ${input.trim() && !isStreaming && !isTranscribing ? "bg-blue-600 text-white shadow-md hover:scale-105" : "bg-gray-200 text-gray-400"}`}
                   >
                     <Send size={18} />
@@ -707,7 +706,7 @@ export default function DropprGPTPage() {
               </div>
             </div>
           </form>
-          <p className="text-[8px] md:text-[10px] text-center text-gray-400 mt-2">Droppr GPT can make mistakes. Check important info.</p>
+          <p className="text-[8px] md:text-[10px] text-center text-gray-400 mt-2">Drop PR GPT can make mistakes. Check important info.</p>
         </div>
 
         {/* Mobile History Drawer */}
@@ -721,7 +720,7 @@ export default function DropprGPTPage() {
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                 <div className="flex gap-2 mb-4">
+                <div className="flex gap-2 mb-4">
                   <button onClick={handleNewChat} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all text-sm">
                     <Plus size={16} /> New Chat
                   </button>
