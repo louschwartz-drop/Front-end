@@ -1,6 +1,5 @@
 import api from "@/lib/api/axios";
 import { BLOCKQUOTE_STYLES } from "@/components/editor/blockquoteStyles";
-import html2pdf from "html2pdf.js";
 
 /**
  * Utility to download campaign articles (Word) using Axios
@@ -44,7 +43,7 @@ export const downloadCampaignFile = async (campaignId, format, defaultFilename =
  * The browser handles PDF natively (File → Save as PDF) — no Puppeteer needed.
  * Pixel-perfect match to the FullArticlePreview modal.
  */
-export const printArticleAsPdf = ({ displayData, displayProduct, standardFooter, stripFooter }) => {
+export const printArticleAsPdf = async ({ displayData, displayProduct, standardFooter, stripFooter }) => {
     const categories = (displayData.categories || displayData.productSummary?.category || "")
         .split(",").map(c => c.trim()).filter(Boolean);
 
@@ -110,5 +109,6 @@ export const printArticleAsPdf = ({ displayData, displayProduct, standardFooter,
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
+    const html2pdf = (await import("html2pdf.js")).default;
     return html2pdf().set(opt).from(element).save();
 };
