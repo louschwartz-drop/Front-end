@@ -210,12 +210,12 @@ export default async function BlogDetail({ params }) {
                   )}
                 </div>
               </div>
-              
+
               <div className="ml-auto z-10 flex items-center gap-2">
-                <ShareMenu 
-                  url={`/blog/${blog.slug}`} 
-                  title={blog.title} 
-                  text={blog.excerpt} 
+                <ShareMenu
+                  url={`/blog/${blog.slug}`}
+                  title={blog.title}
+                  text={blog.excerpt}
                   position="bottom-left"
                   showText={true}
                 />
@@ -265,10 +265,10 @@ export default async function BlogDetail({ params }) {
                 <span className="text-xs font-bold uppercase tracking-wider text-gray-400" style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
                   Share this article
                 </span>
-                <ShareMenu 
-                  url={`/blog/${blog.slug}`} 
-                  title={blog.title} 
-                  text={blog.excerpt} 
+                <ShareMenu
+                  url={`/blog/${blog.slug}`}
+                  title={blog.title}
+                  text={blog.excerpt}
                   position="top-left"
                   showText={true}
                 />
@@ -450,12 +450,12 @@ export default async function BlogDetail({ params }) {
                               </span>
                             </>
                           )}
-                          
+
                           <div className="ml-auto flex-shrink-0 z-10">
-                            <ShareMenu 
-                              url={`/blog/${rBlog.slug}`} 
-                              title={rBlog.title} 
-                              text={rBlog.excerpt} 
+                            <ShareMenu
+                              url={`/blog/${rBlog.slug}`}
+                              title={rBlog.title}
+                              text={rBlog.excerpt}
                               position="bottom-right"
                             />
                           </div>
@@ -487,12 +487,12 @@ export default async function BlogDetail({ params }) {
                         {/* CTA footer */}
                         <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between">
                           <span className="inline-flex items-center gap-1.5 text-primary font-bold text-[10px] uppercase tracking-widest">
-                            Read Article
+                            Read Press Release
                             <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                           </span>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-wider">
-                              Published by : {rBlog.authorName || "Hayden Hollis"}
+                              {rBlog.authorName || "Hayden Hollis"}
                             </span>
                             <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center">
                               <span className="text-white text-[7px] font-black">

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { getAllFeedbacks, updateFeedbackStatus } from "@/lib/api/admin/feedback";
+import { getAllFeedbacks, updateFeedbackStatus, deleteFeedback } from "@/lib/api/admin/feedback";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, MessageSquare, Star, Search, ChevronDown, Check } from "lucide-react";
+import { Loader2, MessageSquare, Star, Search, ChevronDown, Check, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 
 export default function AdminFeedbackPage() {
@@ -11,9 +11,13 @@ export default function AdminFeedbackPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
 
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [openStatusDropdownId, setOpenStatusDropdownId] = useState(null);
+  const [isDeletingId, setIsDeletingId] = useState(null);
+  const [isUpdatingStatusId, setIsUpdatingStatusId] = useState(null);
 
   const FEEDBACK_TYPES = ["All", "Give feedback", "Report a bug", "Suggest an improvement", "Other"];
   const STATUS_OPTIONS = ["Pending", "In Progress", "Resolved", "Closed"];
@@ -54,6 +58,7 @@ export default function AdminFeedbackPage() {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
+      setIsUpdatingStatusId(id);
       const response = await updateFeedbackStatus(id, newStatus);
       if (response.success) {
         toast.success("Bug status updated successfully");
@@ -64,6 +69,24 @@ export default function AdminFeedbackPage() {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to update status");
+    } finally {
+      setIsUpdatingStatusId(null);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this feedback?")) return;
+    try {
+      setIsDeletingId(id);
+      const response = await deleteFeedback(id);
+      if (response.success) {
+        toast.success("Feedback deleted successfully");
+        setFeedbacks((prev) => prev.filter((fb) => fb._id !== id));
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete feedback");
+    } finally {
+      setIsDeletingId(null);
     }
   };
 
@@ -102,9 +125,10 @@ export default function AdminFeedbackPage() {
         (fb.user?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
         (fb.user?.email || "").toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = typeFilter === "All" || fb.type === typeFilter;
-      return matchesSearch && matchesType;
+      const matchesStatus = statusFilter === "All" || fb.status === statusFilter || (!fb.status && statusFilter === "Pending");
+      return matchesSearch && matchesType && matchesStatus;
     });
-  }, [feedbacks, searchTerm, typeFilter]);
+  }, [feedbacks, searchTerm, typeFilter, statusFilter]);
 
   const averageRating = useMemo(() => {
     const ratedFeedbacks = feedbacks.filter((fb) => fb.type === "Give feedback" && fb.rating);
@@ -124,15 +148,20 @@ export default function AdminFeedbackPage() {
     feedback.type === "Report a bug" ? (
       <div className="relative">
         <button
+          disabled={isUpdatingStatusId === feedback._id}
           onClick={() =>
             setOpenStatusDropdownId(openStatusDropdownId === feedback._id ? null : feedback._id)
           }
-          className={`flex items-center justify-between border text-[10px] font-black uppercase tracking-widest rounded-lg w-28 sm:w-32 p-1.5 pl-3 outline-none transition-all hover:opacity-80 shadow-sm ${getStatusColor(feedback.status || "Pending")}`}
+          className={`flex items-center justify-between border text-[10px] font-black uppercase tracking-widest rounded-lg w-28 sm:w-32 p-1.5 pl-3 outline-none transition-all hover:opacity-80 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${getStatusColor(feedback.status || "Pending")}`}
         >
           <span className="truncate">{feedback.status || "Pending"}</span>
-          <ChevronDown
-            className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${openStatusDropdownId === feedback._id ? "rotate-180" : ""}`}
-          />
+          {isUpdatingStatusId === feedback._id ? (
+            <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" />
+          ) : (
+            <ChevronDown
+              className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${openStatusDropdownId === feedback._id ? "rotate-180" : ""}`}
+            />
+          )}
         </button>
 
         <AnimatePresence>
@@ -149,22 +178,30 @@ export default function AdminFeedbackPage() {
                 transition={{ duration: 0.15 }}
                 className="absolute left-0 top-full mt-1.5 w-40 bg-white border border-gray-100 rounded-xl shadow-xl z-40 overflow-hidden p-1.5"
               >
-                {STATUS_OPTIONS.map((opt) => (
-                  <button
-                    key={opt}
-                    onClick={() => handleStatusChange(feedback._id, opt)}
-                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-[10px] uppercase tracking-widest font-bold transition-all ${
-                      (feedback.status || "Pending") === opt
-                        ? getStatusColor(opt)
-                        : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-                    }`}
-                  >
-                    {opt}
-                    {(feedback.status || "Pending") === opt && (
-                      <Check className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                ))}
+                {STATUS_OPTIONS.map((opt) => {
+                  const currentStatusIndex = STATUS_OPTIONS.indexOf(feedback.status || "Pending");
+                  const optIndex = STATUS_OPTIONS.indexOf(opt);
+                  const isBackwardOrSame = optIndex <= currentStatusIndex;
+                  const isCurrent = (feedback.status || "Pending") === opt;
+
+                  return (
+                    <button
+                      key={opt}
+                      disabled={isBackwardOrSame}
+                      onClick={() => handleStatusChange(feedback._id, opt)}
+                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-[10px] uppercase tracking-widest font-bold transition-all ${
+                        isCurrent
+                          ? getStatusColor(opt)
+                          : isBackwardOrSame
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                      }`}
+                    >
+                      {opt}
+                      {isCurrent && <Check className="w-3.5 h-3.5" />}
+                    </button>
+                  );
+                })}
               </motion.div>
             </>
           )}
@@ -252,6 +289,58 @@ export default function AdminFeedbackPage() {
           </div>
         </div>
 
+        {/* Status Filter */}
+        <div className="flex items-center gap-2 px-2.5 py-2 bg-white rounded-2xl border border-gray-100 shadow-sm self-start sm:self-auto">
+          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 shrink-0">Status</label>
+          <div className="relative">
+            <button
+              onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+              className="flex items-center justify-between bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue w-40 sm:w-48 p-2 pl-3 outline-none transition-all hover:border-brand-blue/40"
+            >
+              <span className="truncate">{statusFilter}</span>
+              <ChevronDown
+                className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${isStatusDropdownOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            <AnimatePresence>
+              {isStatusDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsStatusDropdownOpen(false)}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-full mt-2 w-52 sm:w-56 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden p-1.5"
+                  >
+                    {["All", ...STATUS_OPTIONS].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => {
+                          setStatusFilter(status);
+                          setIsStatusDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                          statusFilter === status
+                            ? "bg-brand-light text-brand-dark"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-brand-blue"
+                        }`}
+                      >
+                        {status}
+                        {statusFilter === status && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      </button>
+                    ))}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
         {/* Avg Rating Badge */}
         {averageRating > 0 && (
           <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl p-2.5 shadow-sm self-start sm:self-auto">
@@ -300,9 +389,19 @@ export default function AdminFeedbackPage() {
                         {feedback.user?.email || "No email"}
                       </p>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-xs font-bold text-gray-800">{formatDate(feedback.createdAt)}</p>
-                      <p className="text-[10px] text-gray-400">{formatTime(feedback.createdAt)}</p>
+                    <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                      <div>
+                        <p className="text-xs font-bold text-gray-800">{formatDate(feedback.createdAt)}</p>
+                        <p className="text-[10px] text-gray-400">{formatTime(feedback.createdAt)}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDelete(feedback._id)}
+                        disabled={isDeletingId === feedback._id}
+                        className="text-red-400 hover:text-red-600 transition-colors p-1"
+                        title="Delete feedback"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
 
@@ -339,7 +438,8 @@ export default function AdminFeedbackPage() {
                     <th className="px-5 py-4 font-semibold uppercase tracking-wider text-[11px] text-gray-500">Type & Rating</th>
                     <th className="px-5 py-4 font-semibold uppercase tracking-wider text-[11px] text-gray-500 w-[35%]">Message</th>
                     <th className="px-5 py-4 font-semibold uppercase tracking-wider text-[11px] text-gray-500">Status</th>
-                    <th className="px-5 py-4 font-semibold uppercase tracking-wider text-[11px] text-gray-500 text-right">Date</th>
+                    <th className="px-5 py-4 font-semibold uppercase tracking-wider text-[11px] text-gray-500 text-right w-32">Date</th>
+                    <th className="px-5 py-4 font-semibold uppercase tracking-wider text-[11px] text-gray-500 text-right w-16">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -380,6 +480,16 @@ export default function AdminFeedbackPage() {
                             {formatTime(feedback.createdAt)}
                           </span>
                         </div>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          onClick={() => handleDelete(feedback._id)}
+                          disabled={isDeletingId === feedback._id}
+                          className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50"
+                          title="Delete feedback"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </td>
                     </tr>
                   ))}

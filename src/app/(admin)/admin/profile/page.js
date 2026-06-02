@@ -356,6 +356,7 @@ function AdminProfilePageContent() {
                     }`}
                   placeholder="Enter your full name"
                   required
+                  maxLength={30}
                 />
                 {errors.name && (
                   <p className="mt-1.5 text-sm text-red-600">{errors.name}</p>
@@ -404,6 +405,10 @@ function AdminProfilePageContent() {
                   onChange={(phone) => {
                     setFormData({ ...formData, phone: phone });
                   }}
+                  enableSearch={true}
+                  disableSearchIcon={true}
+                  searchPlaceholder="Search country..."
+                  searchStyle={{ width: "100%", margin: 0, padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: "6px", boxSizing: "border-box" }}
                   inputClass="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   buttonClass="border border-gray-300 rounded-l-lg bg-gray-50 hover:bg-gray-100"
                   dropdownClass="border border-gray-300 rounded-lg bg-white shadow-lg"

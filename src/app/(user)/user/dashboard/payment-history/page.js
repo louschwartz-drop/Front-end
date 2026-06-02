@@ -13,12 +13,22 @@ import {
     DollarSign,
     Filter,
     ArrowUpRight,
-    X
+    X,
+    ChevronDown,
+    Check
 } from "lucide-react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import Button from "@/components/ui/Button";
 import Pagination from "@/components/ui/Pagination";
+
+const PLAN_TYPES = [
+    { label: "All Plans", value: "" },
+    { label: "Boost", value: "Boost" },
+    { label: "Boost +", value: "Boost +" },
+    { label: "Boost Pro", value: "Boost Pro" },
+];
 
 export default function PaymentHistoryPage() {
     const { user } = userAuthStore();
@@ -26,7 +36,8 @@ export default function PaymentHistoryPage() {
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [searchTerm, setSearchTerm] = useState("");
+    const [filterPlan, setFilterPlan] = useState("");
+    const [isPlanDropdownOpen, setIsPlanDropdownOpen] = useState(false);
     const [dateRange, setDateRange] = useState({
         startDate: "",
         endDate: ""
@@ -40,7 +51,7 @@ export default function PaymentHistoryPage() {
     const today = new Date().toISOString().split('T')[0];
 
     const clearFilters = () => {
-        setSearchTerm("");
+        setFilterPlan("");
         setDateRange({ startDate: "", endDate: "" });
         setTempDateRange({ startDate: "", endDate: "" });
         setCurrentPage(1);
@@ -71,7 +82,7 @@ export default function PaymentHistoryPage() {
                 limit: 10,
                 startDate: dateRange.startDate,
                 endDate: dateRange.endDate,
-                search: searchTerm
+                planName: filterPlan
             });
 
             if (response.success) {
@@ -90,10 +101,10 @@ export default function PaymentHistoryPage() {
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             fetchHistory();
-        }, searchTerm ? 500 : 0);
+        }, filterPlan ? 500 : 0);
 
         return () => clearTimeout(timeoutId);
-    }, [user, currentPage, dateRange.startDate, dateRange.endDate, searchTerm]);
+    }, [user, currentPage, dateRange.startDate, dateRange.endDate, filterPlan]);
 
     const formatAmount = (amount) => {
         return new Intl.NumberFormat('en-US', {
@@ -105,25 +116,76 @@ export default function PaymentHistoryPage() {
     return (
         <div className="w-full">
             <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Payment History</h1>
-                    <p className="text-xs sm:text-sm text-gray-500 mt-1">Track your distribution plan purchases.</p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full md:w-auto">
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Payment History</h1>
+                        <p className="text-xs sm:text-sm text-gray-500 mt-1">Track your distribution plan purchases.</p>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
-                    {/* Search Bar */}
-                    <div className="relative flex-1 md:w-64">
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search by plan name..."
-                            value={searchTerm}
-                            onChange={(e) => {
-                                setSearchTerm(e.target.value);
-                                setCurrentPage(1);
-                            }}
-                            className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl shadow-sm text-xs font-bold text-gray-700 outline-none focus:ring-1 focus:ring-blue-500"
-                        />
+                <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full md:w-auto">
+                    {/* Manage Cards Button */}
+                    <Link href="/user/dashboard/profile" className="w-full md:w-auto order-first md:order-none mb-2 md:mb-0">
+                        <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-bold shadow-sm hover:bg-blue-100 transition-colors border border-blue-100">
+                            <CreditCard className="w-4 h-4" /> Manage Cards
+                        </button>
+                    </Link>
+
+                    {/* Plan Filter Dropdown */}
+                    <div className="relative flex-1 md:w-48">
+                        <button
+                            type="button"
+                            onClick={() => setIsPlanDropdownOpen(!isPlanDropdownOpen)}
+                            className="w-full flex items-center justify-between pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-xl shadow-sm text-xs font-bold text-gray-700 outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                        >
+                            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                <Filter className="h-4 w-4 text-gray-400" />
+                            </div>
+                            <span className="truncate">
+                                {PLAN_TYPES.find(p => p.value === filterPlan)?.label || "All Plans"}
+                            </span>
+                            <ChevronDown
+                                className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${isPlanDropdownOpen ? "rotate-180" : ""}`}
+                            />
+                        </button>
+
+                        <AnimatePresence>
+                            {isPlanDropdownOpen && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setIsPlanDropdownOpen(false)}
+                                    />
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        transition={{ duration: 0.15 }}
+                                        className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden p-1.5"
+                                    >
+                                        {PLAN_TYPES.map((t) => (
+                                            <button
+                                                key={t.value}
+                                                type="button"
+                                                onClick={() => {
+                                                    setFilterPlan(t.value);
+                                                    setCurrentPage(1);
+                                                    setIsPlanDropdownOpen(false);
+                                                }}
+                                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
+                                                    filterPlan === t.value
+                                                        ? "bg-blue-50 text-blue-600 font-bold"
+                                                        : "text-gray-600 hover:bg-gray-50 hover:text-blue-600 font-semibold"
+                                                }`}
+                                            >
+                                                {t.label}
+                                                {filterPlan === t.value && <Check className="w-4 h-4 shrink-0" />}
+                                            </button>
+                                        ))}
+                                    </motion.div>
+                                </>
+                            )}
+                        </AnimatePresence>
                     </div>
 
                     {/* Desktop Date Filter */}
@@ -163,7 +225,7 @@ export default function PaymentHistoryPage() {
                         )}
                     </button>
 
-                    {(searchTerm || dateRange.startDate || dateRange.endDate) && (
+                    {(filterPlan || dateRange.startDate || dateRange.endDate) && (
                         <button
                             onClick={clearFilters}
                             className="hidden xs:flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-red-500 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100 shrink-0"
@@ -200,18 +262,21 @@ export default function PaymentHistoryPage() {
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-gray-50/50">
                                 <tr>
-                                    <th className="px-6 py-4 text-[10px] font-semibold text-gray-400">Date</th>
-                                    <th className="px-6 py-4 text-[10px] font-semibold text-gray-400">Plan Name</th>
-                                    <th className="px-6 py-4 text-[10px] font-semibold text-gray-400">Releases</th>
-                                    <th className="px-6 py-4 text-[10px] font-semibold text-gray-400 text-right">Amount Paid</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-600">Date & Time</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-600">Plan Name</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-600">Articles Included</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-600 text-right">Amount Paid</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {payments.map((payment, index) => (
                                     <tr key={payment._id} className="border-t border-gray-50 hover:bg-gray-50/30 transition-colors">
                                         <td className="px-6 py-4">
-                                            <span className="text-sm font-bold text-gray-900">
+                                            <span className="text-sm font-bold text-gray-900 block">
                                                 {new Date(payment.createdAt).toLocaleDateString()}
+                                            </span>
+                                            <span className="text-xs text-gray-500 mt-0.5 block">
+                                                {new Date(payment.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
@@ -226,7 +291,7 @@ export default function PaymentHistoryPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="text-sm font-bold text-gray-500">
-                                                {payment.releasesGenerated} Credits
+                                                {payment.releasesGenerated} Press Release Credit{payment.releasesGenerated === 1 ? '' : 's'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
@@ -247,7 +312,7 @@ export default function PaymentHistoryPage() {
                                 <div className="flex justify-between items-start">
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-semibold text-gray-400">
-                                            {new Date(payment.createdAt).toLocaleDateString()}
+                                            {new Date(payment.createdAt).toLocaleDateString()} • {new Date(payment.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                                         </p>
                                         <h3 className="text-sm font-bold text-gray-900 capitalize leading-tight">
                                             {payment.planId?.name || "Distribution Plan"}
@@ -260,7 +325,7 @@ export default function PaymentHistoryPage() {
                                 <div className="flex items-center justify-between pt-3 border-t border-gray-50">
                                     <span className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
                                         <ArrowUpRight className="w-3 h-3" />
-                                        {payment.releasesGenerated} Release Credits
+                                        {payment.releasesGenerated} Press Release Credit{payment.releasesGenerated === 1 ? '' : 's'}
                                     </span>
                                     <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[9px] font-black rounded-full border border-green-100 uppercase tracking-widest">
                                         Success

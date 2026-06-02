@@ -192,6 +192,7 @@ function ProfilePageContent() {
     email: "",
     phone: "",
   });
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [avatarFile, setAvatarFile] = useState(null);
@@ -206,8 +207,13 @@ function ProfilePageContent() {
     if (isAuthenticated && user && !profileLoaded) {
       fetchProfile();
       setProfileLoaded(true);
+    } else if (!authLoading) {
+      // If auth is done loading but we aren't fetching profile, turn off loading
+      if (!isAuthenticated || profileLoaded) {
+        setLoading(false);
+      }
     }
-  }, [isAuthenticated, user, profileLoaded]);
+  }, [isAuthenticated, user, profileLoaded, authLoading]);
 
   useEffect(() => {
     // Cleanup preview URL when component unmounts
@@ -279,6 +285,7 @@ function ProfilePageContent() {
   };
 
   const fetchProfile = async () => {
+    setLoading(true);
     try {
       const userId = user._id || user.id;
       const { profileService } = await import("@/lib/api/user/profile");
@@ -294,6 +301,8 @@ function ProfilePageContent() {
       }
     } catch (error) {
       console.error("Failed to fetch profile:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -333,7 +342,7 @@ function ProfilePageContent() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -483,6 +492,7 @@ function ProfilePageContent() {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   placeholder="Enter your full name"
                   required
+                  maxLength={30}
                 />
               </div>
 
@@ -528,6 +538,10 @@ function ProfilePageContent() {
                   onChange={(phone) => {
                     setFormData({ ...formData, phone: phone });
                   }}
+                  enableSearch={true}
+                  disableSearchIcon={true}
+                  searchPlaceholder="Search country..."
+                  searchStyle={{ width: "100%", margin: 0, padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: "6px", boxSizing: "border-box" }}
                   inputClass="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   buttonClass="border border-gray-300 rounded-l-lg bg-gray-50 hover:bg-gray-100"
                   dropdownClass="border border-gray-300 rounded-lg bg-white shadow-lg"

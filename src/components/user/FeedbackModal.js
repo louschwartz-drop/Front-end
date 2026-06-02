@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { X, Star, StarHalf } from "lucide-react";
+import { X, Star, StarHalf, ChevronDown, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { submitFeedback } from "@/lib/api/user/feedback";
 import { toast } from "react-toastify";
 
@@ -18,6 +19,7 @@ export default function FeedbackModal({ isOpen, onClose, user }) {
   const [hoverRating, setHoverRating] = useState(0);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -89,17 +91,55 @@ export default function FeedbackModal({ isOpen, onClose, user }) {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Feedback Type
             </label>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue"
-            >
-              {FEEDBACK_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue bg-white text-gray-700 text-sm transition-all"
+              >
+                <span className="truncate">{type}</span>
+                <ChevronDown
+                  className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${isTypeDropdownOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              <AnimatePresence>
+                {isTypeDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsTypeDropdownOpen(false)}
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden p-1.5"
+                    >
+                      {FEEDBACK_TYPES.map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => {
+                            setType(t);
+                            setIsTypeDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
+                            type === t
+                              ? "bg-brand-light text-brand-dark font-medium"
+                              : "text-gray-600 hover:bg-gray-50 hover:text-brand-blue"
+                          }`}
+                        >
+                          {t}
+                          {type === t && <Check className="w-4 h-4 shrink-0" />}
+                        </button>
+                      ))}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           {type === "Give feedback" && (
@@ -154,8 +194,12 @@ export default function FeedbackModal({ isOpen, onClose, user }) {
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Tell us what you think..."
               rows={4}
+              maxLength={500}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue resize-none"
             ></textarea>
+            <div className="text-right text-xs text-gray-400 mt-1">
+              {message.length}/500 characters
+            </div>
           </div>
 
           <div className="flex justify-end pt-2">

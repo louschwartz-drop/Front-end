@@ -187,7 +187,7 @@ export default async function ArticleDetailsPage({ params }) {
 
                         {/* Summary / Description (Lead style under title) */}
                         {article.description && (
-                            <p
+                            <div
                                 className="text-lg md:text-[22px] leading-normal md:leading-[1.45]"
                                 style={{
                                     color: "#5f5f5f",
@@ -197,7 +197,7 @@ export default async function ArticleDetailsPage({ params }) {
                                 }}
                             >
                                 {article.description}
-                            </p>
+                            </div>
                         )}
 
                         <hr className="border-gray-200 mb-6" />
@@ -218,7 +218,7 @@ export default async function ArticleDetailsPage({ params }) {
                                     </p>
                                     <span className="text-xs text-gray-300">·</span>
                                     <span className="text-xs text-gray-500">
-                                        Published {article.published ? new Date(article.published).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }) : "Recently"}
+                                        Published {article.published ? new Date(article.published).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" }) : "Recently"}
                                     </span>
                                     {article.isPlatform && (
                                         <span className="inline-flex items-center gap-1 text-[10px] text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-100 font-bold tracking-tight ml-2">
@@ -269,10 +269,10 @@ export default async function ArticleDetailsPage({ params }) {
                                             </div>
                                             <div className="text-xs text-gray-600 space-y-1 mt-2">
                                                 {displayData.productSummary?.useCase && (
-                                                    <p><span className="font-bold opacity-60">Use case:</span> {displayData.productSummary.useCase}</p>
+                                                    <div><span className="font-bold opacity-60">Use case:</span> {displayData.productSummary.useCase}</div>
                                                 )}
                                                 {displayData.productSummary?.positioning && (
-                                                    <p><span className="font-bold opacity-60">Positioning:</span> {displayData.productSummary.positioning}</p>
+                                                    <div><span className="font-bold opacity-60">Positioning:</span> {displayData.productSummary.positioning}</div>
                                                 )}
                                             </div>
                                         </div>
@@ -468,11 +468,20 @@ export default async function ArticleDetailsPage({ params }) {
                                                         ))}
                                                     </div>
                                                 )}
+                                                
+                                                <div className="flex items-center gap-1.5 mb-2 flex-shrink-0">
+                                                    <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center">
+                                                        <span className="text-white text-[7px] font-black">{rcInitials}</span>
+                                                    </div>
+                                                    <span className="text-[11px] text-gray-600 font-medium">
+                                                        {rcAuthor}
+                                                    </span>
+                                                </div>
 
                                                 {/* Meta */}
                                                 <div className="flex items-center gap-1.5 mb-2">
                                                     <span className="text-[10px] text-gray-400 font-medium">
-                                                        {rcDate ? new Date(rcDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "Recently"}
+                                                        {rcDate ? new Date(rcDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Recently"}
                                                     </span>
                                                 </div>
 
@@ -493,25 +502,17 @@ export default async function ArticleDetailsPage({ params }) {
 
                                                 {/* Excerpt */}
                                                 {rcSummary && (
-                                                    <p className="text-[12px] text-gray-500 line-clamp-2 leading-relaxed mb-3">
+                                                    <div className="text-[12px] text-gray-500 line-clamp-2 leading-relaxed mb-3">
                                                         {rcSummary}
-                                                    </p>
+                                                    </div>
                                                 )}
 
                                                 {/* Footer */}
                                                 <div className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between">
                                                     <span className="inline-flex items-center gap-1.5 text-primary font-bold text-[10px] uppercase tracking-widest">
-                                                        Read Article
+                                                        Read Press Release
                                                         <ArrowRightIcon className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                                                     </span>
-                                                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                                                        <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-wider">
-                                                            Published by : {rcAuthor}
-                                                        </span>
-                                                        <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center">
-                                                            <span className="text-white text-[7px] font-black">{rcInitials}</span>
-                                                        </div>
-                                                    </div>
                                                 </div>
                                             </div>
                                         </Link>
