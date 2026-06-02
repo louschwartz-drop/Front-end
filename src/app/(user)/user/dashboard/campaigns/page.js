@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
@@ -9,19 +9,24 @@ import { campaignService } from "@/lib/api/user/campaigns";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import PreviewPublishModal from "@/components/user/PreviewPublishModal";
 import FullArticlePreview from "@/components/user/FullArticlePreview";
+import DistributionStatusModal from "@/components/user/DistributionStatusModal";
 import userAuthStore from "@/store/userAuthStore";
 import Button from "@/components/ui/Button";
 import Pagination from "@/components/ui/Pagination";
 import { useSocket } from "@/context/SocketContext";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/Select";
+import { FileText, Link as LinkIcon, Mic, Video, UploadCloud } from "lucide-react";
 
 const VideoModal = dynamic(() => import("@/components/ui/VideoModal"), { ssr: false });
 
-export default function CampaignsPage() {
+function CampaignsPageContent() {
     const router = useRouter();
     const socket = useSocket();
+    const searchParams = useSearchParams();
     const [campaigns, setCampaigns] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("all");
+    const [generationType, setGenerationType] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -50,6 +55,11 @@ export default function CampaignsPage() {
     const [errorModal, setErrorModal] = useState({
         show: false,
         text: "",
+        title: "",
+    });
+    const [statusModal, setStatusModal] = useState({
+        show: false,
+        campaignId: null,
         title: "",
     });
 
@@ -111,9 +121,18 @@ export default function CampaignsPage() {
         }
     }, [socket]);
 
+    // Sync query status parameters with filter state
+    useEffect(() => {
+        const statusParam = searchParams.get("status");
+        if (statusParam) {
+            setFilter(statusParam);
+        }
+    }, [searchParams]);
+
     // Original effect for initial load and filter changes
     useEffect(() => {
         const timeoutId = setTimeout(() => {
+            setLoading(true);
             fetchCampaigns();
         }, searchTerm ? 500 : 0);
 
@@ -130,7 +149,7 @@ export default function CampaignsPage() {
             clearTimeout(timeoutId);
             window.removeEventListener('focus', handleFocus);
         };
-    }, [searchTerm, currentPage, filter]);
+    }, [searchTerm, currentPage, filter, generationType]);
 
     const fetchCampaigns = async (silent = false) => {
         try {
@@ -149,7 +168,8 @@ export default function CampaignsPage() {
                 page: currentPage,
                 limit: 12,
                 search: searchTerm,
-                status: filter
+                status: filter,
+                generationType
             });
 
             if (response.success) {
@@ -313,6 +333,14 @@ export default function CampaignsPage() {
         );
     }
 
+    const getSourceDetails = (campaign) => {
+        if (campaign.videoSource === "document_upload") return { label: "Doc Uploaded", icon: <FileText className="w-3.5 h-3.5" />, color: "text-green-600 bg-green-50 border-green-100" };
+        if (campaign.videoSource === "social_link") return { label: "From Social Link", icon: <LinkIcon className="w-3.5 h-3.5" />, color: "text-blue-600 bg-blue-50 border-blue-100" };
+        if (campaign.metadata?.sourceType === "record_audio") return { label: "Audio Record", icon: <Mic className="w-3.5 h-3.5" />, color: "text-purple-600 bg-purple-50 border-purple-100" };
+        if (campaign.metadata?.sourceType === "record_video") return { label: "Video Record", icon: <Video className="w-3.5 h-3.5" />, color: "text-red-600 bg-red-50 border-red-100" };
+        return { label: "Upload Video", icon: <UploadCloud className="w-3.5 h-3.5" />, color: "text-orange-600 bg-orange-50 border-orange-100" };
+    };
+
     return (
         <>
             <motion.div
@@ -325,7 +353,7 @@ export default function CampaignsPage() {
                     <div>
                         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">My Campaigns</h1>
                         <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                            Manage and track your video campaigns
+                            Manage and track your campaigns
                         </p>
                     </div>
                     <button
@@ -364,34 +392,59 @@ export default function CampaignsPage() {
                         </svg>
                     </div>
 
-                    <div className="flex gap-1 md:gap-2 border-b border-gray-200">
-                        {[
-                            { key: "all", label: "All", mobileLabel: "All" },
-                            { key: "active", label: "Active", mobileLabel: "Active" },
-                            { key: "finished", label: "Ready for Publish", mobileLabel: "Ready for Publish" },
-                            { key: "published", label: "Published", mobileLabel: "Published" },
-                            { key: "failed", label: "Failed", mobileLabel: "Failed" },
-                        ].map((tab) => (
-                            <button
-                                key={tab.key}
-                                onClick={() => {
-                                    setFilter(tab.key);
-                                    setCurrentPage(1);
-                                }}
-                                className={` px-1 md:px-4 py-2 font-medium transition-colors ${filter === tab.key
-                                    ? "text-primary border-b-2 border-primary"
-                                    : "text-gray-600 hover:text-gray-900"
-                                    }`}
-                            >
-                                <span className="hidden md:inline">{tab.label}</span>
-                                <span className="md:hidden text-[10px] sm:text-xs">{tab.mobileLabel}</span>
-                            </button>
-                        ))}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex gap-1 md:gap-2">
+                            {[
+                                { key: "all", label: "All", mobileLabel: "All" },
+                                { key: "active", label: "Active", mobileLabel: "Active" },
+                                { key: "finished", label: "Ready for Publish", mobileLabel: "Ready for Publish" },
+                                { key: "published", label: "Published", mobileLabel: "Published" },
+                                { key: "failed", label: "Failed", mobileLabel: "Failed" },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => {
+                                        setFilter(tab.key);
+                                        setCurrentPage(1);
+                                    }}
+                                    className={` px-1 md:px-4 py-2 font-medium transition-colors ${filter === tab.key
+                                        ? "text-primary border-b-2 border-primary"
+                                        : "text-gray-600 hover:text-gray-900"
+                                        }`}
+                                >
+                                    <span className="hidden md:inline">{tab.label}</span>
+                                    <span className="md:hidden text-[10px] sm:text-xs">{tab.mobileLabel}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="w-full md:w-[180px] pb-2 md:pb-0">
+                            <Select value={generationType} onValueChange={(val) => { setGenerationType(val); setCurrentPage(1); }}>
+                                <SelectTrigger className="w-full bg-white h-[42px] border-gray-200">
+                                    <SelectValue placeholder="All Sources" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Sources</SelectItem>
+                                    <SelectItem value="upload">Upload Video</SelectItem>
+                                    <SelectItem value="record_audio">Audio Record</SelectItem>
+                                    <SelectItem value="record_video">Video Record</SelectItem>
+                                    <SelectItem value="social_link">From Social Link</SelectItem>
+                                    <SelectItem value="document_upload">Doc Uploaded</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                 </div>
 
+                {/* Loading State Overlay or Skeleton (using current overlay pattern) */}
+                {loading && (
+                    <div className="flex items-center justify-center min-h-[60vh] w-full">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                    </div>
+                )}
+
                 {/* Campaigns Cards */}
-                {displayedCampaigns.length === 0 ? (
+                {!loading && displayedCampaigns.length === 0 ? (
                     <div className="text-center py-16 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                         <svg
                             className="mx-auto h-12 w-12 text-gray-400"
@@ -410,7 +463,7 @@ export default function CampaignsPage() {
                             No campaigns found
                         </h3>
                         <p className="mt-2 text-sm text-gray-500">
-                            Get started by creating your first campaign
+                            Get started by creating your campaign
                         </p>
                         <button
                             onClick={() => router.push("/user/dashboard/create")}
@@ -419,14 +472,14 @@ export default function CampaignsPage() {
                             Create New Campaign
                         </button>
                     </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                ) : !loading && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mt-4">
                         {displayedCampaigns.map((campaign) => (
                             <motion.div
                                 key={campaign._id}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 overflow-hidden"
+                                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 overflow-hidden flex flex-col h-full"
                             >
                                 {/* Card Header */}
                                 <div className="p-4 md:p-5 border-b border-gray-100">
@@ -489,9 +542,9 @@ export default function CampaignsPage() {
                                 </div>
 
                                 {/* Card Body */}
-                                <div className="p-4 md:p-5 space-y-3 md:space-y-4">
+                                <div className="p-4 md:p-5 flex-1 flex flex-col">
                                     {/* Transcript / Document Content */}
-                                    <div>
+                                    <div className="mb-4">
                                         <h4 className="text-[10px] md:text-xs font-medium text-gray-500 mb-2">
                                             {campaign.videoSource === "document_upload" ? "Document Content" : "Transcript"}
                                         </h4>
@@ -514,43 +567,31 @@ export default function CampaignsPage() {
                                         )}
                                     </div>
 
-                                    {/* Video URL - Hide for documents */}
-                                    {campaign.videoSource !== "document_upload" && (
-                                        <div>
-                                            <h4 className="text-[10px] md:text-xs font-medium text-gray-500 mb-2">
-                                                Video
-                                            </h4>
-                                            {campaign.videoUrl ? (
-                                                <button
-                                                    onClick={() => setVideoModal({ show: true, url: campaign.videoUrl })}
-                                                    className="text-sm text-primary hover:underline font-medium inline-flex items-center gap-1"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    View Video
-                                                </button>
-                                            ) : (
-                                                <span className="text-sm text-gray-400">No video available</span>
-                                            )}
-                                        </div>
-                                    )}
+                                </div>
 
-                                    {campaign.videoSource === "document_upload" && (
-                                        <div className="pt-1">
-                                            <div className="flex items-center gap-2 text-green-600 bg-green-50 px-2 py-1.5 rounded-md border border-green-100">
-                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                                <span className="text-[10px] font-bold uppercase tracking-tight">Article Generated from Document</span>
-                                            </div>
-                                        </div>
+                                {/* Source Details Badge & Video Button */}
+                                <div className="px-4 py-2.5 md:px-5 md:py-3 border-t border-gray-100 flex items-center justify-between shrink-0">
+                                    <div className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md border w-fit ${getSourceDetails(campaign).color}`}>
+                                        {getSourceDetails(campaign).icon}
+                                        <span className="text-[10px] font-bold uppercase tracking-tight">{getSourceDetails(campaign).label}</span>
+                                    </div>
+
+                                    {campaign.videoUrl && campaign.videoSource !== "document_upload" && (
+                                        <button
+                                            onClick={() => setVideoModal({ show: true, url: campaign.videoUrl, isAudio: campaign.metadata?.sourceType === 'record_audio' })}
+                                            className="text-[11px] md:text-xs text-primary hover:underline font-bold inline-flex items-center gap-1 bg-blue-50 px-2 py-1.5 rounded-md transition-colors"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {campaign.metadata?.sourceType === 'record_audio' ? 'Listen Audio' : 'View Media'}
+                                        </button>
                                     )}
                                 </div>
 
                                 {/* Card Footer - Actions */}
-                                <div className="px-4 py-3 md:px-5 md:py-4 bg-gray-50 border-t border-gray-100">
+                                <div className="px-4 py-3 md:px-5 md:py-4 bg-gray-50 border-t border-gray-100 mt-auto shrink-0">
                                     <div className="flex flex-wrap gap-2">
                                         {campaign.status === "finished" && (
                                             <button
@@ -564,14 +605,26 @@ export default function CampaignsPage() {
                                         )}
 
                                         {(campaign.status === "published" || campaign.status === "submitted_successfully") && (
-                                            <button
-                                                onClick={() =>
-                                                    setFullPreview({ show: true, campaign })
-                                                }
-                                                className="flex-1 px-3 py-2 bg-blue-100 text-blue-700 text-sm font-medium rounded hover:bg-blue-200 transition-colors"
-                                            >
-                                                Preview Article
-                                            </button>
+                                            <>
+                                                <button
+                                                    onClick={() =>
+                                                        setFullPreview({ show: true, campaign })
+                                                    }
+                                                    className="flex-1 px-3 py-2 bg-blue-100 text-blue-700 text-sm font-medium rounded hover:bg-blue-200 transition-colors"
+                                                >
+                                                    Preview Article
+                                                </button>
+                                                <button
+                                                    onClick={() => setStatusModal({ show: true, campaignId: campaign._id, title: campaign.article?.headline })}
+                                                    className="flex-1 px-3 py-2 bg-indigo-50 text-indigo-700 text-sm font-medium rounded border border-indigo-200 hover:bg-indigo-100 transition-colors flex justify-center items-center gap-1.5"
+                                                    title="Click to check live publication status"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    Check Status
+                                                </button>
+                                            </>
                                         )}
 
                                         {["uploading", "transcribing", "generating"].includes(
@@ -622,7 +675,7 @@ export default function CampaignsPage() {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="fixed inset-0 transition-opacity bg-black opacity-30"
+                                className="fixed inset-0 transition-opacity backdrop-blur-md bg-black/20"
                                 onClick={closeTranscriptModal}
                             />
 
@@ -858,9 +911,36 @@ export default function CampaignsPage() {
             {/* Inline Video Viewer */}
             <VideoModal
                 isOpen={videoModal.show}
-                onClose={() => setVideoModal({ show: false, url: "" })}
+                onClose={() => setVideoModal({ show: false, url: "", isAudio: false })}
                 videoUrl={videoModal.url}
+                isAudio={videoModal.isAudio}
+            />
+            {/* Live Distribution Status Modal */}
+            <DistributionStatusModal
+                isOpen={statusModal.show}
+                onClose={() => setStatusModal({ show: false, campaignId: null, title: "" })}
+                campaignId={statusModal.campaignId}
+                title={statusModal.title}
+                onStatusUpdate={(newStatus) => {
+                    setCampaigns(prev => prev.map(c =>
+                        c._id === statusModal.campaignId
+                            ? { ...c, distributionStatus: newStatus }
+                            : c
+                    ));
+                }}
             />
         </>
+    );
+}
+
+export default function CampaignsPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+        }>
+            <CampaignsPageContent />
+        </Suspense>
     );
 }

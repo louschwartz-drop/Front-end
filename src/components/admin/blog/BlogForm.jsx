@@ -37,7 +37,7 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
         status: "draft",
         authorName: "Hayden Hollis",
         authorRole: "Founder · DropPR.ai",
-        authorBio: "Hayden Hollis writes about digital media, advertising, SEO, AI search, and the future of online discovery. He is Chief Forensic Officer of Signal Law Group and has spent more than two decades across securities law, M&A, capital markets, and senior executive leadership in technology-driven businesses. He has led hundreds of transactions, raised more than $500 million in capital, and served as CEO, board chair, and senior executive across multiple market cycles.",
+        authorBio: "Hayden Hollis writes about content distribution, digital PR, SEO, AI search, and creator marketing. His work focuses on how brands and creators can extend the reach of their content beyond social media and improve visibility across search engines, news publishers, and AI-powered discovery platforms. He regularly covers strategies related to earned media, audience growth, authority building, and the evolving role of AI in online discovery.",
         authorImage: "",
         seo: {
             title: "",
@@ -96,7 +96,7 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
             status: data.status || "draft",
             authorName: data.authorName || "Hayden Hollis",
             authorRole: data.authorRole || "Founder · DropPR.ai",
-            authorBio: data.authorBio || "Hayden Hollis writes about digital media, advertising, SEO, AI search, and the future of online discovery. He is Chief Forensic Officer of Signal Law Group and has spent more than two decades across securities law, M&A, capital markets, and senior executive leadership in technology-driven businesses. He has led hundreds of transactions, raised more than $500 million in capital, and served as CEO, board chair, and senior executive across multiple market cycles.",
+            authorBio: data.authorBio || "Hayden Hollis writes about content distribution, digital PR, SEO, AI search, and creator marketing. His work focuses on how brands and creators can extend the reach of their content beyond social media and improve visibility across search engines, news publishers, and AI-powered discovery platforms. He regularly covers strategies related to earned media, audience growth, authority building, and the evolving role of AI in online discovery.",
             authorImage: data.authorImage || "",
             seo: {
                 title: data.metaTitle || data.title || "",

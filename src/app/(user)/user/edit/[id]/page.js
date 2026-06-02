@@ -694,7 +694,7 @@ export default function EditPage() {
       }
 
       const isSuccess = response?.data?.success !== false;
-      const isGoodScore = aiAnalysisData && aiAnalysisData.score > 70;
+      const isGoodScore = aiAnalysisData && aiAnalysisData.score >= 60;
 
       if (isSuccess && isGoodScore) {
         // Score is good, proceed directly to publish modal
@@ -702,7 +702,7 @@ export default function EditPage() {
       } else {
         // Score is low or filters failed, show the AI improvement modal
         setShowAiScoreSheet(true);
-        if (aiAnalysisData && aiAnalysisData.score <= 70) {
+        if (aiAnalysisData && aiAnalysisData.score < 60) {
           toast.warn("SEO Quality Score is too low for publication. Please improve the content.");
         } else if (!isSuccess) {
           toast.warn("Validation failed. Please review improvement suggestions.");
@@ -1208,19 +1208,19 @@ export default function EditPage() {
                 )}
 
                 {/* Score Meaning */}
-                <div className={`rounded-lg p-4 sm:p-5 border-2 ${aiAnalysis.score <= 70 ? "bg-red-50 border-red-200" : "bg-blue-50/50 border-blue-100"
+                <div className={`rounded-lg p-4 sm:p-5 border-2 ${aiAnalysis.score < 60 ? "bg-red-50 border-red-200" : "bg-blue-50/50 border-blue-100"
                   }`}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-[9px] font-bold text-gray-400">Analysis Summary</span>
-                    {aiAnalysis.score <= 70 && <span className="text-[9px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded shadow-sm">IMPROVEMENT REQUIRED</span>}
+                    {aiAnalysis.score < 60 && <span className="text-[9px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded shadow-sm">IMPROVEMENT REQUIRED</span>}
                   </div>
-                  <p className={`text-sm sm:text-[15px] leading-relaxed font-bold ${aiAnalysis.score <= 70 ? "text-red-900" : "text-blue-900 italic"}`}>
-                    {aiAnalysis.score <= 70
-                      ? `Publish Blocked: Your SEO Score is ${aiAnalysis.score}/100. SEO standards require a minimum score of 70.`
+                  <p className={`text-sm sm:text-[15px] leading-relaxed font-bold ${aiAnalysis.score < 60 ? "text-red-900" : "text-blue-900 italic"}`}>
+                    {aiAnalysis.score < 60
+                      ? `Publish Blocked: Your SEO Score is ${aiAnalysis.score}/100. SEO standards require a minimum score of 60.`
                       : `"${aiAnalysis.summary || "Your article meets the quality standards for publication."}"`
                     }
                   </p>
-                  {aiAnalysis.summary && aiAnalysis.score <= 70 && (
+                  {aiAnalysis.summary && aiAnalysis.score < 60 && (
                     <p className="mt-3 text-xs sm:text-sm text-red-700 font-medium leading-relaxed bg-white/50 p-3 rounded-lg border border-red-100">
                       <strong>Focus:</strong> {aiAnalysis.summary}
                     </p>
@@ -1263,7 +1263,7 @@ export default function EditPage() {
                   Edit
                 </button>
                 <div className="flex gap-2 sm:gap-3">
-                  {aiAnalysis.score <= 70 && (
+                  {aiAnalysis.score < 60 && (
                     <button
                       disabled={regenerating}
                       onClick={async () => {
@@ -1301,7 +1301,7 @@ export default function EditPage() {
                       {regenerating ? "Improving..." : "Improve with AI"}
                     </button>
                   )}
-                  {aiAnalysis.score > 70 && (
+                  {aiAnalysis.score >= 60 && (
                     <button
                       onClick={handleInitiatePublish}
                       className="bg-gray-900 text-white px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold hover:bg-gray-800 transition-all shadow-md"

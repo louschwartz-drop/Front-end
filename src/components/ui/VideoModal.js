@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 
-const VideoModal = ({ isOpen, onClose, videoUrl }) => {
+const VideoModal = ({ isOpen, onClose, videoUrl, isAudio = false }) => {
     if (!isOpen || !videoUrl) return null;
 
     // Helper to get embed URL based on platform
@@ -33,7 +33,7 @@ const VideoModal = ({ isOpen, onClose, videoUrl }) => {
     };
 
     const embedUrl = getEmbedUrl(videoUrl);
-    const directVideo = isDirectVideo(videoUrl);
+    const directVideo = isDirectVideo(videoUrl) || videoUrl.match(/\.webm$/i); // Catch webm generically
 
     return (
         <AnimatePresence>
@@ -49,11 +49,11 @@ const VideoModal = ({ isOpen, onClose, videoUrl }) => {
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.9, opacity: 0 }}
-                    className="relative bg-black w-full max-w-4xl h-[60vh] md:h-auto md:aspect-video rounded-2xl overflow-hidden shadow-2xl"
+                    className={`relative w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl ${isAudio ? 'h-[40vh] md:h-[300px] bg-white border border-gray-100' : 'h-[60vh] md:h-auto md:aspect-video bg-black'}`}
                 >
                     <button
                         onClick={onClose}
-                        className="absolute top-4 right-4 text-white/70 hover:text-white z-20 bg-black/20 hover:bg-black/40 p-2 rounded-full transition-all"
+                        className={`absolute top-4 right-4 z-20 p-2 rounded-full transition-all ${isAudio ? 'text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200' : 'text-white/70 hover:text-white bg-black/20 hover:bg-black/40'}`}
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -67,7 +67,21 @@ const VideoModal = ({ isOpen, onClose, videoUrl }) => {
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
                         />
-                    ) : directVideo ? (
+                    ) : isAudio ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-white p-6">
+                            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-8 shadow-sm border border-blue-100">
+                                <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                </svg>
+                            </div>
+                            <audio
+                                src={videoUrl}
+                                controls
+                                autoPlay
+                                className="w-full max-w-md shadow-sm rounded-full"
+                            />
+                        </div>
+                    ) : directVideo || videoUrl.match(/\.webm$/i) ? (
                         <video
                             src={videoUrl}
                             controls

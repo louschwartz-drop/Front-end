@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Eye, Link, CheckCircle, Search, Filter, ChevronLeft, ChevronRight, Play, Activity, Clock, Flag, ExternalLink, Globe, File, FileAudio, Video } from "lucide-react";
+import { FileText, Eye, Link, CheckCircle, Search, Filter, ChevronLeft, ChevronRight, Play, Activity, Clock, Flag, ExternalLink, Globe, File, FileAudio, Video, Mic, UploadCloud } from "lucide-react";
 import { toast } from "react-toastify";
 import Button from "@/components/ui/Button";
 import debounce from "lodash/debounce";
@@ -148,6 +148,15 @@ export default function UserPressReleasesPage() {
         return past.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     };
 
+    const getSourceDetails = (campaign) => {
+        if (!campaign) return null;
+        if (campaign.videoSource === "document_upload") return { label: "Doc Uploaded", icon: <FileText className="w-3 h-3" />, color: "text-green-600 bg-green-50 border-green-100" };
+        if (campaign.videoSource === "social_link") return { label: "From Social Link", icon: <Link className="w-3 h-3" />, color: "text-blue-600 bg-blue-50 border-blue-100" };
+        if (campaign.metadata?.sourceType === "record_audio") return { label: "Audio Record", icon: <Mic className="w-3 h-3" />, color: "text-purple-600 bg-purple-50 border-purple-100" };
+        if (campaign.metadata?.sourceType === "record_video") return { label: "Video Record", icon: <Video className="w-3 h-3" />, color: "text-red-600 bg-red-50 border-red-100" };
+        return { label: "Upload Video", icon: <UploadCloud className="w-3 h-3" />, color: "text-orange-600 bg-orange-50 border-orange-100" };
+    };
+
     // Removed client-side filter logic since filtering is now server-side.
 
     return (
@@ -202,9 +211,11 @@ export default function UserPressReleasesPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Sources</SelectItem>
-                                <SelectItem value="social_link">Social Link</SelectItem>
-                                <SelectItem value="document_upload">Document Upload</SelectItem>
-                                <SelectItem value="local_upload">Local Video/Audio</SelectItem>
+                                <SelectItem value="upload">Upload Video</SelectItem>
+                                <SelectItem value="record_audio">Audio Record</SelectItem>
+                                <SelectItem value="record_video">Video Record</SelectItem>
+                                <SelectItem value="social_link">From Social Link</SelectItem>
+                                <SelectItem value="document_upload">Doc Uploaded</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -270,10 +281,10 @@ export default function UserPressReleasesPage() {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    setVideoModal({ show: true, url: release.campaign.videoUrl });
+                                                    setVideoModal({ show: true, url: release.campaign.videoUrl, isAudio: release.campaign.metadata?.sourceType === 'record_audio' });
                                                 }}
                                                 className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                                                title="View Source Video"
+                                                title={release.campaign.metadata?.sourceType === 'record_audio' ? "Listen to Audio" : "View Source Video"}
                                             >
                                                 <Play className="w-4 h-4 md:w-6 md:h-6 text-white fill-current" />
                                             </button>
@@ -284,10 +295,10 @@ export default function UserPressReleasesPage() {
                                             {release.campaign?.article?.headline || "Untitled Press Release"}
                                         </h3>
                                         <div className="flex flex-wrap items-center gap-x-3 md:gap-x-4 gap-y-2 text-[10px] md:text-sm">
-                                            {release.campaign?.videoSource && (
-                                                <span className="flex items-center gap-1.5 font-medium text-[10px] md:text-[11px] text-slate-700 bg-slate-50 px-2 md:px-2.5 py-1 rounded-md border border-slate-200 shadow-sm">
-                                                    {release.campaign.videoSource === 'social_link' ? <Globe className="w-3 h-3 text-slate-500" /> : release.campaign.videoSource === 'document_upload' ? <File className="w-3 h-3 text-slate-500" /> : release.campaign.audioUrl ? <FileAudio className="w-3 h-3 text-slate-500" /> : <Video className="w-3 h-3 text-slate-500" />}
-                                                    {release.campaign.videoSource === 'social_link' ? 'Article Generated from Social Link' : release.campaign.videoSource === 'document_upload' ? 'Article Generated from Document' : release.campaign.audioUrl ? 'Article Generated from Audio' : 'Article Generated from Video'}
+                                            {release.campaign && getSourceDetails(release.campaign) && (
+                                                <span className={`flex items-center gap-1.5 font-bold uppercase tracking-tight text-[8px] md:text-[10px] px-2 md:px-2.5 py-0.5 md:py-1 rounded-full border ${getSourceDetails(release.campaign).color}`}>
+                                                    {getSourceDetails(release.campaign).icon}
+                                                    {getSourceDetails(release.campaign).label}
                                                 </span>
                                             )}
                                             <div className="flex items-center gap-2">
@@ -354,12 +365,12 @@ export default function UserPressReleasesPage() {
 
                                         {release.campaign?.videoUrl ? (
                                             <button
-                                                onClick={() => setVideoModal({ show: true, url: release.campaign.videoUrl })}
+                                                onClick={() => setVideoModal({ show: true, url: release.campaign.videoUrl, isAudio: release.campaign.metadata?.sourceType === 'record_audio' })}
                                                 className="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all text-gray-700 flex items-center gap-1.5 border border-gray-200 ml-auto"
                                                 title="View Source Link"
                                             >
-                                                <ExternalLink className="w-3.5 h-3.5" />
-                                                <span className="text-[10px] font-bold whitespace-nowrap">Source</span>
+                                                {release.campaign.metadata?.sourceType === 'record_audio' ? <Mic className="w-3.5 h-3.5" /> : <ExternalLink className="w-3.5 h-3.5" />}
+                                                <span className="text-[10px] font-bold whitespace-nowrap">{release.campaign.metadata?.sourceType === 'record_audio' ? 'Listen Audio' : 'Source'}</span>
                                             </button>
                                         ) : <div className="flex-1" />}
                                     </div>
@@ -387,12 +398,12 @@ export default function UserPressReleasesPage() {
                                         {/* Desktop-Only Source Button */}
                                         {release.campaign?.videoUrl && (
                                             <button
-                                                onClick={() => setVideoModal({ show: true, url: release.campaign.videoUrl })}
+                                                onClick={() => setVideoModal({ show: true, url: release.campaign.videoUrl, isAudio: release.campaign.metadata?.sourceType === 'record_audio' })}
                                                 className="hidden md:flex px-2 md:px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all text-gray-700 hover:text-gray-900 items-center gap-1.5 border border-gray-200"
                                                 title="View Source Link"
                                             >
-                                                <ExternalLink className="w-4 h-4 md:w-4 md:h-4" />
-                                                <span className="text-xs font-bold whitespace-nowrap">Source</span>
+                                                {release.campaign.metadata?.sourceType === 'record_audio' ? <Mic className="w-4 h-4 md:w-4 md:h-4" /> : <ExternalLink className="w-4 h-4 md:w-4 md:h-4" />}
+                                                <span className="text-xs font-bold whitespace-nowrap">{release.campaign.metadata?.sourceType === 'record_audio' ? 'Listen Audio' : 'Source'}</span>
                                             </button>
                                         )}
 
@@ -456,8 +467,9 @@ export default function UserPressReleasesPage() {
             {/* Video Modal */}
             <VideoModal
                 isOpen={videoModal.show}
-                onClose={() => setVideoModal({ show: false, url: "" })}
+                onClose={() => setVideoModal({ show: false, url: "", isAudio: false })}
                 videoUrl={videoModal.url}
+                isAudio={videoModal.isAudio}
             />
         </div >
     );

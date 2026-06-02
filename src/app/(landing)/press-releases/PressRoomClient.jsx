@@ -381,15 +381,6 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                                             <span className="bg-white/90 backdrop-blur-md text-brand-dark text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
                                                 {article.author || "Industry News"}
                                             </span>
-                                            {article.country && (
-                                                <span className="bg-white/90 backdrop-blur-md text-brand-dark text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
-                                                    {(() => {
-                                                        const code = Array.isArray(article.country) ? article.country[0] : article.country;
-                                                        const match = COUNTRIES.find(c => c.code.toLowerCase() === String(code).toLowerCase());
-                                                        return match ? match.name : code;
-                                                    })()}
-                                                </span>
-                                            )}
                                         </div>
                                     </div>
 
