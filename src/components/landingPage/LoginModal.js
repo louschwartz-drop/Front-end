@@ -24,7 +24,8 @@ import {
   Lock,
   ArrowRight,
   Eye,
-  EyeOff
+  EyeOff,
+  User
 } from "lucide-react";
 
 export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect = true }) {
@@ -238,9 +239,9 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[92vw] max-w-[400px] md:w-[85vw] md:max-w-[800px] p-0 overflow-hidden bg-white border-none shadow-2xl max-h-[95vh] sm:max-h-[80vh]">
+      <DialogContent className="w-[92vw] max-w-[400px] md:w-[85vw] md:max-w-[800px] p-0 overflow-hidden bg-white border-none shadow-2xl max-h-[95vh] sm:max-h-[80vh] flex flex-col">
         <DialogTitle className="sr-only">Login or Create Account</DialogTitle>
-        <div className="flex flex-col md:flex-row h-full min-h-0 md:min-h-[550px]">
+        <div className="flex flex-col md:flex-row flex-1 min-h-0 md:min-h-[550px]">
 
           {/* Left Column: Branding & Features - HIDDEN ON MOBILE */}
           <div className="hidden md:flex md:w-[40%] bg-slate-900 p-6 text-white flex-col justify-between relative overflow-hidden">
@@ -429,7 +430,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
                       onChange={(e) => setName(e.target.value)}
                       required
                     />
-                    <ArrowRight className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
+                    <User className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
                   </div>
                 </div>
               )}
@@ -508,7 +509,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
                     required
                   />
                   <label htmlFor="terms" className="text-[10px] text-slate-500 leading-snug">
-                    By checking this, you agree to our <Link href="/terms" className="text-primary hover:underline">Terms & Conditions</Link> and <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
+                    By checking this, you agree to our <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms & Conditions</Link> and <Link href="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>.
                   </label>
                 </div>
               )}

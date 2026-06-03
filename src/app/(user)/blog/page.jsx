@@ -77,34 +77,37 @@ export default function BlogListing() {
         fetchCategories();
     }, []);
 
+    // Fetch blogs when page or filters change (debounced)
     useEffect(() => {
-        fetchBlogs();
-    }, [pagination.page, selectedCategory, sortBy]);
+        const fetchBlogs = async () => {
+            try {
+                const data = await blogService.getPublishedBlogs({
+                    page: pagination.page,
+                    limit: pagination.limit,
+                    search,
+                    category: selectedCategory === "all" ? undefined : selectedCategory,
+                    sort: sortBy === "latest" ? undefined : sortBy
+                });
+                setBlogs(data.data);
+                setPagination(prev => ({ ...prev, total: data.pagination.total }));
+            } catch (error) {
+                console.error("Failed to fetch blogs", error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const fetchBlogs = async () => {
-        try {
-            setLoading(true);
-            const data = await blogService.getPublishedBlogs({
-                page: pagination.page,
-                limit: pagination.limit,
-                search,
-                category: selectedCategory === "all" ? undefined : selectedCategory,
-                sort: sortBy === "latest" ? undefined : sortBy
-            });
-            setBlogs(data.data);
-            setPagination(prev => ({ ...prev, total: data.pagination.total }));
-        } catch (error) {
-            console.error("Failed to fetch blogs", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+        setLoading(true);
+        setBlogs([]);
+        
+        const timeoutId = setTimeout(fetchBlogs, 500);
+        return () => clearTimeout(timeoutId);
+    }, [pagination.page, search, selectedCategory, sortBy]);
 
-    const handleSearch = (e) => {
-        e.preventDefault();
+    // Reset pagination when filters change
+    useEffect(() => {
         setPagination(prev => ({ ...prev, page: 1 }));
-        fetchBlogs();
-    };
+    }, [search, selectedCategory, sortBy]);
 
     return (
         <div className="min-h-screen bg-[#fafafa] selection:bg-primary/10">
@@ -135,7 +138,7 @@ export default function BlogListing() {
 
                         {/* Search & Double Filters Container */}
                         <div className="max-w-5xl mx-auto w-full bg-white/5 backdrop-blur-2xl p-4 rounded-[2.5rem] border border-white/10 shadow-2xl">
-                            <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-3">
+                            <div className="flex flex-col md:flex-row gap-3">
                                 {/* Search Input */}
                                 <div className="relative flex-grow group">
                                     <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/40 group-hover:text-primary transition-colors w-5 h-5" />
@@ -169,11 +172,7 @@ export default function BlogListing() {
                                         label="Sort By"
                                     />
                                 </div>
-
-                                <button type="submit" className="h-14 px-8 bg-primary text-white font-bold rounded-2xl hover:shadow-xl transition-all scale-100 hover:scale-105 shrink-0">
-                                    Search
-                                </button>
-                            </form>
+                            </div>
                         </div>
                     </div>
                 </section>

@@ -8,6 +8,7 @@ import { MessageSquare } from "lucide-react";
 import ConfirmationModal from "../ui/ConfirmationModal";
 import FeedbackModal from "./FeedbackModal";
 import userAuthStore from "@/store/userAuthStore";
+import Tooltip from "@/components/ui/Tooltip";
 
 export default function Header({ setMobileMenuOpen }) {
   const router = useRouter();
@@ -46,51 +47,32 @@ export default function Header({ setMobileMenuOpen }) {
         
         {/* Left Side: Logo */}
         <div className="flex items-center">
-          <Link href={"/"} className="shrink-0">
+          <Link href={"/"} className="shrink-0 flex flex-col justify-center">
             <Image
               src="/logo.png"
               alt="DropPR.ai"
               width={140}
               height={42}
-              className="h-10 md:h-14 w-auto object-contain"
+              className="h-9 md:h-12 w-auto object-contain"
               priority
             />
+            <span className="text-[10px] text-slate-500 font-medium tracking-wide leading-none pl-1 mt-1">AI-Powered Press Releases</span>
           </Link>
         </div>
 
         {/* Right Side: Grouped Actions */}
         <div className="flex items-center gap-1.5 sm:gap-3">
           {/* Feedback Icon */}
-          <button
-            onClick={() => setIsFeedbackModalOpen(true)}
-            className="flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 p-2 sm:px-4 sm:py-2.5 rounded-full sm:rounded-lg border border-gray-100 transition-all duration-200 shadow-xs hover:shadow-sm active:scale-95 group"
-            title="Feedback"
-          >
-            <MessageSquare className="w-5 h-5 group-hover:text-blue-600 transition-colors" />
-            <span className="hidden sm:block ml-2 text-sm font-semibold">Feedback</span>
-          </button>
-
-          {/* Logout Icon */}
-          <button
-            onClick={handleLogoutClick}
-            className="flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-600 p-2 sm:px-4 sm:py-2.5 rounded-full sm:rounded-lg border border-blue-100 transition-all duration-200 shadow-xs hover:shadow-sm active:scale-95 group"
-            title="Logout"
-          >
-            <svg
-              className="w-5 h-5 group-hover:text-blue-700 transition-colors"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <Tooltip text="Submit your feedback" position="bottom">
+            <button
+              onClick={() => setIsFeedbackModalOpen(true)}
+              className="flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 p-2 sm:px-4 sm:py-2.5 rounded-full sm:rounded-lg border border-gray-100 transition-all duration-200 shadow-xs hover:shadow-sm active:scale-95 group"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-            <span className="hidden sm:block ml-2 text-sm font-semibold">Logout</span>
-          </button>
+              <MessageSquare className="w-5 h-5 group-hover:text-blue-600 transition-colors" />
+              <span className="hidden sm:block ml-2 text-sm font-semibold">Provide Feedback</span>
+            </button>
+          </Tooltip>
+
 
           {/* Mobile Menu Button - Hamburger */}
           <button

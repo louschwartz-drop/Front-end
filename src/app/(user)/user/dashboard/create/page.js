@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import Tooltip from "@/components/ui/Tooltip";
 
 import Button from "@/components/ui/Button";
 import { toast } from "react-toastify";
@@ -416,192 +417,202 @@ export default function CreateCampaignPage() {
             Choose Upload Method
           </label>
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-            <motion.button
-              type="button"
-              disabled={isRecording}
-              onClick={() => {
-                setUploadMethod("upload");
-                setVideoFile(null);
-                setDocumentFile(null);
-                setVideoLink("");
-                stopRecording();
-              }}
-              whileHover={!isRecording ? { scale: 1.02 } : {}}
-              whileTap={!isRecording ? { scale: 0.98 } : {}}
-              className={`p-2.5 sm:p-4 border-2 rounded-lg transition-all ${uploadMethod === "upload"
-                ? "border-primary bg-blue-50"
-                : "border-gray-300 hover:border-gray-400"
-                } ${isRecording ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              <div className="flex items-center gap-2 sm:gap-3">
-                <svg
-                  className="w-5 h-5 sm:w-6 sm:h-6 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
-                </svg>
-                <div className="text-left">
-                  <p className="text-sm sm:text-base font-bold text-gray-900">Upload</p>
-                  <p className="text-[9px] sm:text-[10px] text-gray-500 whitespace-nowrap">Video files</p>
+            <Tooltip text="Upload a video file" position="top">
+              <motion.button
+                type="button"
+                disabled={isRecording}
+                onClick={() => {
+                  setUploadMethod("upload");
+                  setVideoFile(null);
+                  setDocumentFile(null);
+                  setVideoLink("");
+                  stopRecording();
+                }}
+                whileHover={!isRecording ? { scale: 1.02 } : {}}
+                whileTap={!isRecording ? { scale: 0.98 } : {}}
+                className={`p-2.5 sm:p-4 border-2 rounded-lg transition-all ${uploadMethod === "upload"
+                  ? "border-primary bg-blue-50"
+                  : "border-gray-300 hover:border-gray-400"
+                  } ${isRecording ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <svg
+                    className="w-5 h-5 sm:w-6 sm:h-6 text-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
+                  </svg>
+                  <div className="text-left">
+                    <p className="text-sm sm:text-base font-bold text-gray-900">Upload</p>
+                    <p className="text-[9px] sm:text-[10px] text-gray-500 whitespace-nowrap">Video files</p>
+                  </div>
                 </div>
-              </div>
-            </motion.button>
+              </motion.button>
+            </Tooltip>
 
-            <motion.button
-              type="button"
-              disabled={isRecording}
-              onClick={() => {
-                setUploadMethod("document_upload");
-                setVideoFile(null);
-                setDocumentFile(null);
-                setVideoLink("");
-                stopRecording();
-              }}
-              whileHover={!isRecording ? { scale: 1.02 } : {}}
-              whileTap={!isRecording ? { scale: 0.98 } : {}}
-              className={`p-2.5 sm:p-4 border-2 rounded-lg transition-all ${uploadMethod === "document_upload"
-                ? "border-primary bg-blue-50"
-                : "border-gray-300 hover:border-gray-400"
-                } ${isRecording ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              <div className="flex items-center gap-2 sm:gap-3">
-                <svg
-                  className="w-5 h-5 sm:w-6 sm:h-6 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <div className="text-left">
-                  <p className="text-sm sm:text-base font-bold text-gray-900">Document</p>
-                  <p className="text-[9px] sm:text-[10px] text-gray-500 whitespace-nowrap">PDF or Word</p>
+            <Tooltip text="Upload a PDF or Word document" position="top">
+              <motion.button
+                type="button"
+                disabled={isRecording}
+                onClick={() => {
+                  setUploadMethod("document_upload");
+                  setVideoFile(null);
+                  setDocumentFile(null);
+                  setVideoLink("");
+                  stopRecording();
+                }}
+                whileHover={!isRecording ? { scale: 1.02 } : {}}
+                whileTap={!isRecording ? { scale: 0.98 } : {}}
+                className={`p-2.5 sm:p-4 border-2 rounded-lg transition-all ${uploadMethod === "document_upload"
+                  ? "border-primary bg-blue-50"
+                  : "border-gray-300 hover:border-gray-400"
+                  } ${isRecording ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <svg
+                    className="w-5 h-5 sm:w-6 sm:h-6 text-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <div className="text-left">
+                    <p className="text-sm sm:text-base font-bold text-gray-900">Document</p>
+                    <p className="text-[9px] sm:text-[10px] text-gray-500 whitespace-nowrap">PDF or Word</p>
+                  </div>
                 </div>
-              </div>
-            </motion.button>
+              </motion.button>
+            </Tooltip>
 
-            <motion.button
-              type="button"
-              disabled={isRecording}
-              onClick={() => {
-                setUploadMethod("link");
-                setVideoFile(null);
-                setVideoLink("");
-                stopRecording();
-              }}
-              whileHover={!isRecording ? { scale: 1.02 } : {}}
-              whileTap={!isRecording ? { scale: 0.98 } : {}}
-              className={`p-2.5 sm:p-4 border-2 rounded-lg transition-all ${uploadMethod === "link"
-                ? "border-primary bg-blue-50"
-                : "border-gray-300 hover:border-gray-400"
-                } ${isRecording ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              <div className="flex items-center gap-2 sm:gap-3">
-                <svg
-                  className="w-5 h-5 sm:w-6 sm:h-6 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                  />
-                </svg>
-                <div className="text-left">
-                  <p className="text-sm sm:text-base font-bold text-gray-900">Link</p>
-                  <p className="text-[9px] sm:text-[10px] text-gray-500 whitespace-nowrap">Social URLs</p>
+            <Tooltip text="Provide a social media link" position="top">
+              <motion.button
+                type="button"
+                disabled={isRecording}
+                onClick={() => {
+                  setUploadMethod("link");
+                  setVideoFile(null);
+                  setVideoLink("");
+                  stopRecording();
+                }}
+                whileHover={!isRecording ? { scale: 1.02 } : {}}
+                whileTap={!isRecording ? { scale: 0.98 } : {}}
+                className={`p-2.5 sm:p-4 border-2 rounded-lg transition-all ${uploadMethod === "link"
+                  ? "border-primary bg-blue-50"
+                  : "border-gray-300 hover:border-gray-400"
+                  } ${isRecording ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <svg
+                    className="w-5 h-5 sm:w-6 sm:h-6 text-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                    />
+                  </svg>
+                  <div className="text-left">
+                    <p className="text-sm sm:text-base font-bold text-gray-900">Link</p>
+                    <p className="text-[9px] sm:text-[10px] text-gray-500 whitespace-nowrap">Social URLs</p>
+                  </div>
                 </div>
-              </div>
-            </motion.button>
+              </motion.button>
+            </Tooltip>
 
-            <motion.button
-              type="button"
-              disabled={isRecording}
-              onClick={() => {
-                setUploadMethod("record_audio");
-                setVideoFile(null);
-                setVideoLink("");
-                stopRecording();
-              }}
-              whileHover={!isRecording ? { scale: 1.02 } : {}}
-              whileTap={!isRecording ? { scale: 0.98 } : {}}
-              className={`p-2.5 sm:p-4 border-2 rounded-lg transition-all ${uploadMethod === "record_audio"
-                ? "border-primary bg-blue-50"
-                : "border-gray-300 hover:border-gray-400"
-                } ${isRecording ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              <div className="flex items-center gap-2 sm:gap-3">
-                <svg
-                  className="w-5 h-5 sm:w-6 sm:h-6 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                  />
-                </svg>
-                <div className="text-left">
-                  <p className="text-sm sm:text-base font-bold text-gray-900">Audio</p>
-                  <p className="text-[9px] sm:text-[10px] text-gray-500 whitespace-nowrap">Direct mic</p>
+            <Tooltip text="Record direct audio" position="top">
+              <motion.button
+                type="button"
+                disabled={isRecording}
+                onClick={() => {
+                  setUploadMethod("record_audio");
+                  setVideoFile(null);
+                  setVideoLink("");
+                  stopRecording();
+                }}
+                whileHover={!isRecording ? { scale: 1.02 } : {}}
+                whileTap={!isRecording ? { scale: 0.98 } : {}}
+                className={`p-2.5 sm:p-4 border-2 rounded-lg transition-all ${uploadMethod === "record_audio"
+                  ? "border-primary bg-blue-50"
+                  : "border-gray-300 hover:border-gray-400"
+                  } ${isRecording ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <svg
+                    className="w-5 h-5 sm:w-6 sm:h-6 text-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                    />
+                  </svg>
+                  <div className="text-left">
+                    <p className="text-sm sm:text-base font-bold text-gray-900">Audio</p>
+                    <p className="text-[9px] sm:text-[10px] text-gray-500 whitespace-nowrap">Direct mic</p>
+                  </div>
                 </div>
-              </div>
-            </motion.button>
+              </motion.button>
+            </Tooltip>
 
-            <motion.button
-              type="button"
-              disabled={isRecording}
-              onClick={() => {
-                setUploadMethod("record_video");
-                setVideoFile(null);
-                setVideoLink("");
-                stopRecording();
-              }}
-              whileHover={!isRecording ? { scale: 1.02 } : {}}
-              whileTap={!isRecording ? { scale: 0.98 } : {}}
-              className={`p-2.5 sm:p-4 border-2 rounded-lg transition-all ${uploadMethod === "record_video"
-                ? "border-primary bg-blue-50"
-                : "border-gray-300 hover:border-gray-400"
-                } ${isRecording ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              <div className="flex items-center gap-2 sm:gap-3">
-                <svg
-                  className="w-5 h-5 sm:w-6 sm:h-6 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
-                </svg>
-                <div className="text-left">
-                  <p className="text-sm sm:text-base font-bold text-gray-900">Video</p>
-                  <p className="text-[9px] sm:text-[10px] text-gray-500 whitespace-nowrap">Direct camera</p>
+            <Tooltip text="Record direct video" position="top">
+              <motion.button
+                type="button"
+                disabled={isRecording}
+                onClick={() => {
+                  setUploadMethod("record_video");
+                  setVideoFile(null);
+                  setVideoLink("");
+                  stopRecording();
+                }}
+                whileHover={!isRecording ? { scale: 1.02 } : {}}
+                whileTap={!isRecording ? { scale: 0.98 } : {}}
+                className={`p-2.5 sm:p-4 border-2 rounded-lg transition-all ${uploadMethod === "record_video"
+                  ? "border-primary bg-blue-50"
+                  : "border-gray-300 hover:border-gray-400"
+                  } ${isRecording ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <svg
+                    className="w-5 h-5 sm:w-6 sm:h-6 text-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <div className="text-left">
+                    <p className="text-sm sm:text-base font-bold text-gray-900">Video</p>
+                    <p className="text-[9px] sm:text-[10px] text-gray-500 whitespace-nowrap">Direct camera</p>
+                  </div>
                 </div>
-              </div>
-            </motion.button>
+              </motion.button>
+            </Tooltip>
           </div>
 
         </motion.div>
@@ -1117,13 +1128,15 @@ export default function CreateCampaignPage() {
 
         <div className="flex justify-start pt-4 border-t border-gray-200">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              type="submit"
-              disabled={uploading}
-              className="px-6 py-3 sm:px-10 sm:py-4 bg-[#0A5CFF] text-white rounded-lg hover:bg-blue-700 font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm sm:text-base whitespace-nowrap"
-            >
-              {uploading ? "Creating Campaign..." : "Create Campaign"}
-            </Button>
+            <Tooltip text="Submit to generate your PR campaign" position="top">
+              <Button
+                type="submit"
+                disabled={uploading}
+                className="px-6 py-3 sm:px-10 sm:py-4 bg-[#0A5CFF] text-white rounded-lg hover:bg-blue-700 font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm sm:text-base whitespace-nowrap"
+              >
+                {uploading ? "Creating Campaign..." : "Create Campaign"}
+              </Button>
+            </Tooltip>
           </motion.div>
         </div>
       </motion.form>

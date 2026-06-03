@@ -21,6 +21,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import Button from "@/components/ui/Button";
+import Tooltip from "@/components/ui/Tooltip";
 import Pagination from "@/components/ui/Pagination";
 
 const PLAN_TYPES = [
@@ -126,13 +127,16 @@ export default function PaymentHistoryPage() {
                 <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full md:w-auto">
                     {/* Manage Cards Button */}
                     <Link href="/user/dashboard/profile" className="w-full md:w-auto order-first md:order-none mb-2 md:mb-0">
+                        <Tooltip text="Manage payment methods" position="top">
                         <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-bold shadow-sm hover:bg-blue-100 transition-colors border border-blue-100">
                             <CreditCard className="w-4 h-4" /> Manage Cards
                         </button>
+                        </Tooltip>
                     </Link>
 
                     {/* Plan Filter Dropdown */}
                     <div className="relative flex-1 md:w-48">
+                        <Tooltip text="Filter by plan" position="top">
                         <button
                             type="button"
                             onClick={() => setIsPlanDropdownOpen(!isPlanDropdownOpen)}
@@ -148,6 +152,7 @@ export default function PaymentHistoryPage() {
                                 className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${isPlanDropdownOpen ? "rotate-180" : ""}`}
                             />
                         </button>
+                        </Tooltip>
 
                         <AnimatePresence>
                             {isPlanDropdownOpen && (
@@ -211,6 +216,7 @@ export default function PaymentHistoryPage() {
                         </div>
                     </div>
 
+                    <Tooltip text="Filter by date" position="top">
                     <button
                         onClick={openDateModal}
                         className={`md:hidden flex items-center justify-center p-1.5 rounded-md border transition-all shadow-sm ${
@@ -224,8 +230,10 @@ export default function PaymentHistoryPage() {
                             <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-600 rounded-full border border-white" />
                         )}
                     </button>
+                    </Tooltip>
 
                     {(filterPlan || dateRange.startDate || dateRange.endDate) && (
+                        <Tooltip text="Clear active filters" position="top">
                         <button
                             onClick={clearFilters}
                             className="hidden xs:flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-red-500 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100 shrink-0"
@@ -233,6 +241,7 @@ export default function PaymentHistoryPage() {
                             <X className="w-3.5 h-3.5" />
                             Clear
                         </button>
+                        </Tooltip>
                     )}
                 </div>
             </div>
@@ -372,12 +381,14 @@ export default function PaymentHistoryPage() {
                             >
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-lg font-bold text-gray-900">Filter by Date</h3>
+                                    <Tooltip text="Close filter" position="left">
                                     <button 
                                         onClick={closeDateModal}
                                         className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
                                     >
                                         <X className="w-5 h-5 text-gray-400" />
                                     </button>
+                                    </Tooltip>
                                 </div>
 
                                 <div className="space-y-4">
@@ -411,18 +422,22 @@ export default function PaymentHistoryPage() {
                                     </div>
 
                                     <div className="pt-2 flex gap-3">
+                                        <Tooltip text="Reset dates" position="top">
                                         <button
                                             onClick={clearFilters}
                                             className="flex-1 px-4 py-2 border border-gray-100 text-gray-500 text-xs font-semibold rounded-md hover:bg-gray-50 transition-all"
                                         >
                                             Reset
                                         </button>
+                                        </Tooltip>
+                                        <Tooltip text="Apply selected dates" position="top">
                                         <button
                                             onClick={handleApplyDateFilter}
                                             className="flex-2 px-6 py-2 bg-blue-600 text-white text-xs font-semibold rounded-md hover:bg-blue-700 shadow-md shadow-blue-500/10 transition-all"
                                         >
                                             Apply Filter
                                         </button>
+                                        </Tooltip>
                                     </div>
                                 </div>
                             </motion.div>

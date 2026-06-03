@@ -1,5 +1,7 @@
 'use client';
 
+import { forwardRef } from 'react';
+
 /**
  * Reusable Button Component
  * @param {Object} props
@@ -13,7 +15,7 @@
  * @param {string} props.type - Button type: 'button', 'submit', 'reset'
  * @param {string} props.className - Additional CSS classes
  */
-export default function Button({
+const Button = forwardRef(({
   children,
   variant = 'primary',
   size = 'md',
@@ -23,7 +25,8 @@ export default function Button({
   onClick,
   type = 'button',
   className = '',
-}) {
+  ...props
+}, ref) => {
   const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variants = {
@@ -43,11 +46,13 @@ export default function Button({
   
   return (
     <button
+      ref={ref}
       type={type}
       onClick={onClick}
       disabled={disabled || loading}
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${widthClass} ${className} cursor-pointer`}
       style={{ cursor: (disabled || loading) ? 'not-allowed' : 'pointer' }}
+      {...props}
     >
       {loading ? (
         <>
@@ -78,5 +83,8 @@ export default function Button({
       )}
     </button>
   );
-}
+});
+
+Button.displayName = 'Button';
+export default Button;
 

@@ -136,9 +136,10 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
         }
 
         updateUrl();
+        setLoading(true);
+        setArticles([]);
 
         const resetAndFetch = async () => {
-            setLoading(true);
             setPage(1);
             setHasMore(true);
             try {
@@ -255,7 +256,7 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
     return (
         <>
             {/* Integrated Hero & Filter Section */}
-            <section className="relative pt-36 pb-28 bg-black overflow-hidden">
+            <section className="relative pt-24 pb-12 md:pt-36 md:pb-28 bg-black overflow-hidden">
                 {/* Background Image with Black Tint */}
                 <div className="absolute inset-0 z-0">
                     <img
@@ -267,24 +268,24 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                 </div>
 
                 <div className="container mx-auto px-4 relative z-10 text-center">
-                    <div className="max-w-3xl mx-auto mb-10">
-                        <h1 className="text-4xl md:text-6xl font-bold text-white mb-5 tracking-tight leading-tight" style={{ fontFamily: "var(--font-serif, Georgia, serif)" }}>
+                    <div className="max-w-3xl mx-auto mb-6 md:mb-10">
+                        <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-5 tracking-tight leading-tight" style={{ fontFamily: "var(--font-serif, Georgia, serif)" }}>
                             Global Newsroom
                         </h1>
                         <p className="text-base md:text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed" style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
-                            Intelligent news aggregation for the next generation of AI brands.
+                            Curating the news, press releases, and conversations shaping the future of brands.
                         </p>
                     </div>
 
                     {/* Search & Filters Container */}
-                    <div className="max-w-6xl mx-auto w-full bg-white/5 backdrop-blur-2xl p-4 rounded-[2.5rem] border border-white/10 shadow-2xl space-y-4">
+                    <div className="max-w-6xl mx-auto w-full bg-white/5 backdrop-blur-2xl p-3 md:p-4 rounded-[2rem] md:rounded-[2.5rem] border border-white/10 shadow-2xl space-y-3 md:space-y-4">
                         {/* Search Input */}
                         <div className="relative w-full group">
-                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/40 group-hover:text-primary transition-colors w-5 h-5" />
+                            <Search className="absolute left-4 md:left-5 top-1/2 -translate-y-1/2 text-white/40 group-hover:text-primary transition-colors w-4 h-4 md:w-5 md:h-5" />
                             <input
                                 type="text"
                                 placeholder="Search by keywords (e.g., 'OpenAI', 'Tech Funding')..."
-                                className="w-full h-14 pl-14 pr-6 bg-white/5 text-white text-lg placeholder:text-white/30 border border-white/10 rounded-2xl focus:ring-2 focus:ring-primary/50 outline-hidden transition-all"
+                                className="w-full h-12 md:h-14 pl-12 md:pl-14 pr-6 bg-white/5 text-white text-base md:text-lg placeholder:text-white/30 border border-white/10 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-primary/50 outline-hidden transition-all"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -303,9 +304,9 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`flex-grow xl:flex-grow-0 px-4 h-14 rounded-2xl text-sm font-semibold transition-all duration-300 border backdrop-blur-md flex items-center justify-center whitespace-nowrap ${activeTab === tab.id
-                                                ? "bg-primary text-white border-primary shadow-lg shadow-primary/30 scale-105"
-                                                : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border-white/10"
+                                        className={`flex-grow xl:flex-grow-0 px-3 md:px-4 h-10 md:h-14 rounded-xl md:rounded-2xl text-xs md:text-sm font-semibold transition-all duration-300 border backdrop-blur-md flex items-center justify-center whitespace-nowrap ${activeTab === tab.id
+                                            ? "bg-primary text-white border-primary shadow-lg shadow-primary/30 scale-105"
+                                            : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border-white/10"
                                             }`}
                                     >
                                         {tab.label}
@@ -407,7 +408,7 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
 
                                         <div className="mt-auto flex items-center justify-between">
                                             <span className="inline-flex items-center gap-2 text-brand-blue font-bold text-sm">
-                                                Read Article
+                                                {activeTab === "news" ? "Read News" : activeTab === "discussion" ? "Read Discussion" : activeTab === "platform" ? "Read Press Release" : "Read Article"}
                                                 <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                                             </span>
                                         </div>

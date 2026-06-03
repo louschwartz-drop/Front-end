@@ -7,6 +7,7 @@ import Link from "next/link";
 import Button from "@/components/ui/Button";
 import { useSocket } from "@/context/SocketContext";
 import { motion, AnimatePresence } from "framer-motion";
+import Tooltip from "@/components/ui/Tooltip";
 
 // Premium icons from Lucide React
 import {
@@ -19,7 +20,7 @@ import {
 // Recharts components
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, PieChart, Pie, Cell
+  Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from "recharts";
 
 // Modern Custom Tooltip for Recharts AreaChart
@@ -207,23 +208,25 @@ function DashboardContent() {
           <p className="text-xs text-slate-500 font-medium mt-0.5">Manage and track your campaigns and newsroom balance.</p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <Link href="/user/dashboard/profile" className="hidden md:flex items-center gap-3 hover:opacity-95 transition-opacity mr-2">
-            {user?.avatar ? (
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className="w-9 h-9 rounded-full border border-slate-200 shadow-sm object-cover"
-              />
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold border border-primary/20 shadow-sm">
-                {getInitials(user?.name)}
+          <Tooltip text="View Profile" position="bottom">
+            <Link href="/user/dashboard/profile" className="hidden md:flex items-center gap-3 hover:opacity-95 transition-opacity mr-2">
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="w-9 h-9 rounded-full border border-slate-200 shadow-sm object-cover"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold border border-primary/20 shadow-sm">
+                  {getInitials(user?.name)}
+                </div>
+              )}
+              <div className="text-left hidden sm:block">
+                <p className="text-xs font-bold text-slate-900 leading-tight">{user?.name || "User"}</p>
+                <p className="text-[10px] text-slate-500 font-medium leading-none">{user?.email || ""}</p>
               </div>
-            )}
-            <div className="text-left hidden sm:block">
-              <p className="text-xs font-bold text-slate-900 leading-tight">{user?.name || "User"}</p>
-              <p className="text-[10px] text-slate-500 font-medium leading-none">{user?.email || ""}</p>
-            </div>
-          </Link>
+            </Link>
+          </Tooltip>
         </div>
       </div>
 
@@ -231,89 +234,99 @@ function DashboardContent() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-4">
 
         {/* Campaign Repository */}
-        <Link href="/user/dashboard/campaigns" className="bg-white rounded-2xl border border-slate-100 shadow-xs p-4 hover:shadow-md hover:-translate-y-0.5 transition-all group block">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0">
-              <p className="text-slate-600/70 font-extrabold text-[9px] uppercase tracking-wider mb-1 truncate">Campaign </p>
-              <p className="text-xl font-bold text-slate-900 group-hover:text-primary transition-colors leading-none">{stats.total}</p>
+        <Tooltip text="View all campaigns">
+          <Link href="/user/dashboard/campaigns" className="bg-white rounded-2xl border border-slate-100 shadow-xs p-4 hover:shadow-md hover:-translate-y-0.5 transition-all group block">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-slate-600/70 font-extrabold text-[9px] uppercase tracking-wider mb-1 truncate">Campaign </p>
+                <p className="text-xl font-bold text-slate-900 group-hover:text-primary transition-colors leading-none">{stats.total}</p>
+              </div>
+              <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0">
+                <Layers className="w-4.5 h-4.5" />
+              </div>
             </div>
-            <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0">
-              <Layers className="w-4.5 h-4.5" />
-            </div>
-          </div>
-          <p className="text-[10px] text-slate-500 mt-3 truncate flex items-center gap-1">
-            <TrendingUp className="w-3 h-3 text-emerald-500 shrink-0" />
-            <span className="truncate">Total Campaigns</span>
-          </p>
-        </Link>
+            <p className="text-[10px] text-slate-500 mt-3 truncate flex items-center gap-1">
+              <TrendingUp className="w-3 h-3 text-emerald-500 shrink-0" />
+              <span className="truncate">Total Campaigns</span>
+            </p>
+          </Link>
+        </Tooltip>
 
         {/* Distributed / Published Releases */}
-        <Link href="/user/dashboard/press-releases" className="bg-white rounded-2xl border border-slate-100 shadow-xs p-4 hover:shadow-md hover:-translate-y-0.5 transition-all group block">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0">
-              <p className="text-slate-600/70 font-extrabold text-[9px] uppercase tracking-wider mb-1 truncate">Published</p>
-              <p className="text-xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors leading-none">{stats.published}</p>
+        <Tooltip text="View published releases">
+          <Link href="/user/dashboard/press-releases" className="bg-white rounded-2xl border border-slate-100 shadow-xs p-4 hover:shadow-md hover:-translate-y-0.5 transition-all group block">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-slate-600/70 font-extrabold text-[9px] uppercase tracking-wider mb-1 truncate">Published</p>
+                <p className="text-xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors leading-none">{stats.published}</p>
+              </div>
+              <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all shrink-0">
+                <CheckCircle className="w-4.5 h-4.5" />
+              </div>
             </div>
-            <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all shrink-0">
-              <CheckCircle className="w-4.5 h-4.5" />
-            </div>
-          </div>
-          <p className="text-[10px] text-slate-500 mt-3 truncate flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-            <span className="truncate">Syndicated releases</span>
-          </p>
-        </Link>
+            <p className="text-[10px] text-slate-500 mt-3 truncate flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+              <span className="truncate">Syndicated releases</span>
+            </p>
+          </Link>
+        </Tooltip>
 
         {/* Ready for Publish */}
-        <Link href="/user/dashboard/campaigns?status=finished" className="bg-white rounded-2xl border border-slate-100 shadow-xs p-4 hover:shadow-md hover:-translate-y-0.5 transition-all group block">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0">
-              <p className="text-slate-600/70 font-extrabold text-[9px] uppercase tracking-wider mb-1 truncate">Ready for Publish</p>
-              <p className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-none">{stats.drafts}</p>
+        <Tooltip text="View ready to publish drafts">
+          <Link href="/user/dashboard/campaigns?status=finished" className="bg-white rounded-2xl border border-slate-100 shadow-xs p-4 hover:shadow-md hover:-translate-y-0.5 transition-all group block">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-slate-600/70 font-extrabold text-[9px] uppercase tracking-wider mb-1 truncate">Ready for Publish</p>
+                <p className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-none">{stats.drafts}</p>
+              </div>
+              <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0">
+                <FileText className="w-4.5 h-4.5" />
+              </div>
             </div>
-            <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0">
-              <FileText className="w-4.5 h-4.5" />
-            </div>
-          </div>
-          <p className="text-[10px] text-slate-500 mt-3 truncate flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-            <span className="truncate">Draft press releases</span>
-          </p>
-        </Link>
+            <p className="text-[10px] text-slate-500 mt-3 truncate flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+              <span className="truncate">Draft press releases</span>
+            </p>
+          </Link>
+        </Tooltip>
 
         {/* Failed / Needs Review */}
-        <Link href="/user/dashboard/campaigns?status=failed" className="bg-white rounded-2xl border border-slate-100 shadow-xs p-4 hover:shadow-md hover:-translate-y-0.5 transition-all group block">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0">
-              <p className="text-slate-600/70 font-extrabold text-[9px] uppercase tracking-wider mb-1 truncate">Failed Releases</p>
-              <p className="text-xl font-bold text-slate-900 group-hover:text-rose-600 transition-colors leading-none">{stats.failed}</p>
+        <Tooltip text="View failed releases">
+          <Link href="/user/dashboard/campaigns?status=failed" className="bg-white rounded-2xl border border-slate-100 shadow-xs p-4 hover:shadow-md hover:-translate-y-0.5 transition-all group block">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-slate-600/70 font-extrabold text-[9px] uppercase tracking-wider mb-1 truncate">Failed Releases</p>
+                <p className="text-xl font-bold text-slate-900 group-hover:text-rose-600 transition-colors leading-none">{stats.failed}</p>
+              </div>
+              <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-all shrink-0">
+                <AlertCircle className="w-4.5 h-4.5" />
+              </div>
             </div>
-            <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-all shrink-0">
-              <AlertCircle className="w-4.5 h-4.5" />
-            </div>
-          </div>
-          <p className="text-[10px] text-slate-500 mt-3 truncate flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-            <span className="truncate">Validation failed</span>
-          </p>
-        </Link>
+            <p className="text-[10px] text-slate-500 mt-3 truncate flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+              <span className="truncate">Validation failed</span>
+            </p>
+          </Link>
+        </Tooltip>
 
         {/* Total Amount Invested (Now at 5th place) */}
-        <Link href="/user/dashboard/payment-history" className="bg-white rounded-2xl border border-slate-100 shadow-xs p-4 hover:shadow-md hover:-translate-y-0.5 transition-all group block col-span-2 sm:col-span-1">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0">
-              <p className="text-slate-600/70 font-extrabold text-[9px] uppercase tracking-wider mb-1 truncate">Total Revenue</p>
-              <p className="text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors leading-none">${stats.totalAmountSpent || 0}</p>
+        <Tooltip text="View payment history" position="bottom">
+          <Link href="/user/dashboard/payment-history" className="bg-white rounded-2xl border border-slate-100 shadow-xs p-4 hover:shadow-md hover:-translate-y-0.5 transition-all group block col-span-2 sm:col-span-1">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-slate-600/70 font-extrabold text-[9px] uppercase tracking-wider mb-1 truncate">Total Revenue</p>
+                <p className="text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors leading-none">${stats.totalAmountSpent || 0}</p>
+              </div>
+              <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-all shrink-0">
+                <DollarSign className="w-4.5 h-4.5" />
+              </div>
             </div>
-            <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-all shrink-0">
-              <DollarSign className="w-4.5 h-4.5" />
-            </div>
-          </div>
-          <p className="text-[10px] text-slate-500 mt-3 truncate flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
-            <span className="truncate">Secure payments</span>
-          </p>
-        </Link>
+            <p className="text-[10px] text-slate-500 mt-3 truncate flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+              <span className="truncate">Secure payments</span>
+            </p>
+          </Link>
+        </Tooltip>
       </div>
 
       {/* Row 2: Balance Credits Tiers (3 Cards - Reduced Height & Border Radius) */}
@@ -404,7 +417,7 @@ function DashboardContent() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
                   <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fill: '#9CA3AF', fontSize: 10 }} />
                   <YAxis tickLine={false} axisLine={false} tick={{ fill: '#9CA3AF', fontSize: 10 }} />
-                  <Tooltip content={<CustomTooltip />} />
+                  <RechartsTooltip content={<CustomTooltip />} />
                   <Area type="monotone" dataKey="Campaigns" stroke="#0A5CFF" strokeWidth={2} fillOpacity={1} fill="url(#colorCampaigns)" name="Total Campaigns" />
                   <Area type="monotone" dataKey="Published" stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#colorPublished)" name="Published" />
                 </AreaChart>
@@ -443,7 +456,7 @@ function DashboardContent() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value, name) => [hasData ? value : 0, name]} />
+                    <RechartsTooltip formatter={(value, name) => [hasData ? value : 0, name]} />
                   </PieChart>
                 </ResponsiveContainer>
                 {/* Center text in donut chart */}
@@ -489,20 +502,24 @@ function DashboardContent() {
             <p className="text-xs text-slate-500 font-medium">Manage and track your campaigns and distribution pipelines.</p>
           </div>
           <div className="flex items-center gap-2.5">
-            <Button
-              onClick={() => router.push("/user/dashboard/campaigns")}
-              variant="outline"
-              className="bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 px-4 py-2 text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
-            >
-              See All Campaigns
-            </Button>
-            <Button
-              onClick={() => router.push("/user/dashboard/create")}
-              variant="primary"
-              className="bg-primary hover:bg-brand-blue text-white px-4 py-2 text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
-            >
-              Create Campaign
-            </Button>
+            <Tooltip text="View your campaigns">
+              <Button
+                onClick={() => router.push("/user/dashboard/campaigns")}
+                variant="outline"
+                className="bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 px-4 py-2 text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+              >
+                See All Campaigns
+              </Button>
+            </Tooltip>
+            <Tooltip text="Start a new campaign">
+              <Button
+                onClick={() => router.push("/user/dashboard/create")}
+                variant="primary"
+                className="bg-primary hover:bg-brand-blue text-white px-4 py-2 text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+              >
+                Create Campaign
+              </Button>
+            </Tooltip>
           </div>
         </div>
 

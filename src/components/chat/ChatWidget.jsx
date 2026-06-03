@@ -22,6 +22,7 @@ import {
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { toast } from 'react-toastify';
 import LoginModal from '../landingPage/LoginModal';
+import Tooltip from '@/components/ui/Tooltip';
 
 // ── constants ────────────────────────────────────────────────────────────────
 const AGENT_TIMEOUT_MS = 5 * 60 * 1000; // match server-side value
@@ -246,13 +247,14 @@ function MessageBubble({ msg, onLinkClick }) {
           {renderMessageContent(msg.content, isUser, onLinkClick)}
         </div>
 
-        <button
-          onClick={handleCopy}
-          className={`mt-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600`}
-          title="Copy to clipboard"
-        >
-          {copied ? <Check size={12} className="text-green-600" /> : <Copy size={12} />}
-        </button>
+        <Tooltip text={copied ? "Copied!" : "Copy to clipboard"} position="top">
+          <button
+            onClick={handleCopy}
+            className={`mt-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600`}
+          >
+            {copied ? <Check size={12} className="text-green-600" /> : <Copy size={12} />}
+          </button>
+        </Tooltip>
       </div>
       <span className="text-[9px] text-gray-400 px-1 opacity-0 group-hover:opacity-100 transition-opacity">
         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -864,12 +866,14 @@ export default function ChatWidget() {
             >
               <div className="flex items-center gap-2">
                 {view !== 'chat' ? (
-                  <button
-                    onClick={() => view === 'history-detail' ? setView('history-list') : setView('chat')}
-                    className="p-1 hover:bg-white/10 rounded-full mr-1"
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
+                  <Tooltip text="Go back" position="bottom">
+                    <button
+                      onClick={() => view === 'history-detail' ? setView('history-list') : setView('chat')}
+                      className="p-1 hover:bg-white/10 rounded-full mr-1"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                  </Tooltip>
                 ) : (
                   <div className="bg-white/20 p-2 rounded-lg">
                     {isLive ? <Headset size={20} /> : <Bot size={20} />}
@@ -929,12 +933,14 @@ export default function ChatWidget() {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="hover:bg-white/10 p-1 rounded-full transition-colors"
-              >
-                <X size={20} />
-              </button>
+              <Tooltip text="Close Support" position="bottom">
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="hover:bg-white/10 p-1 rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </Tooltip>
             </div>
 
             {/* View Switching */}
@@ -1076,12 +1082,14 @@ export default function ChatWidget() {
                               <span className={`text-[9px] font-bold uppercase tracking-wider opacity-60 ${msg.sender === 'USER' ? 'text-white' : 'text-gray-400'}`}>
                                 {msg.sender === 'AI' ? 'AI Assistant' : msg.sender === 'AGENT' ? 'Support Agent' : 'You'}
                               </span>
-                              <button
-                                onClick={() => copyToClipboard(msg.content, idx)}
-                                className={`p-1 rounded hover:bg-black/5 transition-colors ${msg.sender === 'USER' ? 'text-white/60' : 'text-gray-300'}`}
-                              >
-                                {copiedId === idx ? <Check size={10} /> : <Copy size={10} />}
-                              </button>
+                              <Tooltip text={copiedId === idx ? "Copied!" : "Copy message"} position="top">
+                                <button
+                                  onClick={() => copyToClipboard(msg.content, idx)}
+                                  className={`p-1 rounded hover:bg-black/5 transition-colors ${msg.sender === 'USER' ? 'text-white/60' : 'text-gray-300'}`}
+                                >
+                                  {copiedId === idx ? <Check size={10} /> : <Copy size={10} />}
+                                </button>
+                              </Tooltip>
                             </div>
                             <p className="leading-relaxed">{msg.content}</p>
                           </div>
@@ -1102,21 +1110,23 @@ export default function ChatWidget() {
             {view === 'chat' && (
               <div className="p-4 bg-white border-t border-gray-100 shrink-0">
                 {isAI && !isWaiting && !timedOut && (
-                  <button
-                    onClick={requestAgent}
-                    disabled={!socket?.connected}
-                    className="w-full mb-3 text-[11px] text-primary font-medium hover:underline flex items-center justify-center gap-1 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Headset size={12} /> Connect to Live Agent
-                  </button>
+                  <Tooltip text="Speak with a human agent" position="top">
+                    <button
+                      onClick={requestAgent}
+                      disabled={!socket?.connected}
+                      className="w-full mb-3 text-[11px] text-primary font-medium hover:underline flex items-center justify-center gap-1 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Headset size={12} /> Connect to Live Agent
+                    </button>
+                  </Tooltip>
                 )}
 
                 {isWaiting && (
                   <button
                     onClick={cancelAgentRequest}
-                    className="w-full mb-3 text-[11px] text-gray-400 hover:text-gray-600 font-medium flex items-center justify-center gap-1"
+                    className="w-full mb-3 py-1.5 text-xs text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded-lg font-medium flex items-center justify-center gap-1.5 transition-colors"
                   >
-                    <X size={11} /> Cancel request
+                    <X size={14} /> Cancel request
                   </button>
                 )}
 
@@ -1149,25 +1159,28 @@ export default function ChatWidget() {
           </motion.div>
         ) : (
           /* Toggle button — Refined for Desktop and Mobile */
-          <motion.button
-            key="chat-toggle"
-            drag={!isMobile}
-            dragMomentum={false}
-            dragElastic={0.1}
-            onDragStart={() => setIsDraggingIcon(true)}
-            onDragEnd={() => setTimeout(() => setIsDraggingIcon(false), 100)}
-            initial={{ scale: 0, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0, opacity: 0, y: 20 }}
-            onClick={() => !isDraggingIcon && setIsOpen(true)}
-            className={`flex items-center bg-primary text-white rounded-full shadow-lg hover:shadow-xl transition-all group ${isMobile ? 'p-2' : 'p-1 pr-4 gap-2'} ${isOpen ? 'hidden' : 'flex'}`}
-            aria-label="Open Support Chat"
-          >
-            <div className={`bg-white/10 rounded-full group-hover:bg-white/20 transition-colors ${isMobile ? 'p-1.5' : 'p-2'}`}>
-              <MessageCircle size={isMobile ? 18 : 20} />
-            </div>
-            {!isMobile && <span className="font-bold text-xs whitespace-nowrap">Support</span>}
-          </motion.button>
+          <div className={`flex items-center ${isOpen ? 'hidden' : 'flex'}`}>
+            <Tooltip text="Open Support Chat" position="left">
+              <motion.button
+                key="chat-toggle"
+                drag={!isMobile}
+                dragMomentum={false}
+                dragElastic={0.1}
+                onDragStart={() => setIsDraggingIcon(true)}
+                onDragEnd={() => setTimeout(() => setIsDraggingIcon(false), 100)}
+                initial={{ scale: 0, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0, opacity: 0, y: 20 }}
+                onClick={() => !isDraggingIcon && setIsOpen(true)}
+                className={`flex items-center bg-primary text-white rounded-full shadow-lg hover:shadow-xl transition-all group ${isMobile ? 'p-2' : 'p-1 pr-4 gap-2'}`}
+              >
+                <div className={`bg-white/10 rounded-full group-hover:bg-white/20 transition-colors ${isMobile ? 'p-1.5' : 'p-2'}`}>
+                  <MessageCircle size={isMobile ? 18 : 20} />
+                </div>
+                {!isMobile && <span className="font-bold text-xs whitespace-nowrap">Support</span>}
+              </motion.button>
+            </Tooltip>
+          </div>
         )}
       </AnimatePresence>
       <LoginModal

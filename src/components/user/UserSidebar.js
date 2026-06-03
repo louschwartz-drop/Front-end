@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import userAuthStore from "../../store/userAuthStore";
+import Tooltip from "@/components/ui/Tooltip";
 
 export const USER_MENU_ITEMS = [
   {
     href: "/user/dashboard/droppr-gpt",
     label: "Drop PR GPT",
+    description: "Generate content with AI assistant",
     icon: (
       <svg
         className="w-5 h-5"
@@ -28,6 +30,7 @@ export const USER_MENU_ITEMS = [
   {
     href: "/user/dashboard",
     label: "Dashboard",
+    description: "View your campaign overview & stats",
     icon: (
       <svg
         className="w-5 h-5"
@@ -45,8 +48,29 @@ export const USER_MENU_ITEMS = [
     ),
   },
   {
+    href: "/user/dashboard/create",
+    label: "Create Campaign",
+    description: "Start a new PR campaign",
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 4v16m8-8H4"
+        />
+      </svg>
+    ),
+  },
+  {
     href: "/user/dashboard/campaigns",
-    label: "Campaigns",
+    label: "Manage Campaigns",
+    description: "Track and edit existing campaigns",
     icon: (
       <svg
         className="w-5 h-5"
@@ -66,6 +90,7 @@ export const USER_MENU_ITEMS = [
   {
     href: "/user/dashboard/press-releases",
     label: "Press Releases",
+    description: "View published press releases",
     icon: (
       <svg
         className="w-5 h-5"
@@ -85,6 +110,7 @@ export const USER_MENU_ITEMS = [
   {
     href: "/user/dashboard/payment-history",
     label: "Payment History",
+    description: "View invoices and billing history",
     icon: (
       <svg
         className="w-5 h-5"
@@ -102,27 +128,9 @@ export const USER_MENU_ITEMS = [
     ),
   },
   {
-    href: "/user/dashboard/create",
-    label: "Create Campaign",
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 4v16m8-8H4"
-        />
-      </svg>
-    ),
-  },
-  {
     href: "/user/dashboard/profile",
-    label: "My Profile",
+    label: "Account Settings",
+    description: "Manage profile and preferences",
     icon: (
       <svg
         className="w-5 h-5"
@@ -258,30 +266,31 @@ export default function UserSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
             <nav className="py-2 px-2 md:py-4">
               <div className="space-y-1">
                 {USER_MENU_ITEMS.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`
-                    flex items-center gap-x-3 py-2 px-4 rounded-lg
-                    transition-all duration-300 ease-in-out
-                    ${isActive(item.href)
-                        ? "bg-blue-600 text-white shadow-sm"
-                        : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                      }
-                    group
-                  `}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <span
+                  <Tooltip key={item.href} text={item.description || item.label} position="right">
+                    <Link
+                      href={item.href}
                       className={`
-                    flex-shrink-0 transition-transform duration-300
-                    ${isActive(item.href) ? "" : "group-hover:scale-110"}
-                  `}
+                      flex items-center gap-x-3 py-2 px-4 rounded-lg
+                      transition-all duration-300 ease-in-out
+                      ${isActive(item.href)
+                          ? "bg-blue-600 text-white shadow-sm"
+                          : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                        }
+                      group
+                    `}
+                      onClick={() => setMobileMenuOpen(false)}
                     >
-                      {item.icon}
-                    </span>
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </Link>
+                      <span
+                        className={`
+                      flex-shrink-0 transition-transform duration-300
+                      ${isActive(item.href) ? "" : "group-hover:scale-110"}
+                    `}
+                      >
+                        {item.icon}
+                      </span>
+                      <span className="text-sm font-medium">{item.label}</span>
+                    </Link>
+                  </Tooltip>
                 ))}
               </div>
             </nav>
@@ -289,55 +298,73 @@ export default function UserSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
 
           {/* Bottom Section - Fixed at bottom */}
           <div className="flex-shrink-0 border-t border-gray-200">
-            {/* Support Section Header */}
-            <div className="flex items-center gap-3 pl-6 pt-3">
-              <h4 className="text-xs font-semibold text-gray-800 uppercase tracking-wider whitespace-nowrap">
-                Support
-              </h4>
-              <div className="flex-1 h-px bg-gray-200"></div>
-            </div>
-
-            <div className="space-y-1 pt-2">
+            <div className="space-y-1 pt-4 pb-2">
               {/* Go to Website */}
-              <Link
-                href="/"
-                className="w-full flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 duration-300 group"
-              >
-                <svg
-                  className="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <Tooltip text="Visit public website" position="right">
+                <Link
+                  href="/"
+                  className="w-full flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 duration-300 group"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                  />
-                </svg>
-                <span className="text-[13px] font-medium">Go to Website</span>
-              </Link>
-              <Link
-                href="/contact"
-                className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <svg
-                  className="w-5 h-5 flex-shrink-0 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                  <svg
+                    className="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                    />
+                  </svg>
+                  <span className="text-[13px] font-medium">Go to Website</span>
+                </Link>
+              </Tooltip>
+              <Tooltip text="Get help & support" position="right">
+                <Link
+                  href="/contact"
+                  className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <span className="text-[13px] font-medium">Help</span>
-              </Link>
+                  <svg
+                    className="w-5 h-5 flex-shrink-0 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="text-[13px] font-medium">Help Center</span>
+                </Link>
+              </Tooltip>
+
+              <Tooltip text="Sign out of account" position="right">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors duration-200 group"
+                >
+                  <svg
+                    className="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                  </svg>
+                  <span className="text-[13px] font-medium text-left flex-1">Logout</span>
+                </button>
+              </Tooltip>
             </div>
           </div>
         </div>

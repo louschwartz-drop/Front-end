@@ -110,9 +110,8 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start w
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
           disabled={!editor.can().chain().focus().toggleBold().run()}
-          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${
-            editor.isActive('bold') ? 'bg-blue-50 text-primary border border-blue-100 font-bold' : 'text-gray-600 border border-transparent'
-          }`}
+          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${editor.isActive('bold') ? 'bg-blue-50 text-primary border border-blue-100 font-bold' : 'text-gray-600 border border-transparent'
+            }`}
           title="Bold"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,9 +124,8 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start w
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
           disabled={!editor.can().chain().focus().toggleItalic().run()}
-          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${
-            editor.isActive('italic') ? 'bg-blue-50 text-primary border border-blue-100' : 'text-gray-600 border border-transparent'
-          }`}
+          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${editor.isActive('italic') ? 'bg-blue-50 text-primary border border-blue-100' : 'text-gray-600 border border-transparent'
+            }`}
           title="Italic"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,9 +140,8 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start w
           type="button"
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           disabled={!editor.can().chain().focus().toggleUnderline().run()}
-          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${
-            editor.isActive('underline') ? 'bg-blue-50 text-primary border border-blue-100 font-bold' : 'text-gray-600 border border-transparent'
-          }`}
+          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${editor.isActive('underline') ? 'bg-blue-50 text-primary border border-blue-100 font-bold' : 'text-gray-600 border border-transparent'
+            }`}
           title="Underline"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,9 +156,8 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start w
         <button
           type="button"
           onClick={() => editor.chain().focus().setTextAlign('left').run()}
-          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${
-            editor.isActive({ textAlign: 'left' }) ? 'bg-blue-50 text-primary border border-blue-100 font-bold' : 'text-gray-600 border border-transparent'
-          }`}
+          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${editor.isActive({ textAlign: 'left' }) ? 'bg-blue-50 text-primary border border-blue-100 font-bold' : 'text-gray-600 border border-transparent'
+            }`}
           title="Align Left"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,9 +169,8 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start w
         <button
           type="button"
           onClick={() => editor.chain().focus().setTextAlign('center').run()}
-          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${
-            editor.isActive({ textAlign: 'center' }) ? 'bg-blue-50 text-primary border border-blue-100' : 'text-gray-600 border border-transparent'
-          }`}
+          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${editor.isActive({ textAlign: 'center' }) ? 'bg-blue-50 text-primary border border-blue-100' : 'text-gray-600 border border-transparent'
+            }`}
           title="Align Center"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -187,9 +182,8 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start w
         <button
           type="button"
           onClick={() => editor.chain().focus().setTextAlign('right').run()}
-          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${
-            editor.isActive({ textAlign: 'right' }) ? 'bg-blue-50 text-primary border border-blue-100' : 'text-gray-600 border border-transparent'
-          }`}
+          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${editor.isActive({ textAlign: 'right' }) ? 'bg-blue-50 text-primary border border-blue-100' : 'text-gray-600 border border-transparent'
+            }`}
           title="Align Right"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,9 +198,8 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start w
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${
-            editor.isActive('bulletList') ? 'bg-blue-50 text-primary border border-blue-100' : 'text-gray-600 border border-transparent'
-          }`}
+          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${editor.isActive('bulletList') ? 'bg-blue-50 text-primary border border-blue-100' : 'text-gray-600 border border-transparent'
+            }`}
           title="List"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,9 +214,8 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start w
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${
-            editor.isActive('blockquote') ? 'bg-blue-50 text-primary border border-blue-100' : 'text-gray-600 border border-transparent'
-          }`}
+          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${editor.isActive('blockquote') ? 'bg-blue-50 text-primary border border-blue-100' : 'text-gray-600 border border-transparent'
+            }`}
           title="Formal Quote Block"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -235,9 +227,8 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start w
         <button
           type="button"
           onClick={setLink}
-          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${
-            editor.isActive('link') ? 'bg-blue-50 text-primary border border-blue-100' : 'text-gray-600 border border-transparent'
-          }`}
+          className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${editor.isActive('link') ? 'bg-blue-50 text-primary border border-blue-100' : 'text-gray-600 border border-transparent'
+            }`}
           title="Link"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -282,11 +273,10 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start w
           <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          Article Body · {editor.storage.characterCount.words()} words
+          Press Release Body · {editor.storage.characterCount.words()} words
         </span>
-        <span className={`font-mono text-[11px] sm:text-xs px-2 py-0.5 rounded-full ${
-          isCharacterLimitReached ? 'bg-red-50 text-red-600 font-bold border border-red-100' : 'bg-gray-100 text-gray-600'
-        }`}>
+        <span className={`font-mono text-[11px] sm:text-xs px-2 py-0.5 rounded-full ${isCharacterLimitReached ? 'bg-red-50 text-red-600 font-bold border border-red-100' : 'bg-gray-100 text-gray-600'
+          }`}>
           {editor.storage.characterCount.characters()} / {maxLength} chars
         </span>
       </div>

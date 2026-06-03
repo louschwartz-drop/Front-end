@@ -8,6 +8,7 @@ import Button from "@/components/ui/Button";
 import LoginModal from "@/components/landingPage/LoginModal";
 import { toast } from "react-toastify";
 import PreviewPublishModal from "@/components/user/PreviewPublishModal";
+import Tooltip from "@/components/ui/Tooltip";
 
 import { pricingService } from "@/lib/api/user/pricing";
 import { campaignService } from "@/lib/api/user/campaigns";
@@ -113,24 +114,26 @@ function PricingContent() {
     setSelectedPlan(planId);
   };
 
-  const handleProceed = () => {
+  const handleProceed = (overridePlanId = null) => {
+    const planToProceed = overridePlanId || selectedPlan;
+
     if (!isAuthenticated) {
       setShowLoginModal(true);
       return;
     }
-    if (!selectedPlan) {
+    if (!planToProceed) {
       toast.error("Please select a plan");
       return;
     }
     
     // Safety check
-    const selectedPlanObj = plans.find((p) => p._id === selectedPlan);
+    const selectedPlanObj = plans.find((p) => p._id === planToProceed);
     if (selectedPlanObj?.isComingSoon) {
       toast.error("This plan is coming soon and cannot be purchased yet.");
       return;
     }
 
-    router.push(`/user/payment/${campaignId}?plan=${selectedPlan}`);
+    router.push(`/user/payment/${campaignId}?plan=${planToProceed}`);
   };
 
   const selectedPlanObj = plans.find((p) => p._id === selectedPlan);
@@ -177,6 +180,7 @@ function PricingContent() {
               transition={{ delay: 0.5 }}
               className="w-full sm:w-auto"
             >
+              <Tooltip text="Proceed to checkout" position="top">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   variant="primary"
@@ -186,6 +190,7 @@ function PricingContent() {
                   Continue to Payment
                 </Button>
               </motion.div>
+              </Tooltip>
             </motion.div>
           )}
         </div>
@@ -197,8 +202,8 @@ function PricingContent() {
             if (!selected) return null;
             const isSelected = selectedPlan === selected._id;
             return (
+              <Tooltip key={planName} text={selected.isComingSoon ? "Not available yet" : "Select this plan"} position="top">
               <motion.div
-                key={planName}
                 role="button"
                 tabIndex={0}
                 initial={{ opacity: 0, y: 30 }}
@@ -237,8 +242,8 @@ function PricingContent() {
                   </h3>
                   <div className="flex gap-2 mb-4">
                     {variants.map((v) => (
+                      <Tooltip key={v._id} text={`Select ${v.releasesCount} article pack`} position="top">
                       <button
-                        key={v._id}
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -252,6 +257,7 @@ function PricingContent() {
                       >
                         {v.releasesCount} {v.releasesCount === 1 ? "Article" : "Articles"}
                       </button>
+                      </Tooltip>
                     ))}
                   </div>
                   <div className="mb-4 sm:mb-6">
@@ -286,12 +292,16 @@ function PricingContent() {
                     ))}
                   </ul>
 
+                  <Tooltip text={selected.isComingSoon ? "Not available yet" : "Proceed to checkout with this plan"} position="bottom">
                   <motion.button
                     type="button"
                     disabled={selected.isComingSoon}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (!selected.isComingSoon) handleSelectPlan(selected._id);
+                      if (!selected.isComingSoon) {
+                        handleSelectPlan(selected._id);
+                        handleProceed(selected._id);
+                      }
                     }}
                     whileHover={selected.isComingSoon ? {} : { scale: 1.02 }}
                     whileTap={selected.isComingSoon ? {} : { scale: 0.98 }}
@@ -302,10 +312,12 @@ function PricingContent() {
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }`}
                   >
-                    {selected.isComingSoon ? "Coming Soon" : isSelected ? "Selected" : "Select Plan"}
+                    {selected.isComingSoon ? "Coming Soon" : isSelected ? "Continue with this Plan" : "Select Plan"}
                   </motion.button>
+                  </Tooltip>
                 </div>
               </motion.div>
+              </Tooltip>
             );
           })}
         </div>

@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
+import Tooltip from "@/components/ui/Tooltip";
 import { toast } from "react-toastify";
 import { campaignService } from "@/lib/api/user/campaigns";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
@@ -356,12 +357,14 @@ function CampaignsPageContent() {
                             Manage and track your campaigns
                         </p>
                     </div>
-                    <button
-                        onClick={() => router.push("/user/dashboard/create")}
-                        className="md:px-6 md:py-3 px-2.5 py-1.5 bg-primary text-white rounded-lg hover:bg-brand-blue text-[10px] xs:text-xs md:text-base font-semibold shadow-sm shrink-0 whitespace-nowrap"
-                    >
-                        + Create Campaign
-                    </button>
+                    <Tooltip text="Create a new campaign">
+                        <button
+                            onClick={() => router.push("/user/dashboard/create")}
+                            className="md:px-6 md:py-3 px-2.5 py-1.5 bg-primary text-white rounded-lg hover:bg-brand-blue text-[10px] xs:text-xs md:text-base font-semibold shadow-sm shrink-0 whitespace-nowrap"
+                        >
+                            + Create Campaign
+                        </button>
+                    </Tooltip>
                 </div>
 
                 {/* Search and Filter */}
@@ -395,14 +398,14 @@ function CampaignsPageContent() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex gap-1 md:gap-2">
                             {[
-                                { key: "all", label: "All", mobileLabel: "All" },
-                                { key: "active", label: "Active", mobileLabel: "Active" },
-                                { key: "finished", label: "Ready for Publish", mobileLabel: "Ready for Publish" },
-                                { key: "published", label: "Published", mobileLabel: "Published" },
-                                { key: "failed", label: "Failed", mobileLabel: "Failed" },
+                                { key: "all", label: "All", mobileLabel: "All", tooltip: "View all campaigns" },
+                                { key: "active", label: "Active", mobileLabel: "Active", tooltip: "View active campaigns" },
+                                { key: "finished", label: "Ready for Publish", mobileLabel: "Ready for Publish", tooltip: "View campaigns ready to publish" },
+                                { key: "published", label: "Published", mobileLabel: "Published", tooltip: "View published campaigns" },
+                                { key: "failed", label: "Failed", mobileLabel: "Failed", tooltip: "View failed campaigns" },
                             ].map((tab) => (
+                                <Tooltip key={tab.key} text={tab.tooltip} position="top">
                                 <button
-                                    key={tab.key}
                                     onClick={() => {
                                         setFilter(tab.key);
                                         setCurrentPage(1);
@@ -415,6 +418,7 @@ function CampaignsPageContent() {
                                     <span className="hidden md:inline">{tab.label}</span>
                                     <span className="md:hidden text-[10px] sm:text-xs">{tab.mobileLabel}</span>
                                 </button>
+                                </Tooltip>
                             ))}
                         </div>
 
@@ -465,12 +469,14 @@ function CampaignsPageContent() {
                         <p className="mt-2 text-sm text-gray-500">
                             Get started by creating your campaign
                         </p>
+                        <Tooltip text="Start a new campaign" position="top">
                         <button
                             onClick={() => router.push("/user/dashboard/create")}
                             className="mt-6 px-6 py-2 bg-primary text-white rounded-lg hover:bg-brand-blue"
                         >
                             Create New Campaign
                         </button>
+                        </Tooltip>
                     </div>
                 ) : !loading && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mt-4">
@@ -527,16 +533,17 @@ function CampaignsPageContent() {
                                                     ? `${campaign.errorMessage.substring(0, 80)}...`
                                                     : campaign.errorMessage}
                                             </p>
+                                            <Tooltip text="View detailed error message" position="top">
                                             <button
                                                 onClick={() => handleViewError(campaign)}
                                                 className="shrink-0 p-1 text-red-600 hover:bg-red-100 rounded-full transition-colors"
-                                                title="View Full Error"
                                             >
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                 </svg>
                                             </button>
+                                            </Tooltip>
                                         </div>
                                     )}
                                 </div>
@@ -553,12 +560,14 @@ function CampaignsPageContent() {
                                                 <p className="text-sm text-gray-600 line-clamp-5 mb-1 whitespace-pre-wrap">
                                                     {campaign.rawTranscript}
                                                 </p>
-                                                <button
-                                                    onClick={() => handleViewTranscript(campaign)}
-                                                    className="text-xs text-primary hover:underline font-medium"
-                                                >
-                                                    View Full {campaign.videoSource === "document_upload" ? "Content" : "Transcript"}
-                                                </button>
+                                                <Tooltip text="View full content">
+                                                    <button
+                                                        onClick={() => handleViewTranscript(campaign)}
+                                                        className="text-xs text-primary hover:underline font-medium"
+                                                    >
+                                                        View Full {campaign.videoSource === "document_upload" ? "Content" : "Transcript"}
+                                                    </button>
+                                                </Tooltip>
                                             </div>
                                         ) : (
                                             <span className="text-sm text-gray-400 italic">
@@ -577,16 +586,18 @@ function CampaignsPageContent() {
                                     </div>
 
                                     {campaign.videoUrl && campaign.videoSource !== "document_upload" && (
-                                        <button
-                                            onClick={() => setVideoModal({ show: true, url: campaign.videoUrl, isAudio: campaign.metadata?.sourceType === 'record_audio' })}
-                                            className="text-[11px] md:text-xs text-primary hover:underline font-bold inline-flex items-center gap-1 bg-blue-50 px-2 py-1.5 rounded-md transition-colors"
-                                        >
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            {campaign.metadata?.sourceType === 'record_audio' ? 'Listen Audio' : 'View Media'}
-                                        </button>
+                                        <Tooltip text="Preview attached media">
+                                            <button
+                                                onClick={() => setVideoModal({ show: true, url: campaign.videoUrl, isAudio: campaign.metadata?.sourceType === 'record_audio' })}
+                                                className="text-[11px] md:text-xs text-primary hover:underline font-bold inline-flex items-center gap-1 bg-blue-50 px-2 py-1.5 rounded-md transition-colors"
+                                            >
+                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                {campaign.metadata?.sourceType === 'record_audio' ? 'Listen Audio' : 'View Media'}
+                                            </button>
+                                        </Tooltip>
                                     )}
                                 </div>
 
@@ -594,42 +605,48 @@ function CampaignsPageContent() {
                                 <div className="px-4 py-3 md:px-5 md:py-4 bg-gray-50 border-t border-gray-100 mt-auto shrink-0">
                                     <div className="flex flex-wrap gap-2">
                                         {campaign.status === "finished" && (
-                                            <button
-                                                onClick={() =>
-                                                    router.push(`/user/edit/${campaign._id}`)
-                                                }
-                                                className="flex-1 px-3 py-2 bg-primary text-white text-sm font-medium rounded hover:bg-brand-blue transition-colors"
-                                            >
-                                                Publish Now
-                                            </button>
+                                            <Tooltip text="Publish this campaign" position="top">
+                                                <button
+                                                    onClick={() =>
+                                                        router.push(`/user/edit/${campaign._id}`)
+                                                    }
+                                                    className="flex-1 px-3 py-2 bg-primary text-white text-sm font-medium rounded hover:bg-brand-blue transition-colors"
+                                                >
+                                                    Publish Now
+                                                </button>
+                                            </Tooltip>
                                         )}
 
                                         {(campaign.status === "published" || campaign.status === "submitted_successfully") && (
                                             <>
-                                                <button
-                                                    onClick={() =>
-                                                        setFullPreview({ show: true, campaign })
-                                                    }
-                                                    className="flex-1 px-3 py-2 bg-blue-100 text-blue-700 text-sm font-medium rounded hover:bg-blue-200 transition-colors"
-                                                >
-                                                    Preview Article
-                                                </button>
-                                                <button
-                                                    onClick={() => setStatusModal({ show: true, campaignId: campaign._id, title: campaign.article?.headline })}
-                                                    className="flex-1 px-3 py-2 bg-indigo-50 text-indigo-700 text-sm font-medium rounded border border-indigo-200 hover:bg-indigo-100 transition-colors flex justify-center items-center gap-1.5"
-                                                    title="Click to check live publication status"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    Check Status
-                                                </button>
+                                                <Tooltip text="Preview published article" position="top">
+                                                    <button
+                                                        onClick={() =>
+                                                            setFullPreview({ show: true, campaign })
+                                                        }
+                                                        className="flex-1 px-3 py-2 bg-blue-100 text-blue-700 text-sm font-medium rounded hover:bg-blue-200 transition-colors"
+                                                    >
+                                                        Preview Article
+                                                    </button>
+                                                </Tooltip>
+                                                <Tooltip text="Check live status" position="top">
+                                                    <button
+                                                        onClick={() => setStatusModal({ show: true, campaignId: campaign._id, title: campaign.article?.headline })}
+                                                        className="flex-1 px-3 py-2 bg-indigo-50 text-indigo-700 text-sm font-medium rounded border border-indigo-200 hover:bg-indigo-100 transition-colors flex justify-center items-center gap-1.5"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        Check Status
+                                                    </button>
+                                                </Tooltip>
                                             </>
                                         )}
 
                                         {["uploading", "transcribing", "generating"].includes(
                                             campaign.status,
                                         ) && (
+                                            <Tooltip text="View progress" position="top">
                                                 <button
                                                     onClick={() =>
                                                         router.push(`/user/processing/${campaign._id}`)
@@ -638,15 +655,18 @@ function CampaignsPageContent() {
                                                 >
                                                     View
                                                 </button>
-                                            )}
+                                            </Tooltip>
+                                        )}
 
                                         {(campaign.status !== "published" && campaign.status !== "submitted_successfully") && (
-                                            <button
-                                                onClick={() => handleDeleteClick(campaign._id)}
-                                                className="px-3 py-2 bg-red-100 text-red-700 text-sm font-medium rounded hover:bg-red-200 transition-colors"
-                                            >
-                                                {["uploading", "transcribing", "generating"].includes(campaign.status) ? "Cancel" : "Delete"}
-                                            </button>
+                                            <Tooltip text={["uploading", "transcribing", "generating"].includes(campaign.status) ? "Cancel analysis" : "Delete campaign"} position="top">
+                                                <button
+                                                    onClick={() => handleDeleteClick(campaign._id)}
+                                                    className="px-3 py-2 bg-red-100 text-red-700 text-sm font-medium rounded hover:bg-red-200 transition-colors"
+                                                >
+                                                    {["uploading", "transcribing", "generating"].includes(campaign.status) ? "Cancel" : "Delete"}
+                                                </button>
+                                            </Tooltip>
                                         )}
                                     </div>
                                 </div>
@@ -690,6 +710,7 @@ function CampaignsPageContent() {
                                 className="relative z-50 inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6"
                             >
                                 <div className="absolute top-0 right-0 pt-4 pr-4">
+                                    <Tooltip text="Close transcript window" position="left">
                                     <button
                                         type="button"
                                         onClick={closeTranscriptModal}
@@ -710,6 +731,7 @@ function CampaignsPageContent() {
                                             />
                                         </svg>
                                     </button>
+                                    </Tooltip>
                                 </div>
                                 <div className="sm:flex sm:items-start">
                                     <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
@@ -724,6 +746,7 @@ function CampaignsPageContent() {
                                     </div>
                                 </div>
                                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                                    <Tooltip text="Close transcript window" position="top">
                                     <button
                                         type="button"
                                         onClick={closeTranscriptModal}
@@ -731,6 +754,7 @@ function CampaignsPageContent() {
                                     >
                                         Close
                                     </button>
+                                    </Tooltip>
                                 </div>
                             </motion.div>
                         </div>
@@ -796,6 +820,7 @@ function CampaignsPageContent() {
                                     </div>
                                 </div>
                                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                                    <Tooltip text="Confirm deletion" position="top">
                                     <button
                                         type="button"
                                         onClick={handleDeleteConfirm}
@@ -805,6 +830,8 @@ function CampaignsPageContent() {
                                             ["uploading", "transcribing", "generating"].includes(campaigns.find(c => c._id === deleteModal.campaignId)?.status)
                                             ? "Cancel & Delete" : "Delete"}
                                     </button>
+                                    </Tooltip>
+                                    <Tooltip text="Cancel deletion" position="top">
                                     <button
                                         type="button"
                                         onClick={handleDeleteCancel}
@@ -812,6 +839,7 @@ function CampaignsPageContent() {
                                     >
                                         Cancel
                                     </button>
+                                    </Tooltip>
                                 </div>
                             </motion.div>
                         </div>
@@ -861,6 +889,7 @@ function CampaignsPageContent() {
                                 className="relative z-[70] inline-block align-bottom bg-white rounded-xl px-4 pt-5 pb-4 text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 border border-red-100"
                             >
                                 <div className="absolute top-0 right-0 pt-4 pr-4">
+                                    <Tooltip text="Close error window" position="left">
                                     <button
                                         type="button"
                                         onClick={closeErrorModal}
@@ -871,6 +900,7 @@ function CampaignsPageContent() {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                         </svg>
                                     </button>
+                                    </Tooltip>
                                 </div>
 
                                 <div className="sm:flex sm:items-start">
@@ -894,6 +924,7 @@ function CampaignsPageContent() {
                                     </div>
                                 </div>
                                 <div className="mt-6 sm:flex sm:flex-row-reverse">
+                                    <Tooltip text="Close error details" position="top">
                                     <button
                                         type="button"
                                         onClick={closeErrorModal}
@@ -901,6 +932,7 @@ function CampaignsPageContent() {
                                     >
                                         Close Details
                                     </button>
+                                    </Tooltip>
                                 </div>
                             </motion.div>
                         </div>

@@ -14,6 +14,7 @@ import { CreditCard, Trash2, ShieldCheck, Loader2, AlertTriangle, X } from "luci
 import { motion, AnimatePresence } from "framer-motion";
 
 import { paymentService } from "@/lib/api/user/payments";
+import Tooltip from "@/components/ui/Tooltip";
 
 function CardManagement() {
   const [cards, setCards] = useState([]);
@@ -97,12 +98,15 @@ function CardManagement() {
                   Are you sure you want to remove this card ending in <span className="font-semibold text-gray-900">{cardToDelete.card.last4}</span>? You'll need to re-enter your details for future purchases.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
+                  <Tooltip text="Keep this card" position="top">
                   <button
                     onClick={() => setCardToDelete(null)}
                     className="flex-1 px-4 py-2.5 bg-gray-50 text-gray-700 font-semibold rounded-xl hover:bg-gray-100 transition-colors border border-gray-200"
                   >
                     Cancel
                   </button>
+                  </Tooltip>
+                  <Tooltip text="Permanently remove card" position="top">
                   <button
                     onClick={() => handleDelete(cardToDelete.id)}
                     disabled={processingId === cardToDelete.id}
@@ -111,6 +115,7 @@ function CardManagement() {
                     {processingId === cardToDelete.id && <Loader2 className="w-4 h-4 animate-spin" />}
                     Remove Card
                   </button>
+                  </Tooltip>
                 </div>
               </div>
             </motion.div>
@@ -146,6 +151,7 @@ function CardManagement() {
             </div>
             <div className="flex items-center gap-2">
               {!card.isDefault && (
+                <Tooltip text="Make default payment method" position="top">
                 <button
                   onClick={() => handleSetDefault(card.id)}
                   disabled={processingId === card.id}
@@ -154,12 +160,13 @@ function CardManagement() {
                   {processingId === card.id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
                   Set as Default
                 </button>
+                </Tooltip>
               )}
+              <Tooltip text="Remove this card" position="top">
               <button
                 onClick={() => setCardToDelete(card)}
                 disabled={processingId === card.id}
                 className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Remove Card"
               >
                 {processingId === card.id ? (
                   <Loader2 className="w-5 h-5 animate-spin text-red-600" />
@@ -167,6 +174,7 @@ function CardManagement() {
                   <Trash2 className="w-5 h-5" />
                 )}
               </button>
+              </Tooltip>
             </div>
           </div>
         ))
@@ -390,6 +398,7 @@ function ProfilePageContent() {
                     </span>
                   </div>
                 )}
+                <Tooltip text="Upload new profile picture" position="right">
                 <button
                   className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full border-2 border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer"
                   onClick={() =>
@@ -442,6 +451,7 @@ function ProfilePageContent() {
                     </svg>
                   )}
                 </button>
+                </Tooltip>
               </div>
               <h2 className="mt-4 text-xl font-semibold text-gray-900">
                 {user?.name || "User"}
@@ -563,6 +573,7 @@ function ProfilePageContent() {
               </div>
 
               <div className="pt-4 flex gap-3">
+                <Tooltip text="Save profile updates" position="top">
                 <button
                   type="submit"
                   disabled={saving}
@@ -596,6 +607,7 @@ function ProfilePageContent() {
                     "Save Changes"
                   )}
                 </button>
+                </Tooltip>
               </div>
             </form>
           </div>

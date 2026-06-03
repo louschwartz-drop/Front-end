@@ -313,20 +313,20 @@ export default function ContactPage() {
                           className={`w-full px-4 py-3 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all appearance-none bg-white cursor-pointer ${errors.howFound ? 'border-red-500' : 'border-gray-300'}`}
                           style={{
                             color: formData.howFound
-                              ? "#000"
-                              : "rgba(0, 0, 0, 0.38)",
+                              ? "#111827"
+                              : "#9CA3AF",
                           }}
                         >
-                          <option value="" disabled>
+                          <option value="" disabled className="text-gray-400 bg-white">
                             Select
                           </option>
-                          <option value="Organic Search">Organic Search</option>
-                          <option value="Ads">Ads</option>
-                          <option value="Word-of-mouth">Word-of-mouth</option>
-                          <option value="Other Websites">Other Websites</option>
-                          <option value="Email">Email</option>
-                          <option value="Salesperson">Salesperson</option>
-                          <option value="Others">Others</option>
+                          <option value="Organic Search" className="text-gray-900 bg-white">Organic Search</option>
+                          <option value="Ads" className="text-gray-900 bg-white">Ads</option>
+                          <option value="Word-of-mouth" className="text-gray-900 bg-white">Word-of-mouth</option>
+                          <option value="Other Websites" className="text-gray-900 bg-white">Other Websites</option>
+                          <option value="Email" className="text-gray-900 bg-white">Email</option>
+                          <option value="Salesperson" className="text-gray-900 bg-white">Salesperson</option>
+                          <option value="Others" className="text-gray-900 bg-white">Others</option>
                         </select>
                         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                           <svg
@@ -389,18 +389,18 @@ export default function ContactPage() {
                                 pressReleaseVolume: e.target.value,
                               })
                             }
-                            className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all appearance-none bg-white cursor-pointer"
+                            className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all appearance-none bg-white cursor-pointer text-gray-900"
                           >
-                            <option value="below 5">below 5</option>
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="20">20</option>
-                            <option value="30">30</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                            <option value="200">200</option>
-                            <option value="300">300</option>
-                            <option value="1500+">1500+</option>
+                            <option value="below 5" className="text-gray-900 bg-white">below 5</option>
+                            <option value="5" className="text-gray-900 bg-white">5</option>
+                            <option value="10" className="text-gray-900 bg-white">10</option>
+                            <option value="20" className="text-gray-900 bg-white">20</option>
+                            <option value="30" className="text-gray-900 bg-white">30</option>
+                            <option value="50" className="text-gray-900 bg-white">50</option>
+                            <option value="100" className="text-gray-900 bg-white">100</option>
+                            <option value="200" className="text-gray-900 bg-white">200</option>
+                            <option value="300" className="text-gray-900 bg-white">300</option>
+                            <option value="1500+" className="text-gray-900 bg-white">1500+</option>
                           </select>
                           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                             <svg
@@ -430,10 +430,10 @@ export default function ContactPage() {
                                 pressPer: e.target.value,
                               })
                             }
-                            className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all appearance-none bg-white cursor-pointer"
+                            className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all appearance-none bg-white cursor-pointer text-gray-900"
                           >
-                            <option value="per month">per month</option>
-                            <option value="per year">per year</option>
+                            <option value="per month" className="text-gray-900 bg-white">per month</option>
+                            <option value="per year" className="text-gray-900 bg-white">per year</option>
                           </select>
                           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                             <svg

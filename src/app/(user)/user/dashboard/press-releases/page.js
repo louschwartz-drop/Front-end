@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FileText, Eye, Link, CheckCircle, Search, Filter, ChevronLeft, ChevronRight, Play, Activity, Clock, Flag, ExternalLink, Globe, File, FileAudio, Video, Mic, UploadCloud } from "lucide-react";
 import { toast } from "react-toastify";
 import Button from "@/components/ui/Button";
+import Tooltip from "@/components/ui/Tooltip";
 import debounce from "lodash/debounce";
 import userAuthStore from "@/store/userAuthStore";
 import { pressReleaseService } from "@/lib/api/user/press-releases";
@@ -184,13 +185,13 @@ export default function UserPressReleasesPage() {
                 <div className="w-full xl:flex-1">
                     <div className="flex flex-row items-center gap-1.5 sm:gap-2 justify-between sm:justify-start w-full">
                         {[
-                            { id: "all", label: "All Press Releases" },
-                            { id: "in-progress", label: "In Progress" },
-                            { id: "finished", label: "Finished" },
-                            { id: "pending", label: "Queued" }
+                            { id: "all", label: "All Press Releases", tooltip: "View all press releases" },
+                            { id: "in-progress", label: "In Progress", tooltip: "View active processing" },
+                            { id: "finished", label: "Finished", tooltip: "View published releases" },
+                            { id: "pending", label: "Queued", tooltip: "View queued releases" }
                         ].map((f) => (
+                            <Tooltip key={f.id} text={f.tooltip} position="top">
                             <button
-                                key={f.id}
                                 onClick={() => { setFilter(f.id); setCurrentPage(1); }}
                                 className={`px-2 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-[9px] xs:text-[10px] sm:text-xs font-bold tracking-tight sm:tracking-wide border transition-all flex items-center justify-center whitespace-nowrap flex-1 sm:flex-none ${filter === f.id
                                     ? "bg-gray-900 text-white border-gray-900 shadow-sm"
@@ -199,6 +200,7 @@ export default function UserPressReleasesPage() {
                             >
                                 {f.label}
                             </button>
+                            </Tooltip>
                         ))}
                     </div>
                 </div>
@@ -278,16 +280,17 @@ export default function UserPressReleasesPage() {
                                             </div>
                                         )}
                                         {release.campaign?.videoUrl && (
+                                            <Tooltip text={release.campaign.metadata?.sourceType === 'record_audio' ? "Listen to Audio" : "View Source Video"} position="top">
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setVideoModal({ show: true, url: release.campaign.videoUrl, isAudio: release.campaign.metadata?.sourceType === 'record_audio' });
                                                 }}
                                                 className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                                                title={release.campaign.metadata?.sourceType === 'record_audio' ? "Listen to Audio" : "View Source Video"}
                                             >
                                                 <Play className="w-4 h-4 md:w-6 md:h-6 text-white fill-current" />
                                             </button>
+                                            </Tooltip>
                                         )}
                                     </div>
                                     <div className="min-w-0 flex-1">
@@ -352,6 +355,7 @@ export default function UserPressReleasesPage() {
                                     <div className="flex md:hidden items-center justify-between w-full gap-2 px-1 pb-1">
                                         {/* Mobile News Room Checkbox */}
                                         {release.campaign && (
+                                            <Tooltip text="Toggle public visibility" position="top">
                                             <label className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
                                                 <input
                                                     type="checkbox"
@@ -361,50 +365,55 @@ export default function UserPressReleasesPage() {
                                                 />
                                                 <span className="text-[10px] font-medium text-gray-600 whitespace-nowrap">Show on News Room</span>
                                             </label>
+                                            </Tooltip>
                                         )}
 
                                         {release.campaign?.videoUrl ? (
+                                            <Tooltip text="View media source" position="top">
                                             <button
                                                 onClick={() => setVideoModal({ show: true, url: release.campaign.videoUrl, isAudio: release.campaign.metadata?.sourceType === 'record_audio' })}
                                                 className="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all text-gray-700 flex items-center gap-1.5 border border-gray-200 ml-auto"
-                                                title="View Source Link"
                                             >
                                                 {release.campaign.metadata?.sourceType === 'record_audio' ? <Mic className="w-3.5 h-3.5" /> : <ExternalLink className="w-3.5 h-3.5" />}
                                                 <span className="text-[10px] font-bold whitespace-nowrap">{release.campaign.metadata?.sourceType === 'record_audio' ? 'Listen Audio' : 'Source'}</span>
                                             </button>
+                                            </Tooltip>
                                         ) : <div className="flex-1" />}
                                     </div>
 
                                     {/* Primary Action Buttons (Mobile Bottom Row / Desktop Flow) */}
                                     <div className="flex items-center gap-2 w-full">
+                                        <Tooltip text="Preview your article" position="top">
                                         <button
                                             onClick={() => setPreviewModal({ show: true, campaign: release.campaign })}
                                             className="flex-1 md:flex-none justify-center px-2 md:px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all text-gray-700 hover:text-gray-900 flex items-center gap-1.5 border border-gray-200"
-                                            title="Preview Article"
                                         >
                                             <Eye className="w-4 h-4 md:w-4 md:h-4" />
                                             <span className="text-[10px] md:text-xs font-bold whitespace-nowrap">Preview Article</span>
                                         </button>
+                                        </Tooltip>
 
+                                        <Tooltip text="Check live status" position="top">
                                         <button
                                             onClick={() => setStatusModal({ show: true, campaignId: release.campaign._id, title: release.campaign.article?.headline })}
                                             className="flex-1 md:flex-none justify-center px-2 md:px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all text-blue-600 hover:text-blue-700 flex items-center gap-1.5 border border-blue-100"
-                                            title="Click to check live publication status"
                                         >
                                             <Activity className="w-4 h-4 md:w-4 md:h-4" />
                                             <span className="text-[10px] md:text-xs font-bold whitespace-nowrap">Check Live Status</span>
                                         </button>
+                                        </Tooltip>
 
                                         {/* Desktop-Only Source Button */}
                                         {release.campaign?.videoUrl && (
+                                            <Tooltip text="View media source" position="top">
                                             <button
                                                 onClick={() => setVideoModal({ show: true, url: release.campaign.videoUrl, isAudio: release.campaign.metadata?.sourceType === 'record_audio' })}
                                                 className="hidden md:flex px-2 md:px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all text-gray-700 hover:text-gray-900 items-center gap-1.5 border border-gray-200"
-                                                title="View Source Link"
                                             >
                                                 {release.campaign.metadata?.sourceType === 'record_audio' ? <Mic className="w-4 h-4 md:w-4 md:h-4" /> : <ExternalLink className="w-4 h-4 md:w-4 md:h-4" />}
                                                 <span className="text-xs font-bold whitespace-nowrap">{release.campaign.metadata?.sourceType === 'record_audio' ? 'Listen Audio' : 'Source'}</span>
                                             </button>
+                                            </Tooltip>
                                         )}
 
                                         {/* Desktop-Only News Room Toggle */}
@@ -413,13 +422,14 @@ export default function UserPressReleasesPage() {
                                                 <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-wider">
                                                     Show on News Room
                                                 </span>
+                                                <Tooltip text="Toggle public visibility" position="top">
                                                 <button
                                                     onClick={() => handleToggleVisibility(release.campaign._id, release.campaign.visibility?.userPreference)}
                                                     className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${release.campaign.visibility?.userPreference !== false ? 'bg-primary' : 'bg-gray-300'}`}
-                                                    title={release.campaign.visibility?.userPreference !== false ? "Visible on Drop PR Newsroom" : "Hidden from Drop PR Newsroom"}
                                                 >
                                                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${release.campaign.visibility?.userPreference !== false ? 'translate-x-4' : 'translate-x-1'}`} />
                                                 </button>
+                                                </Tooltip>
                                             </div>
                                         )}
                                     </div>

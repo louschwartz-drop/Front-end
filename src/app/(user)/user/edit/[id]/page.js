@@ -12,6 +12,7 @@ import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import userAuthStore from "@/store/userAuthStore";
 import { PREDEFINED_CATEGORIES } from "@/lib/constants";
 import RichTextEditor from "@/components/editor/RichTextEditor";
+import Tooltip from "@/components/ui/Tooltip";
 
 const STANDARD_FOOTER = `
 <div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>
@@ -792,19 +793,22 @@ export default function EditPage() {
       {/* Top Navigation Bar */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 px-3 md:px-6 py-2 md:py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2 md:gap-4 max-w-[40%] sm:max-w-none">
+          <Tooltip text="Go back" position="right">
           <button onClick={() => router.back()} className="text-gray-500 hover:text-gray-700 p-1">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
+          </Tooltip>
           <h1 className="text-base md:text-xl font-bold text-gray-900 hidden xs:block">Editor</h1>
           <div className="h-4 w-px bg-gray-200 hidden xs:block"></div>
           <div className="text-[10px] md:text-xs text-gray-500 truncate">
-            {lastSaved ? `${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : "Ready"}
+            {lastSaved ? `${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}` : "Ready"}
           </div>
         </div>
 
         <div className="flex items-center gap-1 sm:gap-3">
+          <Tooltip text="Save manual changes" position="bottom">
           <button
             onClick={handleManualSave}
             disabled={isSavingManual || isLimitReached}
@@ -812,7 +816,6 @@ export default function EditPage() {
                 ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
                 : "bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md disabled:bg-blue-400 disabled:shadow-none"
               }`}
-            title="Save Changes as Version"
           >
             {isSavingManual ? (
               <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -826,11 +829,12 @@ export default function EditPage() {
             )}
             <span>{isSavingManual ? "Saving..." : "Save"}</span>
           </button>
+          </Tooltip>
 
+          <Tooltip text="View revision history" position="bottom">
           <button
             onClick={() => setShowVersions(true)}
             className="p-1.5 sm:px-3 sm:py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg flex items-center gap-1.5 transition-colors border border-gray-200"
-            title="History"
           >
             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -838,10 +842,11 @@ export default function EditPage() {
             <span className="hidden sm:inline">Versions ({versions.length})</span>
             <span className="sm:hidden">({versions.length})</span>
           </button>
+          </Tooltip>
+          <Tooltip text="Preview article" position="bottom">
           <button
             onClick={() => setShowPreview(true)}
             className="p-1.5 sm:px-4 sm:py-1.5 text-xs font-semibold text-primary hover:bg-blue-50 rounded-lg flex items-center gap-1.5 transition-colors"
-            title="Preview"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -849,6 +854,7 @@ export default function EditPage() {
             </svg>
             <span className="hidden sm:inline">Preview</span>
           </button>
+          </Tooltip>
         </div>
       </nav>
 
@@ -896,6 +902,7 @@ export default function EditPage() {
                     </svg>
                   </div>
                 ))}
+                <Tooltip text="Apply changes with AI" position="top">
                 <button
                   onClick={() => setShowRegenConfirm(true)}
                   disabled={regenerating || isLimitReached}
@@ -903,6 +910,7 @@ export default function EditPage() {
                 >
                   {regenerating && regeneratingAction === "REWRITE_WITH_CONTEXT" ? "Rewriting..." : "Apply All"}
                 </button>
+                </Tooltip>
               </div>
             </div>
 
@@ -953,7 +961,7 @@ export default function EditPage() {
 
               {/* HTML Press Release Content */}
               <SectionCard
-                label="HTML Article Body"
+                label="Press Release Body"
                 disabled={isLimitReached}
                 onAiAction={() => handleRegenerate("IMPROVE_NARRATIVE_FLOW")}
                 aiLabel={regenerating && regeneratingAction === "IMPROVE_NARRATIVE_FLOW" ? "Improving..." : "Improve Narrative Flow"}
@@ -1001,18 +1009,45 @@ export default function EditPage() {
 
           {/* Sidebar / Sidebar Cards */}
           <div className="lg:col-span-4 space-y-4 md:space-y-6">
+            <Tooltip text={isPublishDisabled ? "Please fill all required information in the Mandatory Service Card first" : "Validate and publish"} position="top">
+            <div className="w-full">
+            <button
+              disabled={isPublishDisabled || validating || regenerating}
+              onClick={handlePublishClick}
+              className={`w-full py-3 rounded-xl font-bold text-sm transition-all shadow-md flex justify-center items-center gap-2 ${isPublishDisabled || validating || regenerating
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-linear-to-r from-blue-600 to-primary text-white hover:shadow-lg focus:ring-4 focus:ring-blue-100"
+                }`}
+            >
+              {regenerating ? (
+                <>
+                  <div className="w-4 h-4 rounded-full border-2 border-gray-400 border-t-transparent animate-spin" />
+                  Regenerating...
+                </>
+              ) : validating ? (
+                <>
+                  <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  Validating...
+                </>
+              ) : (
+                "Go Next to Release it"
+              )}
+            </button>
+            </div>
+            </Tooltip>
+
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
               <div className="bg-gray-900 px-4 py-2.5">
                 <h3 className="text-xs font-bold text-white flex items-center gap-2">
                   <svg className="w-3.5 h-3.5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
                   </svg>
-                  Mandatory Product Card
+                  Mandatory Service / Product Card
                 </h3>
               </div>
               <div className="p-4 sm:p-5 space-y-4">
                 <SidebarField
-                  label="Product Name"
+                  label="Product Name *"
                   value={productCard.productName}
                   onChange={(val) => setProductCard({ ...productCard, productName: val })}
                   onSpeak={() => toggleSpeech(productCard.productName, 'sidebar-product')}
@@ -1021,14 +1056,16 @@ export default function EditPage() {
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Thumbnail URL</label>
+                    <label className="text-[10px] font-black text-gray-400 tracking-wider">Thumbnail Url *</label>
+                    <Tooltip text="Upload new thumbnail" position="top">
                     <button
                       onClick={() => fileInputRef.current?.click()}
                       className={`text-[10px] font-bold ${uploadingThumbnail ? "text-gray-400" : "text-primary hover:underline"}`}
                       disabled={uploadingThumbnail}
                     >
-                      {uploadingThumbnail ? "Uploading..." : "Upload File"}
+                      {uploadingThumbnail ? "Uploading..." : "Upload Image"}
                     </button>
+                    </Tooltip>
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -1062,7 +1099,7 @@ export default function EditPage() {
                 </div>
 
                 <SidebarField
-                  label="Affiliate Link"
+                  label="Affiliate Link *"
                   value={productCard.affiliateLink}
                   onChange={(val) => {
                     setProductCard({ ...productCard, affiliateLink: val });
@@ -1074,7 +1111,7 @@ export default function EditPage() {
                   isSpeaking={currentlySpeaking === 'sidebar-affiliate'}
                 />
                 <SidebarField
-                  label="Author Name"
+                  label="Author Name *"
                   value={productCard.authorName}
                   onChange={(val) => setProductCard({ ...productCard, authorName: val })}
                   onSpeak={() => toggleSpeech(productCard.authorName, 'sidebar-author')}
@@ -1083,7 +1120,7 @@ export default function EditPage() {
 
                 {videoSource !== "document_upload" && (
                   <SidebarField
-                    label="Source Video Link"
+                    label="Source Video Link *"
                     value={productCard.sourceVideoLink}
                     onChange={(val) => {
                       setProductCard({ ...productCard, sourceVideoLink: val });
@@ -1109,6 +1146,8 @@ export default function EditPage() {
                     </p>
                   </div>
 
+                  <Tooltip text={isPublishDisabled ? "Please fill all required information in the Mandatory Service Card first" : "Validate and publish"} position="top">
+                  <div className="w-full">
                   <button
                     disabled={isPublishDisabled || validating || regenerating}
                     onClick={handlePublishClick}
@@ -1128,9 +1167,11 @@ export default function EditPage() {
                         Validating...
                       </>
                     ) : (
-                      "Validate Now"
+                       "Continue with Press Release"
                     )}
                   </button>
+                  </div>
+                  </Tooltip>
                 </div>
               </div>
             </div>
@@ -1164,7 +1205,9 @@ export default function EditPage() {
                     <p className="text-[9px] text-gray-500 font-bold tracking-tight">SEO Quality Analysis</p>
                   </div>
                 </div>
+                <Tooltip text="Close" position="left">
                 <button onClick={() => setShowAiScoreSheet(false)} className="text-gray-400 hover:text-gray-600 p-1">✕</button>
+                </Tooltip>
               </div>
 
               <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-h-[60vh] overflow-y-auto">
@@ -1264,6 +1307,7 @@ export default function EditPage() {
                 </button>
                 <div className="flex gap-2 sm:gap-3">
                   {aiAnalysis.score < 60 && (
+                    <Tooltip text="Improve using AI" position="top">
                     <button
                       disabled={regenerating}
                       onClick={async () => {
@@ -1300,14 +1344,17 @@ export default function EditPage() {
                     >
                       {regenerating ? "Improving..." : "Improve with AI"}
                     </button>
+                    </Tooltip>
                   )}
                   {aiAnalysis.score >= 60 && (
+                    <Tooltip text="Proceed to publish" position="top">
                     <button
                       onClick={handleInitiatePublish}
                       className="bg-gray-900 text-white px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold hover:bg-gray-800 transition-all shadow-md"
                     >
                       Publish
                     </button>
+                    </Tooltip>
                   )}
                 </div>
               </div>
@@ -1347,12 +1394,14 @@ export default function EditPage() {
                 </ul>
               </div>
               <div className="px-5 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <Tooltip text="Close" position="top">
                 <button
                   onClick={() => setShowValidationModal(false)}
                   className="px-6 py-2 bg-gray-900 text-white rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors"
                 >
                   Close
                 </button>
+                </Tooltip>
               </div>
             </motion.div>
           </div>
@@ -1397,7 +1446,9 @@ export default function EditPage() {
             >
               <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                 <h3 className="font-bold text-gray-900 text-sm">Previous Versions</h3>
+                <Tooltip text="Close" position="left">
                 <button onClick={() => setShowVersions(false)} className="text-gray-400 hover:text-gray-600 p-1">✕</button>
+                </Tooltip>
               </div>
               <div className="max-h-80 overflow-y-auto">
                 {versions.length === 0 ? (
@@ -1443,19 +1494,21 @@ function SectionCard({ label, children, onAiAction, aiLabel, aiDisabled, seconda
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-bold text-gray-400 tracking-tight">{label}</span>
           {onSpeak && (
+            <Tooltip text={isSpeaking ? "Stop listening" : "Listen to content"} position="top">
             <button
               onClick={onSpeak}
               className={`p-1 rounded-md transition-all ${isSpeaking ? "bg-red-50 text-red-500" : "hover:bg-gray-200 text-gray-400 hover:text-gray-600"}`}
-              title={isSpeaking ? "Stop" : "Listen"}
             >
               <motion.div animate={isSpeaking ? { scale: [1, 1.2, 1] } : {}} transition={{ duration: 1.5, repeat: Infinity }}>
                 {isSpeaking ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
               </motion.div>
             </button>
+            </Tooltip>
           )}
         </div>
         <div className="flex gap-2">
           {onAiAction && (
+            <Tooltip text={aiLabel} position="top">
             <button
               onClick={onAiAction}
               disabled={disabled || aiDisabled}
@@ -1463,8 +1516,10 @@ function SectionCard({ label, children, onAiAction, aiLabel, aiDisabled, seconda
             >
               {aiLabel}
             </button>
+            </Tooltip>
           )}
           {secondaryAction && (
+            <Tooltip text={secondaryLabel} position="top">
             <button
               onClick={secondaryAction}
               disabled={disabled || secondaryDisabled}
@@ -1472,6 +1527,7 @@ function SectionCard({ label, children, onAiAction, aiLabel, aiDisabled, seconda
             >
               {secondaryLabel}
             </button>
+            </Tooltip>
           )}
         </div>
       </div>
@@ -1525,12 +1581,14 @@ function CategorySelector({ categories, onChange }) {
             className="flex items-center gap-1 bg-white text-primary text-[10px] font-bold px-2 py-1 rounded-md border border-blue-100 shadow-sm group hover:border-red-200 hover:text-red-500 transition-all cursor-default"
           >
             {cat}
+            <Tooltip text="Remove category" position="top">
             <button
               onClick={() => handleRemoveCategory(cat)}
               className="text-gray-300 group-hover:text-red-500 transition-colors"
             >
               <X className="w-3 h-3" />
             </button>
+            </Tooltip>
           </motion.span>
         ))}
         {categoriesList.length === 0 && (
@@ -1544,8 +1602,8 @@ function CategorySelector({ categories, onChange }) {
           <p className="text-[9px] font-bold text-blue-400 mb-2 tracking-tight">Suggested</p>
           <div className="flex flex-wrap gap-1">
             {suggestions.slice(0, 10).map(cat => (
+              <Tooltip text="Add suggested category" position="top" key={cat}>
               <button
-                key={cat}
                 onClick={() => handleAddCategory(cat)}
                 className="text-[10px] bg-white border border-gray-200 px-2 py-1 rounded-md hover:border-blue-300 hover:text-primary hover:shadow-sm transition-all flex items-center gap-1 font-semibold text-gray-600 group"
               >
@@ -1554,6 +1612,7 @@ function CategorySelector({ categories, onChange }) {
                 </svg>
                 {cat}
               </button>
+              </Tooltip>
             ))}
           </div>
         </div>
@@ -1585,6 +1644,7 @@ function SidebarField({ label, value, onChange, error, placeholder, onSpeak, isS
       <div className="flex items-center justify-between">
         <label className="text-[10px] font-bold text-gray-400">{label}</label>
         {onSpeak && (
+          <Tooltip text={isSpeaking ? "Stop listening" : "Listen to field"} position="top">
           <button
             onClick={onSpeak}
             className={`p-1 rounded-md transition-all ${isSpeaking ? "text-red-500" : "text-gray-400 hover:text-primary"}`}
@@ -1593,6 +1653,7 @@ function SidebarField({ label, value, onChange, error, placeholder, onSpeak, isS
               {isSpeaking ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
             </motion.div>
           </button>
+          </Tooltip>
         )}
       </div>
       <input

@@ -238,7 +238,7 @@ export default async function BlogDetail({ params }) {
             </div>
           )}
 
-          {/* Article Body */}
+          {/* Blog Body */}
           <div className="max-w-4xl mx-auto px-6">
             <div className="w-full animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300">
               {/* Drop-cap wrapper — gives the first p its own containing block */}

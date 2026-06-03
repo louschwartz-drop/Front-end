@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import api from "@/lib/api/axios";
 import userAuthStore from "@/store/userAuthStore";
 import ReactMarkdown from "react-markdown";
+import Tooltip from "@/components/ui/Tooltip";
 import {
   Send,
   Plus,
@@ -576,18 +577,22 @@ export default function DropprGPTPage() {
           )}
         </div>
         <div className="flex items-center opacity-0 group-hover:opacity-100 transition-all">
-          <button
-            onClick={(e) => { e.stopPropagation(); setEditingChatId(chat._id); setEditTitle(chat.title); }}
-            className="p-1.5 hover:text-blue-600 rounded-lg"
-          >
-            <Edit2 size={13} />
-          </button>
-          <button
-            onClick={(e) => handleDeleteChat(e, chat._id)}
-            className="p-1.5 hover:text-red-500 rounded-lg"
-          >
-            <Trash2 size={13} />
-          </button>
+          <Tooltip text="Edit chat title">
+            <button
+              onClick={(e) => { e.stopPropagation(); setEditingChatId(chat._id); setEditTitle(chat.title); }}
+              className="p-1.5 hover:text-blue-600 rounded-lg"
+            >
+              <Edit2 size={13} />
+            </button>
+          </Tooltip>
+          <Tooltip text="Delete chat">
+            <button
+              onClick={(e) => handleDeleteChat(e, chat._id)}
+              className="p-1.5 hover:text-red-500 rounded-lg"
+            >
+              <Trash2 size={13} />
+            </button>
+          </Tooltip>
         </div>
       </div>
     );
@@ -602,9 +607,11 @@ export default function DropprGPTPage() {
           <div className="flex items-center gap-2">
             <h2 className="font-bold text-gray-900 text-lg">Drop PR GPT</h2>
           </div>
-          <button onClick={() => setShowHistory(true)} className="p-2 text-gray-500 hover:bg-gray-50 rounded-lg transition-colors">
-            <History size={20} />
-          </button>
+          <Tooltip text="View history" position="left">
+            <button onClick={() => setShowHistory(true)} className="p-2 text-gray-500 hover:bg-gray-50 rounded-lg transition-colors">
+              <History size={20} />
+            </button>
+          </Tooltip>
         </div>
 
         {/* Chat Messages */}
@@ -633,9 +640,11 @@ export default function DropprGPTPage() {
                       {msg.sender === "USER" ? <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p> : <div className="prose prose-sm max-w-none prose-blue text-gray-800 leading-relaxed text-[13px]"><ReactMarkdown>{msg.content}</ReactMarkdown></div>}
                     </div>
 
-                    <button onClick={() => handleCopy(msg.content, idx)} className={`absolute top-0 ${msg.sender === "USER" ? "-left-8" : "-right-8"} p-1.5 text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all rounded-lg`}>
-                      {copiedIndex === idx ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                    </button>
+                    <Tooltip text={copiedIndex === idx ? "Copied!" : "Copy message"} position={msg.sender === "USER" ? "left" : "right"}>
+                      <button onClick={() => handleCopy(msg.content, idx)} className={`absolute top-0 ${msg.sender === "USER" ? "-left-8" : "-right-8"} p-1.5 text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all rounded-lg`}>
+                        {copiedIndex === idx ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
               ))}
@@ -684,24 +693,27 @@ export default function DropprGPTPage() {
                     <Loader2 size={18} className="animate-spin" />
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={isRecording ? stopRecording : startRecording}
-                    disabled={isStreaming}
-                    className={`p-2 rounded-xl transition-all ${isRecording ? "bg-red-500 text-white shadow-lg animate-pulse" : "text-gray-400 hover:bg-gray-100 hover:text-blue-600"}`}
-                    title={isRecording ? "Stop Recording" : "Voice Message"}
-                  >
-                    {isRecording ? <Square size={16} fill="currentColor" /> : <Mic size={18} />}
-                  </button>
+                  <Tooltip text={isRecording ? "Stop Recording" : "Voice Message"}>
+                    <button
+                      type="button"
+                      onClick={isRecording ? stopRecording : startRecording}
+                      disabled={isStreaming}
+                      className={`p-2 rounded-xl transition-all ${isRecording ? "bg-red-500 text-white shadow-lg animate-pulse" : "text-gray-400 hover:bg-gray-100 hover:text-blue-600"}`}
+                    >
+                      {isRecording ? <Square size={16} fill="currentColor" /> : <Mic size={18} />}
+                    </button>
+                  </Tooltip>
                 )}
                 {!isRecording && (
-                  <button
-                    type="submit"
-                    disabled={!input.trim() || isStreaming || isTranscribing}
-                    className={`p-2 rounded-xl transition-all ${input.trim() && !isStreaming && !isTranscribing ? "bg-blue-600 text-white shadow-md hover:scale-105" : "bg-gray-200 text-gray-400"}`}
-                  >
-                    <Send size={18} />
-                  </button>
+                  <Tooltip text="Send message">
+                    <button
+                      type="submit"
+                      disabled={!input.trim() || isStreaming || isTranscribing}
+                      className={`p-2 rounded-xl transition-all ${input.trim() && !isStreaming && !isTranscribing ? "bg-blue-600 text-white shadow-md hover:scale-105" : "bg-gray-200 text-gray-400"}`}
+                    >
+                      <Send size={18} />
+                    </button>
+                  </Tooltip>
                 )}
               </div>
             </div>
@@ -715,15 +727,21 @@ export default function DropprGPTPage() {
             <div className="flex flex-col h-full overflow-hidden">
               <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-50 bg-white">
                 <h3 className="font-bold text-gray-900 text-sm">Recent Chats</h3>
-                <button onClick={() => setShowHistory(false)} className="p-2 text-gray-400 hover:bg-gray-50 rounded-lg transition-colors">
-                  <X size={20} />
-                </button>
+                <Tooltip text="Close history" position="left">
+                  <button onClick={() => setShowHistory(false)} className="p-2 text-gray-400 hover:bg-gray-50 rounded-lg transition-colors">
+                    <X size={20} />
+                  </button>
+                </Tooltip>
               </div>
               <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                 <div className="flex gap-2 mb-4">
-                  <button onClick={handleNewChat} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all text-sm">
-                    <Plus size={16} /> New Chat
-                  </button>
+                  <div className="w-full">
+                    <Tooltip text="Start a new chat" position="bottom">
+                      <button onClick={handleNewChat} className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all text-sm">
+                        <Plus size={16} /> New Chat
+                      </button>
+                    </Tooltip>
+                  </div>
                 </div>
                 <div className="space-y-1">
                   {searchQuery ? (
@@ -767,12 +785,18 @@ export default function DropprGPTPage() {
         <div className="flex flex-col h-full bg-white">
           <div className="p-4 border-b border-gray-50">
             <div className="flex gap-2">
-              <button onClick={handleNewChat} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all text-sm">
-                <Plus size={16} /> New Chat
-              </button>
-              <button onClick={() => setIsNewFolderModalOpen(true)} className="p-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-all" title="New Folder">
-                <FolderPlus size={18} />
-              </button>
+              <div className="flex-1">
+                <Tooltip text="Start a new chat" position="bottom">
+                  <button onClick={handleNewChat} className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all text-sm">
+                    <Plus size={16} /> New Chat
+                  </button>
+                </Tooltip>
+              </div>
+              <Tooltip text="Create new folder" position="bottom">
+                <button onClick={() => setIsNewFolderModalOpen(true)} className="p-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-all">
+                  <FolderPlus size={18} />
+                </button>
+              </Tooltip>
             </div>
             <div className="mt-4 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
@@ -819,12 +843,16 @@ export default function DropprGPTPage() {
                           )}
                         </div>
                         <div className="flex items-center opacity-0 group-hover:opacity-100 transition-all">
-                          <button onClick={(e) => { e.stopPropagation(); setEditingFolderId(folder._id); setEditFolderName(folder.name); }} className="p-1 hover:text-blue-600">
-                            <Edit2 size={12} />
-                          </button>
-                          <button onClick={(e) => { e.stopPropagation(); setFolderToDelete(folder); setIsFolderDeleteModalOpen(true); }} className="p-1 hover:text-red-500">
-                            <Trash2 size={12} />
-                          </button>
+                          <Tooltip text="Rename folder">
+                            <button onClick={(e) => { e.stopPropagation(); setEditingFolderId(folder._id); setEditFolderName(folder.name); }} className="p-1 hover:text-blue-600">
+                              <Edit2 size={12} />
+                            </button>
+                          </Tooltip>
+                          <Tooltip text="Delete folder">
+                            <button onClick={(e) => { e.stopPropagation(); setFolderToDelete(folder); setIsFolderDeleteModalOpen(true); }} className="p-1 hover:text-red-500">
+                              <Trash2 size={12} />
+                            </button>
+                          </Tooltip>
                         </div>
                       </div>
                       {expandedFolders[folder._id] && (
@@ -840,9 +868,11 @@ export default function DropprGPTPage() {
           </div>
 
           <div className="p-3 border-t border-gray-50 bg-white">
-            <button onClick={() => setIsModalOpen(true)} className="w-full flex items-center justify-center gap-2 py-2 text-gray-400 hover:text-red-500 text-xs font-medium transition-all">
-              <Trash2 size={13} /> Clear all history
-            </button>
+            <Tooltip text="Delete all chat history" position="top">
+              <button onClick={() => setIsModalOpen(true)} className="w-full flex items-center justify-center gap-2 py-2 text-gray-400 hover:text-red-500 text-xs font-medium transition-all">
+                <Trash2 size={13} /> Clear all history
+              </button>
+            </Tooltip>
           </div>
         </div>
       </div>

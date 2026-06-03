@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import ScrollToTop from "../ui/ScrollToTop";
 
 export default function Footer() {
   return (
@@ -18,7 +19,7 @@ export default function Footer() {
                 alt="DropPR.ai"
                 width={160}
                 height={160}
-                className="rounded-lg"
+                className="rounded-lg brightness-0 invert"
               />
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
@@ -147,6 +148,7 @@ export default function Footer() {
           </div>
         </div>
       </div>
+      <ScrollToTop />
     </footer>
   );
 }
