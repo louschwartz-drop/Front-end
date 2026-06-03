@@ -25,7 +25,6 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
-  User
 } from "lucide-react";
 
 export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect = true }) {

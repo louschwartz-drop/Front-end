@@ -442,6 +442,14 @@ export default function ChatWidget() {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (containerRef.current && containerRef.current.contains(event.target)) return;
+      // Ignore clicks inside any Radix UI portal (Select dropdown, Popper, etc.)
+      if (event.target.closest && (
+        event.target.closest('[data-radix-popper-content-wrapper]') ||
+        event.target.closest('[data-radix-select-content]') ||
+        event.target.closest('[role="listbox"]') ||
+        event.target.closest('[role="option"]') ||
+        event.target.closest('[data-state="open"]')
+      )) return;
       if (isLoginModalOpen) return;
       setIsOpen(false);
     };
