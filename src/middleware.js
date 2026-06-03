@@ -25,9 +25,21 @@ export function middleware(request) {
 
   // 2. User Route Protection
   if (pathname.startsWith("/user")) {
+    if (pathname === "/user/auth") {
+      const token = request.cookies.get("auth_token")?.value;
+      const nextAuthToken = request.cookies.get("next-auth.session-token")?.value || 
+                            request.cookies.get("__Secure-next-auth.session-token")?.value;
+      if (token || nextAuthToken) {
+        return NextResponse.redirect(new URL("/user/dashboard/create", request.url));
+      }
+      return NextResponse.next();
+    }
     const token = request.cookies.get("auth_token")?.value;
-    if (!token) {
-      return NextResponse.redirect(new URL("/", request.url));
+    const nextAuthToken = request.cookies.get("next-auth.session-token")?.value || 
+                          request.cookies.get("__Secure-next-auth.session-token")?.value;
+    
+    if (!token && !nextAuthToken) {
+      return NextResponse.redirect(new URL("/user/auth", request.url));
     }
   }
 

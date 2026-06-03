@@ -1,16 +1,17 @@
 import apiAdmin from "./apiAdmin";
 
-export const getAllChatsAdmin = async () => {
+export const getAllSupportTicketsAdmin = async () => {
   const response = await apiAdmin.get("/admin/chat");
   return response.data;
 };
 
-export const getChatMessagesAdmin = async (chatId) => {
-  const response = await apiAdmin.get(`/admin/chat/${chatId}/messages`);
+export const getSupportTicketMessagesAdmin = async (ticketId) => {
+  const response = await apiAdmin.get(`/admin/chat/${ticketId}/messages`);
   return response.data;
 };
 
-export const deleteChatAdmin = async (chatId) => {
-  const response = await apiAdmin.delete(`/admin/chat/${chatId}`);
+export const deleteSupportTicketAdmin = async (ticketId) => {
+  const response = await apiAdmin.delete(`/admin/chat/${ticketId}`);
   return response.data;
 };
+

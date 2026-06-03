@@ -2,29 +2,32 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAdminSocket } from '@/context/AdminSocketContext';
-import { getAllChatsAdmin, getChatMessagesAdmin, deleteChatAdmin } from '@/lib/api/admin/chat.api';
+import {
+  getAllSupportTicketsAdmin,
+  getSupportTicketMessagesAdmin,
+  deleteSupportTicketAdmin
+} from '@/lib/api/admin/chat.api';
 import {
   MessageSquare, Send, User, Users, CreditCard, UserCheck,
-  Headset, Clock, XCircle, Loader2, PlayCircle, BadgeCheck,
-  Search, Trash2, CheckCheck, Archive, ChevronLeft
+  Headset, Clock, Loader2, PlayCircle, BadgeCheck,
+  Search, Trash2, Archive, ChevronLeft
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import adminAuthStore from '@/store/adminAuthStore';
 
 // ── User-type helpers ─────────────────────────────────────────────────────────
-function getUserType(chat) {
-  if (!chat.userId) return 'guest';
-  return (chat.userId?.planCredits?.length ?? 0) > 0 ? 'paid' : 'registered';
+function getUserType(ticket) {
+  if (!ticket.userId) return 'registered';
+  return (ticket.userId?.planCredits?.length ?? 0) > 0 ? 'paid' : 'registered';
 }
 
 const USER_TYPE_META = {
-  guest:      { label: 'Guest',      color: 'bg-gray-100 text-gray-600',       dot: 'bg-gray-400' },
   registered: { label: 'Registered', color: 'bg-blue-100 text-blue-700',       dot: 'bg-blue-500' },
   paid:       { label: 'Paid',       color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
 };
 
 function userTypePill(type) {
-  const m = USER_TYPE_META[type] ?? USER_TYPE_META.guest;
+  const m = USER_TYPE_META[type] ?? USER_TYPE_META.registered;
   return (
     <span className={`inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full ${m.color}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />
@@ -34,15 +37,12 @@ function userTypePill(type) {
 }
 
 const STATUS_META = {
-  AI:         { label: 'AI Chat', color: 'bg-gray-100 text-gray-500' },
-  WAITING:    { label: 'Waiting', color: 'bg-yellow-100 text-yellow-700' },
-  LIVE_AGENT: { label: 'Live',    color: 'bg-green-100 text-green-700 animate-pulse' },
-  FIXED:      { label: 'Fixed',   color: 'bg-blue-100 text-blue-700' },
-  CLOSED:     { label: 'Closed',  color: 'bg-red-100 text-red-600' },
+  open:   { label: 'Open',   color: 'bg-green-100 text-green-700 animate-pulse' },
+  closed: { label: 'Closed', color: 'bg-red-100 text-red-600' },
 };
 
 function statusPill(status) {
-  const m = STATUS_META[status] ?? STATUS_META.AI;
+  const m = STATUS_META[status] ?? STATUS_META.open;
   return <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full ${m.color}`}>{m.label}</span>;
 }
 
@@ -57,18 +57,15 @@ function timeAgo(date) {
 
 // ── Section tabs ──────────────────────────────────────────────────────────────
 const SECTIONS = [
-  { key: 'active',  label: 'Active',             Icon: MessageSquare },
-  { key: 'chatted', label: 'Issue Fixed',         Icon: CheckCheck },
-  { key: 'closed',  label: 'Closed',             Icon: Archive },
+  { key: 'active',  label: 'Active / New',       Icon: MessageSquare },
+  { key: 'closed',  label: 'Closed / Resolved',  Icon: Archive },
 ];
 
-const ACTIVE_STATUSES  = ['AI', 'WAITING', 'LIVE_AGENT'];
-const CHATTED_STATUSES = ['FIXED'];
-const CLOSED_STATUSES  = ['CLOSED'];
+const ACTIVE_STATUSES  = ['open'];
+const CLOSED_STATUSES  = ['closed'];
 
 function sectionStatuses(section) {
   if (section === 'active')  return ACTIVE_STATUSES;
-  if (section === 'chatted') return CHATTED_STATUSES;
   return CLOSED_STATUSES;
 }
 
@@ -132,7 +129,6 @@ const formatContent = (content, isAgent) => {
 
 const renderMessageContent = (content, isAgent) => {
   if (!content) return null;
-  
   const lines = content.split('\n');
   return lines.map((line, i) => {
     const isBullet = line.trim().startsWith('- ');
@@ -149,7 +145,7 @@ const renderMessageContent = (content, isAgent) => {
 function MessageBubble({ msg }) {
   if (msg.isSystem) {
     return (
-      <div className="flex justify-center my-1">
+      <div className="flex justify-center my-2">
         <span className="bg-gray-100 text-gray-500 italic text-[10px] py-1 px-3 rounded-full">{msg.content}</span>
       </div>
     );
@@ -160,13 +156,11 @@ function MessageBubble({ msg }) {
       <div className={`max-w-[85%] sm:max-w-[75%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
         isAgent
           ? 'bg-brand-blue text-white rounded-br-none'
-          : msg.sender === 'USER'
-          ? 'bg-white border border-gray-100 shadow-sm text-gray-800 rounded-bl-none'
-          : 'bg-gray-50 border border-gray-100 text-gray-500 italic rounded-bl-none'
+          : 'bg-white border border-gray-100 shadow-sm text-gray-800 rounded-bl-none'
       }`}>
         {!isAgent && (
           <p className="text-[9px] font-bold uppercase tracking-wide mb-0.5 opacity-60">
-            {msg.sender === 'AI' ? 'AI Assistant' : 'User'}
+            User
           </p>
         )}
         {renderMessageContent(msg.content, isAgent)}
@@ -177,9 +171,8 @@ function MessageBubble({ msg }) {
 
 // ── ChatListItem ──────────────────────────────────────────────────────────────
 function ChatListItem({ chat, isSelected, onClick, hasUnread, onDelete, isDeletable }) {
-  const isWaiting  = chat.status === 'WAITING';
   const userType   = getUserType(chat);
-  const displayName  = chat.userId?.name  || (chat.guestId ? `Guest · ${chat.guestId.slice(0, 6)}` : 'Guest');
+  const displayName  = chat.userId?.name  || 'User';
   const displayEmail = chat.userId?.email || 'Anonymous';
 
   return (
@@ -187,14 +180,16 @@ function ChatListItem({ chat, isSelected, onClick, hasUnread, onDelete, isDeleta
       <button onClick={onClick} className="w-full text-left px-4 py-3 cursor-pointer">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-              isWaiting ? 'bg-yellow-100' : userType === 'paid' ? 'bg-emerald-100' : 'bg-gray-100'
-            }`}>
-              <User size={14} className={isWaiting ? 'text-yellow-600' : userType === 'paid' ? 'text-emerald-600' : 'text-gray-500'} />
+            <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gray-100`}>
+              <User size={14} className="text-gray-500" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-gray-800 truncate">{displayName}</p>
-              <p className="text-[10px] text-gray-400 truncate">{displayEmail}</p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-extrabold text-brand-blue">{chat.ticketId}</span>
+                <span className="text-[9px] bg-gray-100 text-gray-600 font-semibold px-2 py-0.5 rounded-full">{chat.category}</span>
+              </div>
+              <p className="text-xs font-semibold text-gray-800 truncate mt-0.5">{displayName}</p>
+              <p className="text-xs font-medium text-gray-500 truncate line-clamp-1">{chat.subject}</p>
             </div>
           </div>
           <div className="flex flex-col items-end gap-1 shrink-0">
@@ -205,20 +200,15 @@ function ChatListItem({ chat, isSelected, onClick, hasUnread, onDelete, isDeleta
         </div>
         <div className="flex items-center gap-2 mt-1">
           {userTypePill(userType)}
-          {isWaiting && (
-            <span className="text-[10px] text-yellow-600 font-medium flex items-center gap-1">
-              <Clock size={9} /> Waiting
-            </span>
-          )}
         </div>
       </button>
 
-      {/* Delete button — visible on hover for chatted/closed */}
+      {/* Delete button — visible on hover for closed */}
       {isDeletable && (
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(chat._id); }}
           className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-400 hover:text-red-600 cursor-pointer"
-          title="Delete conversation"
+          title="Delete Support Ticket"
         >
           <Trash2 size={12} />
         </button>
@@ -255,7 +245,7 @@ export default function AdminChatPage() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [unreadChatIds, setUnreadChatIds] = useState(new Set());
-  const [section, setSection] = useState('active');       // active | chatted | closed
+  const [section, setSection] = useState('active');       // active | closed
   const [userFilter, setUserFilter] = useState('all');
   const [search, setSearch] = useState('');
 
@@ -283,12 +273,12 @@ export default function AdminChatPage() {
   useEffect(() => {
     if (!socket) return;
 
-    const onNewRequest = (chat) => {
+    const onNewRequest = (ticket) => {
       setChats((prev) => {
-        const exists = prev.some((c) => c._id === chat._id);
-        return exists ? prev.map((c) => (c._id === chat._id ? chat : c)) : [chat, ...prev];
+        const exists = prev.some((c) => c._id === ticket._id);
+        return exists ? prev.map((c) => (c._id === ticket._id ? ticket : c)) : [ticket, ...prev];
       });
-      toast.info('🔔 New live agent request', { autoClose: 4000 });
+      toast.info(`🚨 New Support Ticket - ${ticket.ticketId}`, { autoClose: 4000 });
     };
 
     const onListUpdate = (updated) => {
@@ -297,40 +287,67 @@ export default function AdminChatPage() {
     };
 
     const onNewMessage = (message) => {
-      const cid = message.chatId?._id ?? message.chatId;
-      if (cid === selectedChat?._id) {
+      if (message.ticketId === selectedChat?._id) {
         setMessages((prev) => {
           if (prev.some(m => m._id === message._id)) return prev;
           return [...prev, message];
         });
-      }
-      else setUnreadChatIds((prev) => new Set([...prev, cid]));
-    };
-
-    const onSessionStarted = (sysMsg) => {
-      const cid = sysMsg.chatId?._id ?? sysMsg.chatId;
-      if (cid === selectedChat?._id) {
-        setMessages((prev) => [...prev, sysMsg]);
-        setSelectedChat((prev) => prev ? { ...prev, status: 'LIVE_AGENT' } : prev);
+      } else {
+        setUnreadChatIds((prev) => new Set([...prev, message.ticketId]));
       }
     };
 
-    const onChatClosed = (sysMsg) => {
-      const cid = sysMsg.chatId?._id ?? sysMsg.chatId;
-      if (cid === selectedChat?._id) {
-        setMessages((prev) => [...prev, sysMsg]);
+    const onAgentAssigned = (data) => {
+      setSelectedChat((prev) => {
+        if (prev && prev._id === data.ticketId) {
+          return { ...prev, agentId: data.agentId };
+        }
+        return prev;
+      });
+      if (selectedChat && selectedChat._id === data.ticketId) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            _id: `sys-${Date.now()}`,
+            content: `Agent ${data.agentName} has claimed this support ticket.`,
+            sender: 'AGENT',
+            isSystem: true,
+            createdAt: new Date().toISOString(),
+          }
+        ]);
       }
     };
 
-    const onIncoming = ({ chatId }) => {
-      if (chatId !== selectedChat?._id) setUnreadChatIds((prev) => new Set([...prev, chatId]));
+    const onTicketClosed = (data) => {
+      setSelectedChat((prev) => {
+        if (prev && prev._id === data.ticketId) {
+          return { ...prev, status: 'closed' };
+        }
+        return prev;
+      });
+      if (selectedChat && selectedChat._id === data.ticketId) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            _id: `sys-${Date.now()}`,
+            content: `This ticket has been marked as resolved and closed.`,
+            sender: 'AGENT',
+            isSystem: true,
+            createdAt: new Date().toISOString(),
+          }
+        ]);
+      }
+    };
+
+    const onIncoming = ({ ticketId }) => {
+      if (ticketId !== selectedChat?._id) setUnreadChatIds((prev) => new Set([...prev, ticketId]));
     };
 
     socket.on('new_support_request', onNewRequest);
     socket.on('chat_list_update', onListUpdate);
     socket.on('new_message', onNewMessage);
-    socket.on('session_started', onSessionStarted);
-    socket.on('chat_closed', onChatClosed);
+    socket.on('agent_assigned', onAgentAssigned);
+    socket.on('ticket_closed', onTicketClosed);
     socket.on('incoming_message', onIncoming);
     socket.on('connect', fetchChats);
 
@@ -338,8 +355,8 @@ export default function AdminChatPage() {
       socket.off('new_support_request', onNewRequest);
       socket.off('chat_list_update', onListUpdate);
       socket.off('new_message', onNewMessage);
-      socket.off('session_started', onSessionStarted);
-      socket.off('chat_closed', onChatClosed);
+      socket.off('agent_assigned', onAgentAssigned);
+      socket.off('ticket_closed', onTicketClosed);
       socket.off('incoming_message', onIncoming);
       socket.off('connect', fetchChats);
     };
@@ -349,70 +366,79 @@ export default function AdminChatPage() {
   const fetchChats = async () => {
     try {
       setLoading(true);
-      const res = await getAllChatsAdmin();
-      if (res.success) setChats(res.data);
-    } catch { toast.error('Failed to load chats'); }
+      const res = await getAllSupportTicketsAdmin();
+      if (res.success) setChats(res.data || []);
+    } catch { toast.error('Failed to load tickets'); }
     finally { setLoading(false); }
   };
 
-  const selectChat = useCallback(async (chat) => {
-    if (prevChatId.current && socket) socket.emit('leave_chat', { chatId: prevChatId.current });
-    setSelectedChat(chat);
+  const selectChat = useCallback(async (ticket) => {
+    if (prevChatId.current && socket) socket.emit('leave_chat', { ticketId: prevChatId.current });
+    setSelectedChat(ticket);
     setMessages([]);
-    prevChatId.current = chat._id;
-    setUnreadChatIds((prev) => { const n = new Set(prev); n.delete(chat._id); return n; });
-    if (socket) socket.emit('join_chat', { chatId: chat._id });
+    prevChatId.current = ticket._id;
+    setUnreadChatIds((prev) => { const n = new Set(prev); n.delete(ticket._id); return n; });
+    if (socket) socket.emit('join_chat', { ticketId: ticket._id });
     setMsgLoading(true);
     try {
-      const res = await getChatMessagesAdmin(chat._id);
-      if (res.success) setMessages(res.data);
+      const res = await getSupportTicketMessagesAdmin(ticket._id);
+      if (res.success) setMessages(res.data || []);
     } catch { toast.error('Failed to load messages'); }
     finally { setMsgLoading(false); }
   }, [socket]);
 
-  const startConversation = () => {
+  const claimTicket = () => {
     if (!socket || !selectedChat) return;
-    socket.emit('start_conversation', { chatId: selectedChat._id });
-    setSelectedChat((prev) => ({ ...prev, status: 'LIVE_AGENT' }));
-    toast.success('Conversation started');
+    socket.emit('start_conversation', { ticketId: selectedChat._id });
+    toast.success('Conversation started successfully');
   };
 
-  const closeChat = (type) => {
+  const resolveTicket = () => {
     if (!socket || !selectedChat) return;
-    socket.emit('close_chat', { chatId: selectedChat._id, type });
-    const newStatus = type === 'FIXED' ? 'FIXED' : 'CLOSED';
-    setSelectedChat((prev) => ({ ...prev, status: newStatus }));
+    socket.emit('close_chat', { ticketId: selectedChat._id });
+    toast.success('Ticket closed and resolved');
   };
 
   const sendMessage = () => {
     if (!input.trim() || !socket || !selectedChat) return;
-    if (selectedChat.status !== 'LIVE_AGENT') { toast.warning('Start the conversation first'); return; }
+    if (!selectedChat.agentId) { toast.warning('Claim the support ticket first'); return; }
+    
+    // Client validations
+    const hasHtml = /<\/?[a-z][\s\S]*>/i.test(input);
+    if (hasHtml) {
+      toast.error('HTML tags are not allowed in messages.');
+      return;
+    }
+    if (input.length > 1000) {
+      toast.error('Message is too long (max 1000 characters).');
+      return;
+    }
+
     setSending(true);
-    socket.emit('send_message', { chatId: selectedChat._id, content: input });
+    socket.emit('send_message', { ticketId: selectedChat._id, content: input.trim() });
     setInput('');
     setSending(false);
   };
 
-  const handleDelete = async (chatId) => {
-    if (!confirm('Delete this conversation and all its messages? This cannot be undone.')) return;
+  const handleDelete = async (ticketId) => {
+    if (!confirm('Delete this support ticket and all its message history? This cannot be undone.')) return;
     try {
-      const res = await deleteChatAdmin(chatId);
+      const res = await deleteSupportTicketAdmin(ticketId);
       if (res.success) {
-        setChats((prev) => prev.filter((c) => c._id !== chatId));
-        if (selectedChat?._id === chatId) { setSelectedChat(null); setMessages([]); }
-        toast.success('Conversation deleted');
+        setChats((prev) => prev.filter((c) => c._id !== ticketId));
+        if (selectedChat?._id === ticketId) { setSelectedChat(null); setMessages([]); }
+        toast.success('Ticket deleted');
       }
-    } catch { toast.error('Failed to delete conversation'); }
+    } catch { toast.error('Failed to delete support ticket'); }
   };
 
   // ── derived counts ──
-  const activeChats  = chats.filter((c) => ACTIVE_STATUSES.includes(c.status));
-  const chattedChats = chats.filter((c) => CHATTED_STATUSES.includes(c.status));
-  const closedChats  = chats.filter((c) => CLOSED_STATUSES.includes(c.status));
+  const activeChats = chats.filter((c) => ACTIVE_STATUSES.includes(c.status));
+  const closedChats = chats.filter((c) => CLOSED_STATUSES.includes(c.status));
 
   const registeredCount = activeChats.filter((c) => getUserType(c) === 'registered').length;
   const paidCount       = activeChats.filter((c) => getUserType(c) === 'paid').length;
-  const waitingCount    = chats.filter((c) => c.status === 'WAITING').length;
+  const waitingCount    = activeChats.filter((c) => !c.agentId).length;
 
   // ── chat list for current section (+ user filter + search) ──
   const sectionChats = chats.filter((c) => sectionStatuses(section).includes(c.status));
@@ -425,31 +451,32 @@ export default function AdminChatPage() {
       return (
         c.userId?.name?.toLowerCase().includes(q) ||
         c.userId?.email?.toLowerCase().includes(q) ||
-        c.guestId?.toLowerCase().includes(q)
+        c.ticketId?.toLowerCase().includes(q) ||
+        c.subject?.toLowerCase().includes(q)
       );
     })
     .sort((a, b) => {
-      const order = { WAITING: 0, LIVE_AGENT: 1, AI: 2, FIXED: 3, CLOSED: 4 };
-      const oa = order[a.status] ?? 5, ob = order[b.status] ?? 5;
-      if (oa !== ob) return oa - ob;
+      // Prioritize unassigned open tickets, then sort by lastMessageAt
+      const hasAgentA = !!a.agentId, hasAgentB = !!b.agentId;
+      if (hasAgentA !== hasAgentB) return hasAgentA ? 1 : -1;
       return new Date(b.lastMessageAt) - new Date(a.lastMessageAt);
     });
 
-  const isDeletable = section === 'chatted' || section === 'closed';
+  const isDeletable = section === 'closed';
   const selectedUserType = selectedChat ? getUserType(selectedChat) : null;
-  const isReadOnly = selectedChat && (selectedChat.status === 'FIXED' || selectedChat.status === 'CLOSED');
+  const isReadOnly = selectedChat && selectedChat.status === 'closed';
 
   return (
-    <div className="flex flex-col gap-4 w-full h-full max-h-[calc(100vh-100px)]">
+    <div className="flex flex-col gap-4 w-full h-[calc(100vh-96px)] sm:h-[calc(100vh-112px)] lg:h-[calc(100vh-128px)]">
 
       {/* Adaptive Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
-        <StatCard label="Registered Users" value={registeredCount} Icon={UserCheck}  color="border-blue-200 bg-blue-50 text-blue-700"          sub="Signed-in, no plan" />
-        <StatCard label="Paid Users"       value={paidCount}       Icon={CreditCard} color="border-emerald-200 bg-emerald-50 text-emerald-700"  sub="Active plan holders" />
+        <StatCard label="Registered Users" value={registeredCount} Icon={UserCheck}  color="border-blue-200 bg-blue-50 text-blue-700"          sub="Open tickets, no paid plan" />
+        <StatCard label="Paid Users"       value={paidCount}       Icon={CreditCard} color="border-emerald-200 bg-emerald-50 text-emerald-700"  sub="Open tickets from plan holders" />
         <StatCard
-          label="Waiting Now" value={waitingCount} Icon={Headset}
-          color={waitingCount > 0 ? 'border-yellow-300 bg-yellow-50 text-yellow-700 animate-pulse' : 'border-gray-200 bg-gray-50 text-gray-500'}
-          sub="Need live agent help"
+          label="Open Tickets" value={activeChats.length} Icon={Headset}
+          color={activeChats.length > 0 ? 'border-yellow-300 bg-yellow-50 text-yellow-700' : 'border-gray-200 bg-gray-50 text-gray-500'}
+          sub="Total open tickets in queue"
         />
       </div>
 
@@ -462,7 +489,7 @@ export default function AdminChatPage() {
           {/* Section tabs */}
           <div className="flex border-b border-gray-100 shrink-0">
             {SECTIONS.map(({ key, label, Icon }) => {
-              const count = key === 'active' ? activeChats.length : key === 'chatted' ? chattedChats.length : closedChats.length;
+              const count = key === 'active' ? activeChats.length : closedChats.length;
               return (
                 <button
                   key={key}
@@ -489,7 +516,7 @@ export default function AdminChatPage() {
               <Search size={12} className="absolute left-2.5 top-2.5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search name or email…"
+                placeholder="Search ticket, name or subject…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-7 pr-3 py-1.5 text-xs bg-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue/20"
@@ -519,7 +546,7 @@ export default function AdminChatPage() {
             )}
             {section !== 'active' && (
               <p className="text-[10px] text-gray-400 italic">
-                {section === 'chatted' ? 'Resolved conversations — hover delete' : 'Closed sessions — hover delete'}
+                Resolved tickets — hover over list item to delete
               </p>
             )}
           </div>
@@ -529,14 +556,13 @@ export default function AdminChatPage() {
             {loading ? (
               <div className="p-8 text-center">
                 <Loader2 className="animate-spin w-6 h-6 text-brand-blue mx-auto mb-2" />
-                <p className="text-xs text-gray-400">Loading support history...</p>
+                <p className="text-xs text-gray-400">Loading support tickets...</p>
               </div>
             ) : filteredChats.length === 0 ? (
               <div className="p-8 text-center">
                 <MessageSquare className="w-8 h-8 text-gray-200 mx-auto mb-2" />
                 <p className="text-xs text-gray-400">
-                  {section === 'chatted' ? 'No resolved conversations yet' :
-                   section === 'closed'  ? 'No closed conversations yet' : 'No chats found'}
+                  {section === 'closed' ? 'No resolved tickets' : 'No active tickets'}
                 </p>
               </div>
             ) : (
@@ -571,26 +597,21 @@ export default function AdminChatPage() {
                 </button>
 
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                  selectedUserType === 'paid' ? 'bg-emerald-100' : selectedUserType === 'registered' ? 'bg-blue-100' : 'bg-gray-100'
+                  selectedUserType === 'paid' ? 'bg-emerald-100' : 'bg-blue-100'
                 }`}>
-                  <User size={18} className={selectedUserType === 'paid' ? 'text-emerald-600' : selectedUserType === 'registered' ? 'text-blue-600' : 'text-gray-500'} />
+                  <User size={18} className={selectedUserType === 'paid' ? 'text-emerald-600' : 'text-blue-600'} />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-bold text-gray-900 truncate max-w-[120px] sm:max-w-[200px]">
-                      {selectedChat.userId?.name || (selectedChat.guestId ? `Guest · ${selectedChat.guestId.slice(0, 8)}` : 'Guest User')}
+                      {selectedChat.userId?.name || 'User'}
                     </p>
                     {userTypePill(selectedUserType)}
                   </div>
                   <p className="text-[10px] text-gray-400 flex items-center gap-1.5 mt-0.5 truncate">
                     <span className="truncate max-w-[120px] sm:max-w-[180px]">{selectedChat.userId?.email || 'Anonymous'}</span>
                     <span>·</span>{statusPill(selectedChat.status)}
-                    {selectedUserType === 'paid' && (
-                      <><span>·</span>
-                      <span className="text-emerald-600 font-medium hidden sm:inline">
-                        {selectedChat.userId?.planCredits?.reduce((a, c) => a + c.remainingArticles, 0)} left
-                      </span></>
-                    )}
+                    <span>·</span><span className="font-semibold text-brand-blue">{selectedChat.ticketId}</span>
                   </p>
                 </div>
               </div>
@@ -598,20 +619,15 @@ export default function AdminChatPage() {
               {/* Action Buttons Panel */}
               {!isReadOnly && (
                 <div className="flex items-center gap-1.5 shrink-0">
-                  {selectedChat.status === 'WAITING' && (
-                    <button onClick={startConversation} className="flex items-center gap-1 px-2.5 py-1.5 bg-green-600 text-white text-[10px] sm:text-xs font-semibold rounded-lg hover:bg-green-700 transition-colors cursor-pointer shadow-sm">
-                      <PlayCircle size={12} /> <span className="hidden sm:inline">Start Chat</span><span className="sm:hidden">Start</span>
+                  {!selectedChat.agentId && (
+                    <button onClick={claimTicket} className="flex items-center gap-1 px-2.5 py-1.5 bg-green-600 text-white text-[10px] sm:text-xs font-semibold rounded-lg hover:bg-green-700 transition-colors cursor-pointer shadow-sm">
+                      <PlayCircle size={12} /> Start conversation
                     </button>
                   )}
-                  {selectedChat.status === 'LIVE_AGENT' && (
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => closeChat('FIXED')} className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white text-[10px] sm:text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors cursor-pointer shadow-sm">
-                        <BadgeCheck size={12} /> <span className="hidden sm:inline">Mark Fixed</span><span className="sm:hidden">Fix</span>
-                      </button>
-                      <button onClick={() => closeChat('CLOSE')} className="flex items-center gap-1 px-2 py-1.5 bg-gray-100 text-gray-700 text-[10px] sm:text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
-                        <XCircle size={12} /> <span className="hidden sm:inline">Close</span>
-                      </button>
-                    </div>
+                  {selectedChat.agentId && (
+                    <button onClick={resolveTicket} className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white text-[10px] sm:text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors cursor-pointer shadow-sm">
+                      <BadgeCheck size={12} /> Close & Resolve
+                    </button>
                   )}
                 </div>
               )}
@@ -622,17 +638,44 @@ export default function AdminChatPage() {
                   onClick={() => handleDelete(selectedChat._id)}
                   className="flex items-center gap-1 px-2.5 py-1.5 bg-red-50 text-red-500 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors cursor-pointer shrink-0"
                 >
-                  <Trash2 size={13} /> <span className="hidden sm:inline">Delete</span>
+                  <Trash2 size={13} /> <span className="hidden sm:inline">Delete Ticket</span><span className="sm:hidden">Delete</span>
                 </button>
               )}
             </div>
 
             {/* Messages Area */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 bg-gray-50/40">
+              {!msgLoading && selectedChat && (
+                <div className="bg-gradient-to-r from-blue-50/80 to-indigo-50/80 rounded-2xl p-4 border border-blue-100/50 shadow-sm space-y-3 mb-4 text-left">
+                  <div className="flex items-center gap-2 pb-2 border-b border-blue-100/50">
+                    <div className="w-2 h-2 rounded-full bg-brand-blue animate-pulse" />
+                    <span className="text-[10px] font-bold text-brand-blue uppercase tracking-widest">Support Ticket Details</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Ticket Number</p>
+                      <p className="font-extrabold text-brand-blue">{selectedChat.ticketId}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Issue Type</p>
+                      <p className="font-bold text-gray-700">{selectedChat.category}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Subject</p>
+                      <p className="font-bold text-gray-800 line-clamp-1">{selectedChat.subject}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">User</p>
+                      <p className="font-bold text-gray-800">{selectedChat.userId?.name || 'User'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {msgLoading ? (
                 <div className="text-center pt-12"><Loader2 className="animate-spin w-6 h-6 text-brand-blue mx-auto" /></div>
               ) : messages.length === 0 ? (
-                <div className="text-center pt-12 text-gray-400 text-sm italic">No messages yet. Say hello!</div>
+                <div className="text-center pt-12 text-gray-400 text-sm italic">No messages in ticket room.</div>
               ) : (
                 messages.map((msg, idx) => <MessageBubble key={msg._id ?? idx} msg={msg} />)
               )}
@@ -642,15 +685,11 @@ export default function AdminChatPage() {
             <div className="p-3 sm:p-4 bg-white border-t border-gray-100 shrink-0">
               {isReadOnly ? (
                 <div className="text-center text-xs text-gray-400 py-2 flex items-center justify-center gap-1.5">
-                  {selectedChat.status === 'FIXED'
-                    ? <><CheckCheck size={13} className="text-blue-400" /> Issue resolved and marked as fixed</>
-                    : <><Archive size={13} className="text-gray-400" /> Support session is closed</>}
+                  <Archive size={13} className="text-gray-400" /> Support ticket has been marked as closed & resolved
                 </div>
-              ) : selectedChat.status !== 'LIVE_AGENT' ? (
+              ) : !selectedChat.agentId ? (
                 <div className="text-center text-xs text-gray-400 py-2 font-medium italic">
-                  {selectedChat.status === 'WAITING'
-                    ? '⬆ Click "Start Conversation" above to connect and reply'
-                    : 'System under AI assistance — Agent takeover available when user initiates taking control'}
+                  ⬆ Click "Claim Ticket" above to assign yourself and write a response
                 </div>
               ) : (
                 <div className="flex gap-2">
@@ -673,13 +712,12 @@ export default function AdminChatPage() {
           /* Empty Selection Placeholder */
           <div className="flex-1 flex flex-col items-center justify-center text-gray-300 p-6 text-center">
             <MessageSquare size={44} className="mb-3 text-gray-200 animate-bounce" />
-            <p className="text-sm font-bold text-gray-400">Select a conversation thread</p>
+            <p className="text-sm font-bold text-gray-400">Select a support ticket</p>
             <p className="text-xs mt-1 text-gray-400 max-w-xs">
               {section === 'active' && waitingCount > 0
-                ? `${waitingCount} user${waitingCount > 1 ? 's' : ''} actively waiting in support queue`
-                : section === 'chatted' ? `${chattedChats.length} resolved tickets`
-                : section === 'closed'  ? `${closedChats.length} archived chats`
-                : 'No support TAKEOVER requests at this moment'}
+                ? `${waitingCount} ticket${waitingCount > 1 ? 's' : ''} currently unassigned in the queue`
+                : section === 'closed' ? `${closedChats.length} resolved tickets`
+                : 'No pending claims at this moment'}
             </p>
           </div>
         )}

@@ -8,12 +8,14 @@ export default function sitemap() {
     '/faq',
     '/contact',
     '/privacy',
-    '/terms'
+    '/terms',
+    '/blog',
+    '/press-releases'
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date().toISOString(),
-    changeFrequency: route === '' ? 'weekly' : 'monthly',
-    priority: route === '' ? 1 : 0.8,
+    changeFrequency: route === '' ? 'weekly' : route === '/blog' || route === '/press-releases' ? 'daily' : 'monthly',
+    priority: route === '' ? 1 : route === '/blog' || route === '/press-releases' ? 0.9 : 0.8,
   }));
 
   return routes;

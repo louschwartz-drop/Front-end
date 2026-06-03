@@ -98,6 +98,7 @@ import adminAuthStore from "@/store/adminAuthStore";
 import Image from "next/image";
 import ConfirmationModal from "../ui/ConfirmationModal";
 import { useAdminSocket } from "@/context/AdminSocketContext";
+import { getAllSupportTicketsAdmin } from "@/lib/api/admin/chat.api";
 
 function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
   const router = useRouter();
@@ -105,7 +106,7 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
   const { logout } = adminAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [waitingCount, setWaitingCount] = useState(0);
+  const [waitingTicketIds, setWaitingTicketIds] = useState(new Set());
   const [expandedMenus, setExpandedMenus] = useState(["/admin/blogs"]); // Default blogs open
   const adminSocket = useAdminSocket();
 
@@ -115,13 +116,51 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
     );
   };
 
-  // Track real-time waiting-agent requests
+  // Fetch initial unassigned open tickets on mount
+  useEffect(() => {
+    const fetchInitialWaitingTickets = async () => {
+      try {
+        const res = await getAllSupportTicketsAdmin();
+        if (res.success && Array.isArray(res.data)) {
+          const unassignedOpenIds = res.data
+            .filter(t => t.status === "open" && !t.agentId)
+            .map(t => t._id);
+          setWaitingTicketIds(new Set(unassignedOpenIds));
+        }
+      } catch (err) {
+        console.error("Failed to fetch initial support tickets for sidebar badge:", err);
+      }
+    };
+
+    fetchInitialWaitingTickets();
+  }, []);
+
+  // Track real-time support requests
   useEffect(() => {
     if (!adminSocket) return;
 
-    const onNewRequest = () => setWaitingCount((n) => n + 1);
-    const onListUpdate = (chat) => {
-      if (chat.status !== "WAITING") setWaitingCount((n) => Math.max(0, n - 1));
+    const onNewRequest = (ticket) => {
+      if (ticket && ticket._id) {
+        setWaitingTicketIds(prev => {
+          const next = new Set(prev);
+          next.add(ticket._id);
+          return next;
+        });
+      }
+    };
+
+    const onListUpdate = (ticket) => {
+      if (ticket && ticket._id) {
+        setWaitingTicketIds(prev => {
+          const next = new Set(prev);
+          if (ticket.status !== "open" || ticket.agentId) {
+            next.delete(ticket._id);
+          } else {
+            next.add(ticket._id);
+          }
+          return next;
+        });
+      }
     };
 
     adminSocket.on("new_support_request", onNewRequest);
@@ -257,9 +296,9 @@ function AdminSidebar({ mobileMenuOpen, setMobileMenuOpen }) {
                     >
                       <Icon className="w-5 h-5 shrink-0" />
                       <span className="text-sm font-medium flex-1">{item.label}</span>
-                      {isLiveChat && waitingCount > 0 && (
+                      {isLiveChat && waitingTicketIds.size > 0 && (
                         <span className="bg-yellow-500 text-white text-[9px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 animate-pulse">
-                          {waitingCount}
+                          {waitingTicketIds.size}
                         </span>
                       )}
                     </Link>

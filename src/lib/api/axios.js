@@ -4,6 +4,7 @@
 // -----------------------------
 
 import axios from "axios";
+import userAuthStore from "@/store/userAuthStore";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -39,6 +40,18 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
+      // Catch authentication errors globally
+      if (error.response.status === 401) {
+        console.warn("🔐 401 Unauthorized detected. Logging out user...");
+        if (typeof window !== "undefined") {
+          userAuthStore.getState().logout();
+          // Avoid looping if we are already on the auth page
+          if (window.location.pathname !== "/user/auth") {
+            window.location.href = "/user/auth";
+          }
+        }
+      }
+
       return Promise.reject({
         success: false,
         message:

@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import api from "@/lib/api/axios";
-import userAuthStore from "@/store/userAuthStore";
 import ReactMarkdown from "react-markdown";
 import Tooltip from "@/components/ui/Tooltip";
 import {
@@ -27,7 +26,6 @@ import {
   Square
 } from "lucide-react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // --- Components ---
 
@@ -147,6 +145,8 @@ export default function DropprGPTPage() {
   const [isNewFolderModalOpen, setIsNewFolderModalOpen] = useState(false);
   const [isFolderDeleteModalOpen, setIsFolderDeleteModalOpen] = useState(false);
   const [folderToDelete, setFolderToDelete] = useState(null);
+  const [chatToDelete, setChatToDelete] = useState(null);
+  const [isChatDeleteModalOpen, setIsChatDeleteModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -161,7 +161,6 @@ export default function DropprGPTPage() {
 
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
-  const { token } = userAuthStore();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -171,7 +170,15 @@ export default function DropprGPTPage() {
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = "auto";
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 300)}px`;
+      const maxHeight = 160; // Max height to prevent taking too much vertical space
+      const scrollHeight = textarea.scrollHeight;
+      if (scrollHeight > maxHeight) {
+        textarea.style.height = `${maxHeight}px`;
+        textarea.style.overflowY = "auto";
+      } else {
+        textarea.style.height = `${Math.max(scrollHeight, 52)}px`;
+        textarea.style.overflowY = "hidden";
+      }
     }
   };
 
@@ -236,6 +243,10 @@ export default function DropprGPTPage() {
   };
 
   const handleSelectChat = (chatId) => {
+    if (isStreaming) {
+      toast.warn("Please wait for the current response to finish.");
+      return;
+    }
     setCurrentChatId(chatId);
     fetchMessages(chatId);
     setStreamingMessage("");
@@ -243,23 +254,56 @@ export default function DropprGPTPage() {
   };
 
   const handleNewChat = () => {
+    if (isStreaming) {
+      toast.warn("Please wait for the current response to finish.");
+      return;
+    }
+    const dailyChatCount = chats.filter(c => {
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      return new Date(c.createdAt) >= startOfToday;
+    }).length;
+
+    if (dailyChatCount >= 10) {
+      toast.error("You have reached the maximum daily limit of 10 chats. Please delete some chats first.");
+      return;
+    }
+
     setCurrentChatId("new");
     setMessages([]);
     setStreamingMessage("");
     setShowHistory(false);
   };
 
-  const handleDeleteChat = async (e, chatId) => {
+  const confirmDeleteChat = (e, chat) => {
     e.stopPropagation();
+    if (isStreaming) {
+      toast.warn("Cannot delete chat while a response is streaming.");
+      return;
+    }
+    setChatToDelete(chat);
+    setIsChatDeleteModalOpen(true);
+  };
+
+  const handleDeleteChat = async () => {
+    if (!chatToDelete) return;
+    setIsProcessing(true);
     try {
-      const res = await api.delete(`/user/droppr-gpt/chats/${chatId}`);
+      const res = await api.delete(`/user/droppr-gpt/chats/${chatToDelete._id}`);
       if (res.data.success) {
-        setChats(chats.filter(c => c._id !== chatId));
-        if (currentChatId === chatId) handleNewChat();
+        setChats(chats.filter(c => c._id !== chatToDelete._id));
+        if (currentChatId === chatToDelete._id) {
+          setCurrentChatId("new");
+          setMessages([]);
+        }
+        setIsChatDeleteModalOpen(false);
+        setChatToDelete(null);
         toast.success("Chat deleted");
       }
     } catch (error) {
       toast.error("Failed to delete chat");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -359,7 +403,27 @@ export default function DropprGPTPage() {
     const textToSend = typeof overrideInput === "string" ? overrideInput : input;
     if (!textToSend.trim() || isStreaming || isTranscribing) return;
 
-    const userMsg = { sender: "USER", content: textToSend };
+    // Frontend validation
+    const hasHtmlTags = /<\/?[a-z][\s\S]*>/i.test(textToSend);
+    const codePatterns = [
+      /function\s+\w*\s*\(/i,
+      /class\s+\w+/i,
+      /import\s+.*\s+from/i,
+      /const\s+\w+\s*=/i,
+      /let\s+\w+\s*=/i,
+      /var\s+\w+\s*=/i,
+      /def\s+\w+\s*\(/i,
+      /struct\s+\w+/i,
+      /include\s+<.*>/i,
+      /package\s+\w+/i,
+      /public\s+class\s+\w+/i,
+      /on\w+\s*=/i,
+      /javascript:/i
+    ];
+    const isCode = codePatterns.some(p => p.test(textToSend));
+    const isTooLong = textToSend.length > 4000;
+
+    const userMsg = { sender: "USER", content: textToSend, createdAt: new Date().toISOString() };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
 
@@ -371,54 +435,97 @@ export default function DropprGPTPage() {
     setIsStreaming(true);
     setStreamingMessage("");
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/user/droppr-gpt/chat/stream`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          chatId: currentChatId,
-          message: textToSend
-        })
-      });
+    if (hasHtmlTags || isCode || isTooLong) {
+      // Simulate AI response stream
+      let refusalText = "";
+      if (isTooLong) {
+        refusalText = "I'm sorry, but I can only process messages up to 4000 characters. Please shorten your message.";
+      } else if (hasHtmlTags) {
+        refusalText = "I'm sorry, but I can only answer questions related to press releases, blogs, public relations strategies, and the Droppr.ai platform. HTML input is not permitted.";
+      } else {
+        refusalText = "I'm sorry, but I can only answer questions related to press releases, blogs, public relations strategies, and the Droppr.ai platform. Programming code input is not permitted.";
+      }
 
-      if (!response.ok) throw new Error("Failed to send message");
+      const words = refusalText.split(" ");
+      let currentText = "";
+      for (const word of words) {
+        currentText += word + " ";
+        setStreamingMessage(currentText);
+        await new Promise(resolve => setTimeout(resolve, 30));
+      }
+
+      setMessages(prev => [...prev, { sender: "AI", content: refusalText, createdAt: new Date().toISOString() }]);
+      setStreamingMessage("");
+      setIsStreaming(false);
+      return;
+    }
+
+    // Read token the same way the axios interceptor does
+    let token = null;
+    if (typeof window !== "undefined") {
+      try {
+        const authStorage = localStorage.getItem("auth-storage");
+        if (authStorage) {
+          const { state } = JSON.parse(authStorage);
+          token = state?.token ?? null;
+        }
+      } catch (e) {
+        console.error("Error reading auth token for stream:", e);
+      }
+    }
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/user/droppr-gpt/chat/stream`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ chatId: currentChatId, message: textToSend }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to send message");
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let buffer = "";
       let fullAIContent = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const dataStr = line.slice(6).trim();
-            if (dataStr === "[DONE]") break;
+          if (!line.startsWith("data: ")) continue;
+          const dataStr = line.slice(6).trim();
+          if (!dataStr || dataStr === "[DONE]") continue;
 
-            try {
-              const data = JSON.parse(dataStr);
-              if (data.type === "chunk") {
-                fullAIContent += data.content;
-                setStreamingMessage(fullAIContent);
-              } else if (data.type === "chat_info") {
-                setCurrentChatId(data.chat._id);
-                setChats(prev => [data.chat, ...prev]);
-              }
-            } catch (e) {
-              // Ignore parse errors for partial chunks
+          try {
+            const data = JSON.parse(dataStr);
+            if (data.type === "chunk") {
+              fullAIContent += data.content;
+              setStreamingMessage(fullAIContent);
+            } else if (data.type === "chat_info") {
+              setCurrentChatId(data.chat._id);
+              setChats(prev => [data.chat, ...prev]);
             }
+          } catch (_) {
+            // partial chunk — ignore
           }
         }
       }
 
-      setMessages(prev => [...prev, { sender: "AI", content: fullAIContent }]);
+      setMessages(prev => [...prev, { sender: "AI", content: fullAIContent, createdAt: new Date().toISOString() }]);
       setStreamingMessage("");
     } catch (error) {
       console.error("Streaming error:", error);
@@ -429,10 +536,15 @@ export default function DropprGPTPage() {
     }
   };
 
+
   // --- Voice Recording ---
 
   const startRecording = async () => {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast.error("Microphone recording is not supported in this browser or requires HTTPS.");
+        return;
+      }
       const mimeType = ['audio/webm', 'audio/ogg', 'audio/mp4'].find(type => MediaRecorder.isTypeSupported(type));
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream, { mimeType });
@@ -472,7 +584,11 @@ export default function DropprGPTPage() {
 
     } catch (error) {
       console.error("Recording error:", error);
-      toast.error("Microphone access denied or not supported");
+      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+        toast.error("Microphone access is blocked. Please enable microphone permissions in your browser's site settings to use voice input.");
+      } else {
+        toast.error("Microphone access denied or not supported.");
+      }
     }
   };
 
@@ -506,6 +622,9 @@ export default function DropprGPTPage() {
         }
         // Append to previous text
         setInput(prev => prev ? (prev.endsWith(" ") ? prev + text : prev + " " + text) : text);
+        setTimeout(() => {
+          textareaRef.current?.focus();
+        }, 100);
       }
     } catch (error) {
       toast.error("Failed to transcribe voice");
@@ -514,12 +633,48 @@ export default function DropprGPTPage() {
     }
   };
 
+  const filteredFolders = folders.filter(folder => {
+    const folderMatches = folder.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const hasMatchingChat = chats.some(c => c.folderId === folder._id && c.title.toLowerCase().includes(searchQuery.toLowerCase()));
+    return folderMatches || hasMatchingChat;
+  });
+
+  const getSearchChatsForFolder = (folder) => {
+    const folderMatches = folder.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return chats.filter(c => c.folderId === folder._id && (folderMatches || c.title.toLowerCase().includes(searchQuery.toLowerCase())));
+  };
+
   // --- Helpers ---
 
-  const handleCopy = (text, index) => {
-    navigator.clipboard.writeText(text);
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
+  const handleCopy = async (text, index) => {
+    try {
+      const element = document.getElementById(`msg-content-${index}`);
+      if (element) {
+        // We clone the element to remove the copy/share buttons or anything else if they ever get rendered inside it
+        // but timestamps are outside.
+        const htmlContent = element.innerHTML;
+        const plainText = element.innerText;
+
+        const blobHtml = new Blob([htmlContent], { type: "text/html" });
+        const blobText = new Blob([plainText], { type: "text/plain" });
+
+        const data = [new ClipboardItem({
+          "text/html": blobHtml,
+          "text/plain": blobText
+        })];
+
+        await navigator.clipboard.write(data);
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    } catch (err) {
+      console.error("Rich copy failed, falling back to plain text:", err);
+      navigator.clipboard.writeText(text);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    }
   };
 
   const suggestionPrompts = [
@@ -556,8 +711,8 @@ export default function DropprGPTPage() {
         onDragStart={(e) => onDragStart(e, chat._id)}
         onClick={() => handleSelectChat(chat._id)}
         className={`group flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all ${currentChatId === chat._id
-            ? "bg-blue-50/50 text-blue-700 border border-blue-50"
-            : "hover:bg-gray-50 text-gray-600"
+          ? "bg-blue-50/50 text-blue-700 border border-blue-50"
+          : "hover:bg-gray-50 text-gray-600"
           }`}
       >
         <div className="flex items-center gap-2.5 overflow-hidden flex-1">
@@ -577,22 +732,18 @@ export default function DropprGPTPage() {
           )}
         </div>
         <div className="flex items-center opacity-0 group-hover:opacity-100 transition-all">
-          <Tooltip text="Edit chat title">
-            <button
-              onClick={(e) => { e.stopPropagation(); setEditingChatId(chat._id); setEditTitle(chat.title); }}
-              className="p-1.5 hover:text-blue-600 rounded-lg"
-            >
-              <Edit2 size={13} />
-            </button>
-          </Tooltip>
-          <Tooltip text="Delete chat">
-            <button
-              onClick={(e) => handleDeleteChat(e, chat._id)}
-              className="p-1.5 hover:text-red-500 rounded-lg"
-            >
-              <Trash2 size={13} />
-            </button>
-          </Tooltip>
+          <button
+            onClick={(e) => { e.stopPropagation(); setEditingChatId(chat._id); setEditTitle(chat.title); }}
+            className="p-1.5 hover:text-blue-600 rounded-lg"
+          >
+            <Edit2 size={13} />
+          </button>
+          <button
+            onClick={(e) => confirmDeleteChat(e, chat)}
+            className="p-1.5 hover:text-red-500 rounded-lg"
+          >
+            <Trash2 size={13} />
+          </button>
         </div>
       </div>
     );
@@ -616,7 +767,12 @@ export default function DropprGPTPage() {
 
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 bg-white scroll-smooth custom-scrollbar">
-          {messages.length === 0 && !isStreaming ? (
+          {isLoading ? (
+            <div className="h-full flex flex-col items-center justify-center text-gray-400">
+              <Loader2 size={36} className="animate-spin text-blue-600 mb-2" />
+              <p className="text-sm font-medium">Loading chat history...</p>
+            </div>
+          ) : messages.length === 0 && !isStreaming ? (
             <div className="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto px-4">
               <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 How can I help you today?
@@ -636,15 +792,20 @@ export default function DropprGPTPage() {
               {messages.map((msg, idx) => (
                 <div key={idx} className={`flex ${msg.sender === "USER" ? "justify-end" : "justify-start"}`}>
                   <div className={`relative group max-w-[92%] md:max-w-[85%]`}>
-                    <div className={`p-4 rounded-2xl ${msg.sender === "USER" ? "bg-blue-600 text-white shadow-sm rounded-tr-none" : "bg-gray-100 text-gray-800 border border-gray-200 rounded-tl-none shadow-sm"}`}>
+                    <div
+                      id={`msg-content-${idx}`}
+                      className={`p-4 rounded-2xl ${msg.sender === "USER" ? "bg-blue-600 text-white shadow-sm rounded-tr-none" : "bg-gray-100 text-gray-800 border border-gray-200 rounded-tl-none shadow-sm"}`}
+                    >
                       {msg.sender === "USER" ? <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p> : <div className="prose prose-sm max-w-none prose-blue text-gray-800 leading-relaxed text-[13px]"><ReactMarkdown>{msg.content}</ReactMarkdown></div>}
                     </div>
 
-                    <Tooltip text={copiedIndex === idx ? "Copied!" : "Copy message"} position={msg.sender === "USER" ? "left" : "right"}>
-                      <button onClick={() => handleCopy(msg.content, idx)} className={`absolute top-0 ${msg.sender === "USER" ? "-left-8" : "-right-8"} p-1.5 text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all rounded-lg`}>
-                        {copiedIndex === idx ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                      </button>
-                    </Tooltip>
+                    <span className={`text-[10px] block mt-1 px-1 ${msg.sender === "USER" ? "text-gray-400 text-right" : "text-gray-400"}`}>
+                      {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+
+                    <button onClick={() => handleCopy(msg.content, idx)} className={`absolute top-0 ${msg.sender === "USER" ? "-left-8" : "-right-8"} p-1.5 text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all rounded-lg`}>
+                      {copiedIndex === idx ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                    </button>
                   </div>
                 </div>
               ))}
@@ -663,61 +824,95 @@ export default function DropprGPTPage() {
 
         {/* Input Area */}
         <div className="flex-shrink-0 p-4 md:p-6 pb-2 md:pb-4 bg-white border-t border-gray-50">
-          <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="max-w-4xl mx-auto relative group flex items-center">
-            <div className="relative w-full">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                disabled={isStreaming || isTranscribing}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && !isStreaming && (e.preventDefault(), handleSendMessage())}
-                placeholder={isTranscribing ? "Transcribing voice..." : isStreaming ? "Wait for response..." : "Message Drop PR GPT..."}
-                className={`w-full bg-gray-50 border border-blue-100 rounded-2xl py-3.5 pl-4 pr-36 focus:ring-1 focus:ring-blue-500 focus:border-blue-400 outline-none resize-none min-h-[52px] max-h-[300px] text-sm transition-all overflow-y-hidden ${isRecording ? "opacity-0 invisible h-[52px]" : ""} ${isStreaming || isTranscribing ? "opacity-50 cursor-not-allowed" : ""}`}
-                rows="1"
-              />
+          {(() => {
+            const dailyChatCount = chats.filter(c => {
+              const startOfToday = new Date();
+              startOfToday.setHours(0, 0, 0, 0);
+              return new Date(c.createdAt) >= startOfToday;
+            }).length;
 
-              {isRecording && (
-                <div className="absolute inset-0 bg-blue-50/50 rounded-2xl flex items-center pl-4 pr-16 gap-4 animate-in fade-in duration-300">
-                  <span className="text-blue-600 font-mono font-bold text-sm min-w-[40px]">
-                    {formatTime(recordingSeconds)}
-                  </span>
-                  <div className="flex-1 h-10 overflow-hidden rounded-lg bg-white/50 border border-blue-100 relative pr-4">
-                    <ScrollingWaveform stream={audioStream} />
+            const dailyMessageCount = messages.filter(m => {
+              const startOfToday = new Date();
+              startOfToday.setHours(0, 0, 0, 0);
+              return m.sender === "USER" && (!m.createdAt || new Date(m.createdAt) >= startOfToday);
+            }).length;
+
+            const isDailyChatLimitReached = currentChatId === "new" && dailyChatCount >= 10;
+            const isDailyMessageLimitReached = currentChatId !== "new" && dailyMessageCount >= 25;
+            const isInputDisabled = isStreaming || isTranscribing || isDailyChatLimitReached || isDailyMessageLimitReached;
+
+            const getPlaceholderText = () => {
+              if (isTranscribing) return "Transcribing voice...";
+              if (isStreaming) return "Wait for response...";
+              if (isDailyChatLimitReached) return "Daily chat limit reached (Max 10). Delete a chat.";
+              if (isDailyMessageLimitReached) return "Daily message limit reached (Max 25). Try tomorrow.";
+              return "Message Drop PR GPT...";
+            };
+
+            // Touch comment to clear Next.js compile cache
+            return (
+              <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="max-w-4xl mx-auto w-full flex flex-col gap-1.5">
+                <div className="relative w-full flex items-center">
+                  <textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    disabled={isInputDisabled}
+                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && !isInputDisabled && input.length <= 4000 && (e.preventDefault(), handleSendMessage())}
+                    placeholder={getPlaceholderText()}
+                    className={`w-full bg-gray-50 border border-blue-100 rounded-2xl py-3.5 pl-4 pr-24 focus:ring-1 focus:ring-blue-500 focus:border-blue-400 outline-none resize-none min-h-[52px] max-h-[160px] text-sm transition-all overflow-hidden gpt-input-scrollbar placeholder:text-[11px] md:placeholder:text-sm ${isRecording ? "opacity-0 invisible h-[52px]" : ""} ${isInputDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                    rows="1"
+                  />
+
+                  {isRecording && (
+                    <div className="absolute inset-0 bg-blue-50/50 rounded-2xl flex items-center pl-4 pr-16 gap-4 animate-in fade-in duration-300">
+                      <span className="text-blue-600 font-mono font-bold text-xs min-w-[75px]">
+                        {formatTime(recordingSeconds)} / 2:00
+                      </span>
+                      <div className="flex-1 h-10 overflow-hidden rounded-lg bg-white/50 border border-blue-100 relative pr-4">
+                        <ScrollingWaveform stream={audioStream} />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 z-10">
+                    {isTranscribing ? (
+                      <div className="p-2 text-blue-600">
+                        <Loader2 size={18} className="animate-spin" />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={isRecording ? stopRecording : startRecording}
+                        disabled={isStreaming || isDailyChatLimitReached || isDailyMessageLimitReached}
+                        className={`p-2 rounded-xl transition-all ${isRecording ? "bg-red-500 text-white shadow-lg animate-pulse" : "text-gray-400 hover:bg-gray-100 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"}`}
+                        title={isRecording ? "Stop Recording" : "Voice Message"}
+                      >
+                        {isRecording ? <Square size={16} fill="currentColor" /> : <Mic size={18} />}
+                      </button>
+                    )}
+                    {!isRecording && (
+                      <button
+                        type="submit"
+                        disabled={!input.trim() || isInputDisabled || input.length > 4000}
+                        className={`p-2 rounded-xl transition-all ${input.trim() && !isInputDisabled && input.length <= 4000 ? "bg-blue-600 text-white shadow-md hover:scale-105" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
+                      >
+                        <Send size={18} />
+                      </button>
+                    )}
                   </div>
                 </div>
-              )}
 
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 z-10">
-                {isTranscribing ? (
-                  <div className="p-2 text-blue-600">
-                    <Loader2 size={18} className="animate-spin" />
+                {input.length > 0 && !isRecording && (
+                  <div className="flex justify-end px-2">
+                    <span className={`text-[10px] font-mono ${input.length > 4000 ? "text-red-500 font-bold animate-pulse" : "text-gray-400"}`}>
+                      {input.length}/4000
+                    </span>
                   </div>
-                ) : (
-                  <Tooltip text={isRecording ? "Stop Recording" : "Voice Message"}>
-                    <button
-                      type="button"
-                      onClick={isRecording ? stopRecording : startRecording}
-                      disabled={isStreaming}
-                      className={`p-2 rounded-xl transition-all ${isRecording ? "bg-red-500 text-white shadow-lg animate-pulse" : "text-gray-400 hover:bg-gray-100 hover:text-blue-600"}`}
-                    >
-                      {isRecording ? <Square size={16} fill="currentColor" /> : <Mic size={18} />}
-                    </button>
-                  </Tooltip>
                 )}
-                {!isRecording && (
-                  <Tooltip text="Send message">
-                    <button
-                      type="submit"
-                      disabled={!input.trim() || isStreaming || isTranscribing}
-                      className={`p-2 rounded-xl transition-all ${input.trim() && !isStreaming && !isTranscribing ? "bg-blue-600 text-white shadow-md hover:scale-105" : "bg-gray-200 text-gray-400"}`}
-                    >
-                      <Send size={18} />
-                    </button>
-                  </Tooltip>
-                )}
-              </div>
-            </div>
-          </form>
+              </form>
+            );
+          })()}
           <p className="text-[8px] md:text-[10px] text-center text-gray-400 mt-2">Drop PR GPT can make mistakes. Check important info.</p>
         </div>
 
@@ -745,10 +940,21 @@ export default function DropprGPTPage() {
                 </div>
                 <div className="space-y-1">
                   {searchQuery ? (
-                    <div className="mb-2">
+                    <div className="mb-2 space-y-2">
                       <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold px-2 mb-2">Search Results</p>
-                      {chats.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase())).map(renderChatItem)}
-                      {chats.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                      {chats.filter(c => !c.folderId && c.title.toLowerCase().includes(searchQuery.toLowerCase())).map(renderChatItem)}
+                      {filteredFolders.map(folder => (
+                        <div key={folder._id} className="mb-1">
+                          <div className="flex items-center gap-2 text-gray-600 p-2 rounded-lg bg-gray-50/50">
+                            <Folder size={14} className="text-blue-500 flex-shrink-0" />
+                            <span className="text-[13px] font-semibold truncate">{folder.name}</span>
+                          </div>
+                          <div className="pl-4 mt-1 space-y-1">
+                            {getSearchChatsForFolder(folder).map(renderChatItem)}
+                          </div>
+                        </div>
+                      ))}
+                      {chats.filter(c => !c.folderId && c.title.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && filteredFolders.length === 0 && (
                         <p className="text-center text-gray-400 py-4 text-xs">No chats found</p>
                       )}
                     </div>
@@ -806,10 +1012,21 @@ export default function DropprGPTPage() {
 
           <div className="flex-1 overflow-y-auto p-2 space-y-1 bg-white custom-scrollbar">
             {searchQuery ? (
-              <div className="mb-2">
+              <div className="mb-2 space-y-2">
                 <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold px-2 mb-2">Search Results</p>
-                {chats.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase())).map(renderChatItem)}
-                {chats.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                {chats.filter(c => !c.folderId && c.title.toLowerCase().includes(searchQuery.toLowerCase())).map(renderChatItem)}
+                {filteredFolders.map(folder => (
+                  <div key={folder._id} className="mb-1">
+                    <div className="flex items-center gap-2 text-gray-600 p-2 rounded-lg bg-gray-50/50">
+                      <Folder size={14} className="text-blue-500 flex-shrink-0" />
+                      <span className="text-[13px] font-semibold truncate">{folder.name}</span>
+                    </div>
+                    <div className="pl-4 mt-1 space-y-1">
+                      {getSearchChatsForFolder(folder).map(renderChatItem)}
+                    </div>
+                  </div>
+                ))}
+                {chats.filter(c => !c.folderId && c.title.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && filteredFolders.length === 0 && (
                   <p className="text-center text-gray-400 py-4 text-xs">No results found for "{searchQuery}"</p>
                 )}
               </div>
@@ -843,16 +1060,34 @@ export default function DropprGPTPage() {
                           )}
                         </div>
                         <div className="flex items-center opacity-0 group-hover:opacity-100 transition-all">
-                          <Tooltip text="Rename folder">
-                            <button onClick={(e) => { e.stopPropagation(); setEditingFolderId(folder._id); setEditFolderName(folder.name); }} className="p-1 hover:text-blue-600">
-                              <Edit2 size={12} />
-                            </button>
-                          </Tooltip>
-                          <Tooltip text="Delete folder">
-                            <button onClick={(e) => { e.stopPropagation(); setFolderToDelete(folder); setIsFolderDeleteModalOpen(true); }} className="p-1 hover:text-red-500">
-                              <Trash2 size={12} />
-                            </button>
-                          </Tooltip>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isStreaming) {
+                                toast.warn("Please wait for the current response to finish.");
+                                return;
+                              }
+                              setEditingFolderId(folder._id);
+                              setEditFolderName(folder.name);
+                            }}
+                            className="p-1 hover:text-blue-600"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isStreaming) {
+                                toast.warn("Please wait for the current response to finish.");
+                                return;
+                              }
+                              setFolderToDelete(folder);
+                              setIsFolderDeleteModalOpen(true);
+                            }}
+                            className="p-1 hover:text-red-500"
+                          >
+                            <Trash2 size={12} />
+                          </button>
                         </div>
                       </div>
                       {expandedFolders[folder._id] && (
@@ -868,11 +1103,18 @@ export default function DropprGPTPage() {
           </div>
 
           <div className="p-3 border-t border-gray-50 bg-white">
-            <Tooltip text="Delete all chat history" position="top">
-              <button onClick={() => setIsModalOpen(true)} className="w-full flex items-center justify-center gap-2 py-2 text-gray-400 hover:text-red-500 text-xs font-medium transition-all">
-                <Trash2 size={13} /> Clear all history
-              </button>
-            </Tooltip>
+            <button
+              onClick={() => {
+                if (isStreaming) {
+                  toast.warn("Please wait for the current response to finish.");
+                  return;
+                }
+                setIsModalOpen(true);
+              }}
+              className="w-full flex items-center justify-center gap-2 py-2 text-gray-400 hover:text-red-500 text-xs font-medium transition-all"
+            >
+              <Trash2 size={13} /> Clear all history
+            </button>
           </div>
         </div>
       </div>
@@ -906,6 +1148,22 @@ export default function DropprGPTPage() {
           <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto"><AlertTriangle size={24} /></div>
           <p className="text-gray-600 text-sm font-bold mb-2">Delete "{folderToDelete?.name}"?</p>
           <p className="text-gray-500 text-xs">All chats inside will be permanently removed.</p>
+        </div>
+      </Modal>
+
+      <Modal isOpen={isChatDeleteModalOpen} onClose={() => setIsChatDeleteModalOpen(false)} title="Delete Chat" footer={(
+        <>
+          <button onClick={() => setIsChatDeleteModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-600">Cancel</button>
+          <button onClick={handleDeleteChat} disabled={isProcessing} className="px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 flex items-center gap-2">
+            {isProcessing ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
+            Delete
+          </button>
+        </>
+      )}>
+        <div className="text-center">
+          <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto"><AlertTriangle size={24} /></div>
+          <p className="text-gray-600 text-sm font-bold mb-2">Delete chat "{chatToDelete?.title}"?</p>
+          <p className="text-gray-500 text-xs font-medium">This conversation will be permanently deleted.</p>
         </div>
       </Modal>
 

@@ -27,8 +27,8 @@ export default function UserDashboardLayout({ children }) {
         {/* Header */}
         <Header setMobileMenuOpen={setMobileMenuOpen} />
 
-        {/* Main Content Area - Scrollable */}
-        <main className="flex-1 overflow-y-auto">
+        {/* Main Content Area - Scrollable (hidden for GPT page to prevent double scrolls) */}
+        <main className={`flex-1 ${pathname?.includes("/droppr-gpt") ? "overflow-hidden" : "overflow-y-auto"}`}>
           <div className=" min-h-full bg-white ">
             <div className="bg-white p-3 sm:p-6 ">{children}</div>
           </div>

@@ -51,6 +51,20 @@ export const metadata = {
     title: "DropPR.ai - AI-Powered Media & PR Distribution Platform",
     description: "Build instant exposure with DropPR.ai. Convert your videos into AI-written articles and distribute them to top media outlets.",
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: "/",
+  },
 };
 
 import { SocketProvider } from "@/context/SocketContext";
@@ -64,6 +78,23 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} ${lora.variable} antialiased`}
         suppressHydrationWarning
       >
+        <Script
+          id="schema-organization"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "DropPR.ai",
+              "url": "https://www.droppr.ai",
+              "logo": "https://www.droppr.ai/logo.png",
+              "sameAs": [
+                "https://twitter.com/droppr_ai",
+                "https://www.linkedin.com/company/droppr-ai"
+              ]
+            })
+          }}
+        />
         <NextAuthProvider>
           <SocketProvider>
             {children}

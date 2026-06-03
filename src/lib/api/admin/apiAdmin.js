@@ -1,4 +1,5 @@
 import axios from "axios";
+import adminAuthStore from "@/store/adminAuthStore";
 
 /**
  * Separate Axios instance for Admin API calls.
@@ -17,14 +18,14 @@ apiAdmin.interceptors.request.use(
     try {
       if (typeof window !== "undefined") {
         const adminAuthStorage = localStorage.getItem("admin-auth-storage");
-      if (adminAuthStorage) {
-        const { state } = JSON.parse(adminAuthStorage);
-        const token = state?.token;
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        if (adminAuthStorage) {
+          const { state } = JSON.parse(adminAuthStorage);
+          const token = state?.token;
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
         }
       }
-    }
     } catch (error) {
       console.error("Error setting admin auth header:", error);
     }
@@ -38,6 +39,17 @@ apiAdmin.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
+      // Catch admin authentication errors globally
+      if (error.response.status === 401) {
+        console.warn("🔐 Admin 401 Unauthorized detected. Logging out admin...");
+        if (typeof window !== "undefined") {
+          adminAuthStore.getState().logout();
+          if (window.location.pathname !== "/admin/login") {
+            window.location.href = "/admin/login";
+          }
+        }
+      }
+
       return Promise.reject({
         success: false,
         message: error.response.data?.message || "Admin API Error",
