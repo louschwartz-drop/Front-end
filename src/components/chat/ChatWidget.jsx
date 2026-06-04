@@ -250,6 +250,25 @@ export default function ChatWidget() {
   const scrollRef = useRef(null);
   const containerRef = useRef(null);
 
+  const setScrollRef = useCallback((node) => {
+    if (node !== null) {
+      scrollRef.current = node;
+      // Scroll to bottom immediately upon mount
+      node.scrollTop = node.scrollHeight;
+      
+      // Additional timeouts to guarantee scrolling after layout/animation stabilizes
+      setTimeout(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }, 50);
+      setTimeout(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }, 150);
+      setTimeout(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }, 300);
+    }
+  }, []);
+
   const { user: currentUser, isAuthenticated } = userAuthStore();
 
   // ── Responsive Detection ──
@@ -462,10 +481,26 @@ export default function ChatWidget() {
 
   // ── Scroll to bottom on updates ──
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [view, aiMessages, ticketMessages, streamingMessage]);
+    const scrollToBottom = () => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
+    };
+
+    // Scroll immediately
+    scrollToBottom();
+
+    // Scroll after layout changes, animations, and paint cycles
+    const timer1 = setTimeout(scrollToBottom, 50);
+    const timer2 = setTimeout(scrollToBottom, 150);
+    const timer3 = setTimeout(scrollToBottom, 300);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
+  }, [view, aiMessages, ticketMessages, streamingMessage, isOpen, isAgentTyping, aiStreaming]);
 
   // ── Fetch Tickets ──
   const loadTicketsList = async () => {
@@ -935,7 +970,7 @@ export default function ChatWidget() {
               {view === 'ai-chat' && (
                 <div className="flex-1 flex flex-col min-h-0 bg-white">
                   <div
-                    ref={scrollRef}
+                    ref={setScrollRef}
                     className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50"
                   >
                     {aiMessages.length === 0 && (
@@ -981,23 +1016,30 @@ export default function ChatWidget() {
                     >
                       <Headset size={12} /> Connect to Human Agent
                     </button>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={aiInput}
-                        onChange={(e) => setAIInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSendAIMessage()}
-                        placeholder="Ask AI Assistant..."
-                        disabled={aiStreaming}
-                        className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none disabled:opacity-60 transition-opacity"
-                      />
-                      <button
-                        onClick={() => handleSendAIMessage()}
-                        disabled={!aiInput.trim() || aiStreaming}
-                        className="bg-primary text-white p-2.5 rounded-xl hover:bg-brand-blue disabled:opacity-50 transition-colors"
-                      >
-                        <Send size={18} />
-                      </button>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={aiInput}
+                          onChange={(e) => setAIInput(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSendAIMessage()}
+                          placeholder="Ask AI Assistant..."
+                          disabled={aiStreaming}
+                          className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none disabled:opacity-60 transition-opacity"
+                        />
+                        <button
+                          onClick={() => handleSendAIMessage()}
+                          disabled={!aiInput.trim() || aiStreaming || aiInput.length > 1000}
+                          className="bg-primary text-white p-2.5 rounded-xl hover:bg-brand-blue disabled:opacity-50 transition-colors"
+                        >
+                          <Send size={18} />
+                        </button>
+                      </div>
+                      {aiInput.length > 1000 && (
+                        <p className="text-red-500 text-[10px] font-semibold px-1">
+                          Message exceeds the 1000 character limit ({aiInput.length}/1000)
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1151,7 +1193,7 @@ export default function ChatWidget() {
 
                   {/* Messages scrollarea */}
                   <div
-                    ref={scrollRef}
+                    ref={setScrollRef}
                     className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50"
                   >
                     {!loadingMessages && activeTicket && activeTicket.status === 'open' && (

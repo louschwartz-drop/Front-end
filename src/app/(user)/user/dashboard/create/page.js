@@ -109,6 +109,11 @@ export default function CreateCampaignPage() {
       }
 
       if (file.type.startsWith("video/")) {
+        if (file.size > 50 * 1024 * 1024) {
+          toast.error("Video file size exceeds 50MB limit");
+          return;
+        }
+
         setDurationError(null);
         setVideoDuration(null);
 
@@ -178,6 +183,11 @@ export default function CreateCampaignPage() {
       }
 
       if (file.type.startsWith("video/")) {
+        if (file.size > 50 * 1024 * 1024) {
+          toast.error("Video file size exceeds 50MB limit");
+          return;
+        }
+
         setDurationError(null);
         setVideoDuration(null);
 
@@ -750,7 +760,7 @@ export default function CreateCampaignPage() {
                         MP4, MOV files only
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        Maximum duration: {MAX_VIDEO_DURATION_MINUTES} minutes
+                        Maximum duration: {MAX_VIDEO_DURATION_MINUTES} minutes | Max size: 50MB
                       </p>
                     </motion.div>
                   )}

@@ -646,31 +646,27 @@ export default function DropprGPTPage() {
 
   // --- Helpers ---
 
+  const stripMarkdownForCopy = (content) => {
+    if (!content) return "";
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    return content
+      .replace(/\*\*(\[[^\]]+\]\([^)]+\))\*\*/g, "$1")
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
+        const fullUrl = url.startsWith("/") ? `${origin}${url}` : url;
+        return `${text}: ${fullUrl}`;
+      })
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/^\s*-\s/gm, "• ");
+  };
+
   const handleCopy = async (text, index) => {
     try {
-      const element = document.getElementById(`msg-content-${index}`);
-      if (element) {
-        // We clone the element to remove the copy/share buttons or anything else if they ever get rendered inside it
-        // but timestamps are outside.
-        const htmlContent = element.innerHTML;
-        const plainText = element.innerText;
-
-        const blobHtml = new Blob([htmlContent], { type: "text/html" });
-        const blobText = new Blob([plainText], { type: "text/plain" });
-
-        const data = [new ClipboardItem({
-          "text/html": blobHtml,
-          "text/plain": blobText
-        })];
-
-        await navigator.clipboard.write(data);
-      } else {
-        await navigator.clipboard.writeText(text);
-      }
+      const plainText = stripMarkdownForCopy(text);
+      await navigator.clipboard.writeText(plainText);
       setCopiedIndex(index);
       setTimeout(() => setCopiedIndex(null), 2000);
     } catch (err) {
-      console.error("Rich copy failed, falling back to plain text:", err);
+      console.error("Copy failed:", err);
       navigator.clipboard.writeText(text);
       setCopiedIndex(index);
       setTimeout(() => setCopiedIndex(null), 2000);
@@ -800,7 +796,7 @@ export default function DropprGPTPage() {
                     </div>
 
                     <span className={`text-[10px] block mt-1 px-1 ${msg.sender === "USER" ? "text-gray-400 text-right" : "text-gray-400"}`}>
-                      {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {msg.createdAt ? `${new Date(msg.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} ${new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : `${new Date().toLocaleDateString([], { month: 'short', day: 'numeric' })} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                     </span>
 
                     <button onClick={() => handleCopy(msg.content, idx)} className={`absolute top-0 ${msg.sender === "USER" ? "-left-8" : "-right-8"} p-1.5 text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all rounded-lg`}>
