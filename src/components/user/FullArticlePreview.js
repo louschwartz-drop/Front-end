@@ -271,33 +271,35 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                             </div>
                         )}
 
-                        <div className="space-y-3 md:space-y-4">
-                            <h4 className="text-xl md:text-2xl font-bold text-gray-900">
-                                Purchase Information
-                            </h4>
-                            <p className="text-sm md:text-lg text-gray-600 italic leading-relaxed">
-                                If you've seen the video and wondered whether{" "}
-                                {displayProduct?.productName || "it"} could fit into your own routine,
-                                product details, pricing, and availability are available through
-                                the official product page.
-                            </p>
-                            <div className="pt-2 md:pt-4 space-y-1 md:space-y-2">
-                                <p className="text-[10px] md:text-sm font-bold text-gray-400 uppercase tracking-wider">
-                                    Product Page:
+                        {campaign?.videoSource !== "document_upload" && (
+                            <div className="space-y-3 md:space-y-4">
+                                <h4 className="text-xl md:text-2xl font-bold text-gray-900">
+                                    Purchase Information
+                                </h4>
+                                <p className="text-sm md:text-lg text-gray-600 italic leading-relaxed">
+                                    If you've seen the video and wondered whether{" "}
+                                    {displayProduct?.productName || "it"} could fit into your own routine,
+                                    product details, pricing, and availability are available through
+                                    the official product page.
                                 </p>
-                                <a
-                                    href={displayProduct.affiliateLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-primary hover:text-blue-700 underline font-semibold text-xs md:text-base transition-colors flex items-center gap-1.5 w-fit"
-                                >
-                                    Click here to see product
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                    </svg>
-                                </a>
+                                <div className="pt-2 md:pt-4 space-y-1 md:space-y-2">
+                                    <p className="text-[10px] md:text-sm font-bold text-gray-400 uppercase tracking-wider">
+                                        Product Page:
+                                    </p>
+                                    <a
+                                        href={displayProduct.affiliateLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-primary hover:text-blue-700 underline font-semibold text-xs md:text-base transition-colors flex items-center gap-1.5 w-fit"
+                                    >
+                                        Click here to see product
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                    </a>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         <div className="pt-6 md:pt-8 border-t border-gray-100 text-[10px] md:text-sm text-gray-500 flex flex-col gap-3 md:gap-4">
                             {campaign?.videoSource !== "document_upload" && (

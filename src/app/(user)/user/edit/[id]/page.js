@@ -618,20 +618,23 @@ export default function EditPage() {
       }
 
       // 2. Build the Purchase Information HTML block (uses objective, non-promotional terms to maximize AI quality score)
-      const purchaseInfoHtml = `
-        <div style="margin-top: 30px; padding-top: 20px;">
-          <h4 style="font-size: 1.25rem; font-weight: 700; color: #111827; margin: 0 0 10px 0;">Product Sourcing & Availability</h4>
-          <p style="font-size: 0.95rem; line-height: 1.6; color: #4b5563; margin: 0 0 12px 0;">
-            Retail pricing, specifications, and regional availability for ${productCard.productName || "this product"} are cataloged on the official retail platform.
-          </p>
-          <div style="margin-top: 10px;">
-            <p style="font-size: 0.8rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 6px 0;">Reference Listing:</p>
-            <a href="${productCard.affiliateLink || '#'}" target="_blank" rel="noopener noreferrer" style="color: #0A5CFF; font-weight: 600; text-decoration: underline; font-size: 0.95rem;">
-              Official Product Page
-            </a>
+      let purchaseInfoHtml = "";
+      if (videoSource !== "document_upload") {
+        purchaseInfoHtml = `
+          <div style="margin-top: 30px; padding-top: 20px;">
+            <h4 style="font-size: 1.25rem; font-weight: 700; color: #111827; margin: 0 0 10px 0;">Product Sourcing & Availability</h4>
+            <p style="font-size: 0.95rem; line-height: 1.6; color: #4b5563; margin: 0 0 12px 0;">
+              Retail pricing, specifications, and regional availability for ${productCard.productName || "this product"} are cataloged on the official retail platform.
+            </p>
+            <div style="margin-top: 10px;">
+              <p style="font-size: 0.8rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 6px 0;">Reference Listing:</p>
+              <a href="${productCard.affiliateLink || '#'}" target="_blank" rel="noopener noreferrer" style="color: #0A5CFF; font-weight: 600; text-decoration: underline; font-size: 0.95rem;">
+                Official Product Page
+              </a>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }
 
       // 3. Build the Original Source Video link block if it exists
       let originalSourceHtml = "";
@@ -679,7 +682,6 @@ export default function EditPage() {
         xprStoryPayload.categories = categoriesArray;
       }
 
-      console.log("XPR Media Payload:", JSON.stringify(xprStoryPayload, null, 2));
       setXprStoryPayload(xprStoryPayload);
 
       const xprArticleRelease = (await import("@/lib/api/user/xprArticleRelease")).default;
@@ -688,11 +690,6 @@ export default function EditPage() {
       // Validation passed, check AI score
       const aiAnalysisData = response?.data?.aiAnalysis;
       setAiAnalysis(aiAnalysisData);
-
-      if (aiAnalysisData) {
-        console.log(`[Frontend AI Score] ${aiAnalysisData.score}/100 - Classification: ${aiAnalysisData.classification}`);
-        console.log(`[Frontend AI Summary] ${aiAnalysisData.summary}`);
-      }
 
       const isSuccess = response?.data?.success !== false;
       const isGoodScore = aiAnalysisData && aiAnalysisData.score >= 60;
@@ -1426,7 +1423,7 @@ export default function EditPage() {
       <FullArticlePreview
         isOpen={showPreview}
         onClose={() => setShowPreview(false)}
-        campaign={{ _id: campaignId }}
+        campaign={{ _id: campaignId, videoSource }}
         article={editData}
         productCard={productCard}
       />
@@ -1478,7 +1475,7 @@ export default function EditPage() {
       <PreviewPublishModal
         isOpen={showPublishModal}
         onClose={() => setShowPublishModal(false)}
-        campaign={{ _id: campaignId, article: editData, context }}
+        campaign={{ _id: campaignId, article: editData, context, videoSource }}
         article={editData}
         onPublish={handleConfirmPublish}
         storyPayload={xprStoryPayload}

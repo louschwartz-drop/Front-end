@@ -8,7 +8,6 @@ import { Elements } from "@stripe/react-stripe-js";
 import CheckoutForm from "@/components/user/CheckoutForm";
 import Button from "@/components/ui/Button";
 import { toast } from "react-toastify";
-import Tooltip from "@/components/ui/Tooltip";
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 import { pricingService } from "@/lib/api/user/pricing";
@@ -217,7 +216,6 @@ export default function PaymentPage() {
       >
         {/* Left Column: Summary */}
         <div className="lg:col-span-5 space-y-6">
-          <Tooltip text="Return to pricing options" position="bottom">
           <button
             onClick={() => router.push(`/user/pricing/${campaignId}`)}
             className="group flex w-fit items-center gap-2 text-gray-500 hover:text-primary transition-all font-medium mb-4"
@@ -229,7 +227,6 @@ export default function PaymentPage() {
             </div>
             Back to Pricing
           </button>
-          </Tooltip>
 
           <div className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100/50 p-2 sm:p-8 overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
@@ -272,11 +269,9 @@ export default function PaymentPage() {
                 {appliedPromo && (
                   <div className="flex justify-between text-green-600 text-sm font-medium animate-in fade-in slide-in-from-top-1">
                     <div className="flex items-center gap-1.5">
-                      <Tooltip text="Remove discount" position="top">
                       <button onClick={handleRemovePromo} className="hover:text-red-500 transition-colors">
                         <X className="w-3.5 h-3.5" />
                       </button>
-                      </Tooltip>
                       <span>Discount ({appliedPromo.code})</span>
                     </div>
                     <span>-${appliedPromo.discountAmount.toFixed(2)}</span>
@@ -294,7 +289,6 @@ export default function PaymentPage() {
                           onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
                           className={`w-full min-w-0 flex-1 px-3 py-2 bg-gray-50 border ${promoError ? 'border-red-300 ring-4 ring-red-50' : 'border-gray-200'} rounded-xl text-sm font-bold uppercase transition-all outline-none focus:border-primary`}
                         />
-                        <Tooltip text={isApplyingPromo ? "Applying discount..." : "Apply promo code"} position="top">
                         <div className="flex-shrink-0">
                         <button
                           onClick={handleApplyPromo}
@@ -304,7 +298,6 @@ export default function PaymentPage() {
                           {isApplyingPromo ? "..." : "Apply"}
                         </button>
                         </div>
-                        </Tooltip>
                       </div>
                       {promoError && <p className="text-[10px] text-red-500 font-bold ml-1">{promoError}</p>}
                     </div>
@@ -324,14 +317,12 @@ export default function PaymentPage() {
                         <p className="text-[8px] sm:text-[9px] text-green-600/70 font-bold uppercase tracking-tighter mt-0.5 truncate">Discount applied successfully</p>
                       </div>
                     </div>
-                    <Tooltip text="Remove promo code" position="top">
                     <button
                       onClick={handleRemovePromo}
                       className="p-1.5 sm:p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all rounded-lg flex-shrink-0"
                     >
                       <X className="w-3 h-3 sm:w-4 sm:h-4" />
                     </button>
-                    </Tooltip>
                   </div>
                 )}
                 </div>
@@ -380,8 +371,8 @@ export default function PaymentPage() {
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Saved Methods</p>
                   <div className="grid grid-cols-1 gap-3">
                     {savedCards.map(card => (
-                      <Tooltip key={card.id} text="Pay with this saved card" position="top">
                       <button
+                        key={card.id}
                         onClick={() => {
                           setSelectedCardId(card.id);
                           setUseNewCard(false);
@@ -403,9 +394,7 @@ export default function PaymentPage() {
                           )}
                         </div>
                       </button>
-                      </Tooltip>
                     ))}
-                    <Tooltip text="Enter new card details" position="top">
                     <button
                       onClick={() => setUseNewCard(true)}
                       className={`flex w-full items-center justify-between p-4 rounded-2xl border-2 transition-all ${useNewCard ? 'border-primary bg-primary/5 ring-4 ring-primary/5' : 'border-gray-100 hover:border-gray-200 bg-white'}`}
@@ -422,7 +411,6 @@ export default function PaymentPage() {
                         {useNewCard && <div className="w-2 h-2 bg-white rounded-full" />}
                       </div>
                     </button>
-                    </Tooltip>
                   </div>
                 </div>
               )}

@@ -6,6 +6,8 @@ import { BLOCKQUOTE_STYLES } from "@/components/editor/blockquoteStyles";
 import PressReleaseCta from "./PressReleaseCta";
 import FallbackImage from "./FallbackImage";
 
+export const dynamic = "force-dynamic";
+
 const STANDARD_FOOTER = `
 <div style='margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5e7eb;'>
   <h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:0.5rem;'>Media Contact</h4>
@@ -56,9 +58,7 @@ async function getArticle(id) {
     if (isLocalId) {
         const baseUrl = process.env.NEXT_PUBLIC_API_URL;
         try {
-            const res = await fetch(`${baseUrl}/public/press-releases/${id}`, {
-                next: { revalidate: 300 }
-            });
+            const res = await fetch(`${baseUrl}/public/press-releases/${id}`);
             if (!res.ok) return null;
             const data = await res.json();
 
@@ -88,9 +88,7 @@ async function getArticle(id) {
     const url = `https://api.currentsapi.services/v1/search?apiKey=${API_KEY}&keywords=press%20release%20AI&country=us&language=en&category=technology&page_size=100`;
 
     try {
-        const res = await fetch(url, {
-            next: { revalidate: 3600 }
-        });
+        const res = await fetch(url);
         const data = await res.json();
         const article = data.news?.find(a => a.id === id) || null;
         if (article) article.isPlatform = false;
@@ -107,9 +105,7 @@ async function getRelatedPressReleases(id) {
 
     const baseUrl = process.env.NEXT_PUBLIC_API_URL;
     try {
-        const res = await fetch(`${baseUrl}/public/press-releases/${id}/related?limit=3`, {
-            next: { revalidate: 300 }
-        });
+        const res = await fetch(`${baseUrl}/public/press-releases/${id}/related?limit=3`);
         if (!res.ok) return [];
         const data = await res.json();
         return data.data || [];
@@ -332,7 +328,7 @@ export default async function ArticleDetailsPage({ params }) {
                         )}
 
                         {/* Purchase Information */}
-                        {article.isPlatform && displayProduct.affiliateLink && (
+                        {article.isPlatform && article.campaign?.videoSource !== "document_upload" && displayProduct.affiliateLink && (
                             <div className="space-y-3 mt-10">
                                 <h4 className="text-lg md:text-xl font-bold text-gray-900">
                                     Purchase Information

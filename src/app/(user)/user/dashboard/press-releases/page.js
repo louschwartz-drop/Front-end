@@ -117,6 +117,7 @@ export default function UserPressReleasesPage() {
         if (release.distributionStatus?.isPending) return "bg-amber-100 text-amber-700 border-amber-200";
 
         switch (status) {
+            case "completed":
             case "published": return "bg-emerald-100 text-emerald-700 border-emerald-200";
             case "submitted_successfully": return "bg-indigo-100 text-indigo-700 border-indigo-200";
             case "pending": return "bg-blue-100 text-blue-700 border-blue-200";
@@ -127,7 +128,7 @@ export default function UserPressReleasesPage() {
     const getStatusLabel = (release) => {
         if (release.distributionStatus?.needsReview) return "FLAGGED / REVIEW";
         if (release.distributionStatus?.isPending) return "IN PROGRESS";
-        if (release.status === "published" || (!release.distributionStatus?.isPending && release.distributionStatus?.total > 0)) return "FINISHED";
+        if (release.status === "completed" || release.status === "published" || (!release.distributionStatus?.isPending && release.distributionStatus?.total > 0)) return "COMPLETED";
         return release.status.toUpperCase();
     };
 
@@ -185,13 +186,13 @@ export default function UserPressReleasesPage() {
                 <div className="w-full xl:flex-1">
                     <div className="flex flex-row items-center gap-1.5 sm:gap-2 justify-between sm:justify-start w-full">
                         {[
-                            { id: "all", label: "All Press Releases", tooltip: "View all press releases" },
-                            { id: "in-progress", label: "In Progress", tooltip: "View active processing" },
-                            { id: "finished", label: "Finished", tooltip: "View published releases" },
-                            { id: "pending", label: "Queued", tooltip: "View queued releases" }
+                            { id: "all", label: "All Press Releases" },
+                            { id: "in-progress", label: "In Progress" },
+                            { id: "completed", label: "Completed" },
+                            { id: "pending", label: "Queued" }
                         ].map((f) => (
-                            <Tooltip key={f.id} text={f.tooltip} position="top">
                             <button
+                                key={f.id}
                                 onClick={() => { setFilter(f.id); setCurrentPage(1); }}
                                 className={`px-2 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-[9px] xs:text-[10px] sm:text-xs font-bold tracking-tight sm:tracking-wide border transition-all flex items-center justify-center whitespace-nowrap flex-1 sm:flex-none ${filter === f.id
                                     ? "bg-gray-900 text-white border-gray-900 shadow-sm"
@@ -200,7 +201,6 @@ export default function UserPressReleasesPage() {
                             >
                                 {f.label}
                             </button>
-                            </Tooltip>
                         ))}
                     </div>
                 </div>

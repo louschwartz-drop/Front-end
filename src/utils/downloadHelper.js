@@ -8,17 +8,17 @@ import { BLOCKQUOTE_STYLES } from "@/components/editor/blockquoteStyles";
 export const downloadCampaignFile = async (campaignId, format, defaultFilename = null) => {
     try {
         const url = `/user/campaigns/${campaignId}/download/${format}`;
-        
+
         const response = await api.get(url, {
             responseType: 'blob',
         });
 
-        const blob = new Blob([response.data], { 
-            type: format === 'pdf' 
-                ? 'application/pdf' 
-                : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+        const blob = new Blob([response.data], {
+            type: format === 'pdf'
+                ? 'application/pdf'
+                : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         });
-        
+
         const blobUrl = window.URL.createObjectURL(blob);
         const filename = defaultFilename || `article-${campaignId}.${format === 'pdf' ? 'pdf' : 'docx'}`;
 
@@ -29,7 +29,7 @@ export const downloadCampaignFile = async (campaignId, format, defaultFilename =
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(blobUrl);
-        
+
         return { success: true };
     } catch (error) {
         console.error(`Error downloading ${format}:`, error);
@@ -38,20 +38,47 @@ export const downloadCampaignFile = async (campaignId, format, defaultFilename =
 };
 
 /**
- * Client-side PDF generation via browser print window.
- * Opens the article HTML in a new window and triggers window.print().
- * The browser handles PDF natively (File → Save as PDF) — no Puppeteer needed.
- * Pixel-perfect match to the FullArticlePreview modal.
+ * Convert an image URL to a base64 data URL so html2canvas can render it
+ * without CORS issues. Returns null on failure (image will be skipped).
+ */
+const toBase64 = (url) => {
+    return new Promise((resolve) => {
+        if (!url) return resolve(null);
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                canvas.getContext('2d').drawImage(img, 0, 0);
+                resolve(canvas.toDataURL('image/png'));
+            } catch {
+                resolve(null);
+            }
+        };
+        img.onerror = () => resolve(null);
+        // Bust cache to avoid stale CORS preflight
+        img.src = url + (url.includes('?') ? '&' : '?') + '_t=' + Date.now();
+    });
+};
+
+/**
+ * Client-side PDF generation using html2pdf.js.
+ * Converts the product thumbnail to base64 first so html2canvas can always render it.
  */
 export const printArticleAsPdf = async ({ displayData, displayProduct, standardFooter, stripFooter }) => {
     const categories = (displayData.categories || displayData.productSummary?.category || "")
         .split(",").map(c => c.trim()).filter(Boolean);
 
+    // Pre-convert the product image to base64 so html2canvas doesn't hit CORS
+    const thumbBase64 = await toBase64(displayProduct.thumbnail);
+
     const productBlock = `
         <div class="product-card">
             <span class="product-label">Featured Product</span>
             <div class="product-inner">
-                ${displayProduct.thumbnail ? `<img src="${displayProduct.thumbnail}" alt="Product" class="product-thumb" />` : ""}
+                ${thumbBase64 ? `<img src="${thumbBase64}" alt="Product" class="product-thumb" />` : ""}
                 <div>
                     <h4 class="product-name">${displayProduct.productName || "Product"}</h4>
                     ${categories.length ? `<div class="categories">${categories.map(c => `<span class="tag">${c}</span>`).join("")}</div>` : ""}
@@ -86,10 +113,10 @@ export const printArticleAsPdf = async ({ displayData, displayProduct, standardF
         .product-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px; margin: 1.5rem 0; }
         .product-label { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; display: block; margin-bottom: 12px; }
         .product-inner { display: flex; gap: 20px; align-items: flex-start; }
-        .product-thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 12px; flex-shrink: 0; }
+        .product-thumb { width: 96px; height: 96px; object-fit: cover; border-radius: 16px; flex-shrink: 0; border: 1px solid #e5e7eb; }
         .product-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
-        .categories { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-        .tag { background: #eff6ff; color: #0A5CFF; font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid #bfdbfe; }
+        .categories { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0px; }
+        .tag { background: #eff6ff; color: #0A5CFF; font-size: 0.7rem; font-weight: 700; height: 30px;  padding: 0 10px; border-radius: 999px; border: 1px solid #bfdbfe; text-align: center; position: relative; top: 5px; }
         .meta { font-size: 0.8rem; color: #4b5563; margin-top: 4px; }
         .body-content { font-size: 1rem; line-height: 1.8; color: #374151; margin-top: 1.5rem; }
         .body-content p { margin-bottom: 1rem; }
@@ -97,16 +124,16 @@ export const printArticleAsPdf = async ({ displayData, displayProduct, standardF
     `;
     element.appendChild(style);
 
-    const safeFilename = displayData.headline 
-        ? displayData.headline.substring(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase() 
+    const safeFilename = displayData.headline
+        ? displayData.headline.substring(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase()
         : 'article';
 
     const opt = {
-        margin:       15,
-        filename:     `article-${safeFilename}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, logging: false },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        margin: 15,
+        filename: `article-${safeFilename}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
     const html2pdf = (await import("html2pdf.js")).default;

@@ -7,7 +7,6 @@ export const xprArticleRelease = {
      */
     precheck: async (story, campaignId) => {
         try {
-            console.log(story);
             const response = await api.post('/user/xpr-media/precheck', { story, campaignId });
             return response.data;
         } catch (error) {

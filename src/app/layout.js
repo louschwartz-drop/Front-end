@@ -113,15 +113,24 @@ export default function RootLayout({ children }) {
             />
           </SocketProvider>
         </NextAuthProvider>
-        <Script id="register-sw" strategy="afterInteractive">
+        <Script id="unregister-sw" strategy="afterInteractive">
           {`
             if ('serviceWorker' in navigator) {
-              window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                  console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                }, function(err) {
-                  console.log('ServiceWorker registration failed: ', err);
-                });
+              navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                if (registrations.length > 0) {
+                  for (let registration of registrations) {
+                    registration.unregister();
+                  }
+                  if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                      Promise.all(names.map(name => caches.delete(name))).then(function() {
+                        window.location.reload();
+                      });
+                    });
+                  } else {
+                    window.location.reload();
+                  }
+                }
               });
             }
           `}

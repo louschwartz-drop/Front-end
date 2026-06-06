@@ -100,6 +100,7 @@ export default function AdminPressReleasesPage() {
         if (release.distributionStatus?.isPending) return "bg-amber-50 text-amber-700 border-amber-200";
 
         switch (status) {
+            case "completed":
             case "published": return "bg-emerald-50 text-emerald-700 border-emerald-200";
             case "submitted_successfully": return "bg-indigo-50 text-indigo-700 border-indigo-200";
             case "pending": return "bg-blue-50 text-blue-700 border-blue-200";
@@ -110,7 +111,7 @@ export default function AdminPressReleasesPage() {
     const getStatusLabel = (release) => {
         if (release.distributionStatus?.needsReview) return "FLAGGED / REVIEW";
         if (release.distributionStatus?.isPending) return "IN PROGRESS";
-        if (release.status === "published" || (!release.distributionStatus?.isPending && release.distributionStatus?.total > 0)) return "FINISHED";
+        if (release.status === "completed" || release.status === "published" || (!release.distributionStatus?.isPending && release.distributionStatus?.total > 0)) return "COMPLETED";
         return release.status.toUpperCase();
     };
 
@@ -182,7 +183,7 @@ export default function AdminPressReleasesPage() {
                             {[
                                 { id: "all", label: "All Press Releases" },
                                 { id: "in-progress", label: "In Progress", color: "amber" },
-                                { id: "finished", label: "Finished", color: "emerald" },
+                                { id: "completed", label: "Completed", color: "emerald" },
                                 { id: "pending", label: "Queued", color: "blue" }
                             ].map((f) => (
                                 <button

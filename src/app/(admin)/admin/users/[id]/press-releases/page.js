@@ -42,7 +42,7 @@ export default function AdminUserPressReleasesPage() {
     const statusOptions = [
         { id: "all", label: "All Press Releases" },
         { id: "in-progress", label: "In Progress", color: "amber" },
-        { id: "finished", label: "Finished", color: "emerald" },
+        { id: "completed", label: "Completed", color: "emerald" },
         { id: "pending", label: "Queued", color: "blue" }
     ];
 
@@ -103,6 +103,7 @@ export default function AdminUserPressReleasesPage() {
         if (release.distributionStatus?.isPending) return "bg-amber-100 text-amber-700 border-amber-200";
 
         switch (status) {
+            case "completed":
             case "published": return "bg-emerald-100 text-emerald-700 border-emerald-200";
             case "submitted_successfully": return "bg-indigo-100 text-indigo-700 border-indigo-200";
             case "pending": return "bg-blue-100 text-blue-700 border-blue-200";
@@ -113,7 +114,7 @@ export default function AdminUserPressReleasesPage() {
     const getStatusLabel = (release) => {
         if (release.distributionStatus?.needsReview) return "FLAGGED / REVIEW";
         if (release.distributionStatus?.isPending) return "IN PROGRESS";
-        if (release.status === "published" || (!release.distributionStatus?.isPending && release.distributionStatus?.total > 0)) return "FINISHED";
+        if (release.status === "completed" || release.status === "published" || (!release.distributionStatus?.isPending && release.distributionStatus?.total > 0)) return "COMPLETED";
         return release.status.toUpperCase();
     };
 
@@ -139,7 +140,7 @@ export default function AdminUserPressReleasesPage() {
         const label = getStatusLabel(release);
         const matchesStatus = statusFilter === "all" || 
             (statusFilter === "in-progress" ? label === "IN PROGRESS" :
-             statusFilter === "finished" ? label === "FINISHED" :
+             statusFilter === "completed" ? label === "COMPLETED" :
              statusFilter === "pending" ? (label === "PENDING" || label === "SUBMITTED_SUCCESSFULLY") : true);
         
         const matchesDate = !dateFilter || 
@@ -211,7 +212,7 @@ export default function AdminUserPressReleasesPage() {
                                     if (f.id === "all") return true;
                                     const label = getStatusLabel(r);
                                     if (f.id === "in-progress") return label === "IN PROGRESS";
-                                    if (f.id === "finished") return label === "FINISHED";
+                                    if (f.id === "completed") return label === "COMPLETED";
                                     if (f.id === "pending") return label === "PENDING" || label === "SUBMITTED_SUCCESSFULLY";
                                     return true;
                                 }).length})

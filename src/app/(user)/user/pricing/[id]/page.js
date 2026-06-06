@@ -8,7 +8,6 @@ import Button from "@/components/ui/Button";
 import LoginModal from "@/components/landingPage/LoginModal";
 import { toast } from "react-toastify";
 import PreviewPublishModal from "@/components/user/PreviewPublishModal";
-import Tooltip from "@/components/ui/Tooltip";
 
 import { pricingService } from "@/lib/api/user/pricing";
 import { campaignService } from "@/lib/api/user/campaigns";
@@ -115,7 +114,7 @@ function PricingContent() {
   };
 
   const handleProceed = (overridePlanId = null) => {
-    const planToProceed = overridePlanId || selectedPlan;
+    const planToProceed = (typeof overridePlanId === "string" ? overridePlanId : null) || selectedPlan;
 
     if (!isAuthenticated) {
       setShowLoginModal(true);
@@ -180,17 +179,15 @@ function PricingContent() {
               transition={{ delay: 0.5 }}
               className="w-full sm:w-auto"
             >
-              <Tooltip text="Proceed to checkout" position="top">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   variant="primary"
-                  onClick={handleProceed}
+                  onClick={() => handleProceed()}
                   className="w-full sm:w-auto bg-[#0A5CFF] hover:bg-[#3B82F6]"
                 >
                   Continue to Payment
                 </Button>
               </motion.div>
-              </Tooltip>
             </motion.div>
           )}
         </div>
@@ -202,8 +199,8 @@ function PricingContent() {
             if (!selected) return null;
             const isSelected = selectedPlan === selected._id;
             return (
-              <Tooltip key={planName} text={selected.isComingSoon ? "Not available yet" : "Select this plan"} position="top">
               <motion.div
+                key={planName}
                 role="button"
                 tabIndex={0}
                 initial={{ opacity: 0, y: 30 }}
@@ -242,8 +239,8 @@ function PricingContent() {
                   </h3>
                   <div className="flex gap-2 mb-4">
                     {variants.map((v) => (
-                      <Tooltip key={v._id} text={`Select ${v.releasesCount} article pack`} position="top">
                       <button
+                        key={v._id}
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -257,7 +254,6 @@ function PricingContent() {
                       >
                         {v.releasesCount} {v.releasesCount === 1 ? "Article" : "Articles"}
                       </button>
-                      </Tooltip>
                     ))}
                   </div>
                   <div className="mb-4 sm:mb-6">
@@ -292,7 +288,6 @@ function PricingContent() {
                     ))}
                   </ul>
 
-                  <Tooltip text={selected.isComingSoon ? "Not available yet" : "Proceed to checkout with this plan"} position="bottom">
                   <motion.button
                     type="button"
                     disabled={selected.isComingSoon}
@@ -314,10 +309,8 @@ function PricingContent() {
                   >
                     {selected.isComingSoon ? "Coming Soon" : isSelected ? "Continue with this Plan" : "Select Plan"}
                   </motion.button>
-                  </Tooltip>
                 </div>
               </motion.div>
-              </Tooltip>
             );
           })}
         </div>

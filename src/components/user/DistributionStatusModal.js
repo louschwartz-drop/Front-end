@@ -44,18 +44,19 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
             if (res.success && res.data) {
                 const data = res.data;
 
-                // Determine overall status
-                let overallStatus = "pending";
-                if (data.status?.isLive) overallStatus = "published";
-                else if (data.status?.isReviewedDenied) overallStatus = "rejected";
-                else if (data.status?.isNeedsReview) overallStatus = "needs review";
-                else if (data.status?.isPartiallyLive) overallStatus = "partially live";
-
                 // Metrics
                 const pendingCount = data.status?.publisherCount?.pending || 0;
                 const publishedCount = data.status?.publisherCount?.live || 0;
                 const totalCount = data.status?.publisherCount?.total || (pendingCount + publishedCount);
                 const needsReviewCount = data.needsReview?.length || 0;
+
+                // Determine overall status
+                let overallStatus = "pending";
+                if (totalCount > 0 && (publishedCount / totalCount) >= 0.7) overallStatus = "completed";
+                else if (data.status?.isLive) overallStatus = "published";
+                else if (data.status?.isReviewedDenied) overallStatus = "rejected";
+                else if (data.status?.isNeedsReview) overallStatus = "needs review";
+                else if (data.status?.isPartiallyLive) overallStatus = "partially live";
 
                 // Live Date
                 let liveAtStr = null;
@@ -106,12 +107,13 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
 
                 // Notify parent to update dashboard card locally (Just Now effect)
                 if (typeof onStatusUpdate === "function") {
+                    const isOverThreshold = totalCount > 0 && (publishedCount / totalCount) >= 0.7;
                     onStatusUpdate({
                         total: totalCount,
                         pending: pendingCount,
                         publishedDate: liveAtStr,
                         lastStatusCheck: new Date().toISOString(), // Instant update locally
-                        isPending: pendingCount > 0,
+                        isPending: isOverThreshold ? false : pendingCount > 0,
                     });
                 }
             }
@@ -221,11 +223,11 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
                                 {/* Overall Status Banner */}
                                 <div className="bg-white p-5 border border-gray-200 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${statusData.overallStatus === "published" || statusData.overallStatus === "active" ? "bg-green-100 text-green-600"
+                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${statusData.overallStatus === "published" || statusData.overallStatus === "completed" || statusData.overallStatus === "active" ? "bg-green-100 text-green-600"
                                             : statusData.overallStatus === "rejected" ? "bg-red-100 text-red-600"
                                                 : "bg-blue-100 text-blue-600"
                                             }`}>
-                                            {statusData.overallStatus === "published" || statusData.overallStatus === "active" ? <CheckCircle className="w-6 h-6" />
+                                            {statusData.overallStatus === "published" || statusData.overallStatus === "completed" || statusData.overallStatus === "active" ? <CheckCircle className="w-6 h-6" />
                                                 : statusData.overallStatus === "rejected" ? <AlertCircle className="w-6 h-6" />
                                                     : <Clock className="w-6 h-6" />}
                                         </div>
@@ -259,6 +261,18 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
                                         </div>
                                     )}
                                 </div>
+
+                                {statusData.overallStatus === "completed" && (
+                                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
+                                        <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                                        <div>
+                                            <h4 className="text-sm font-bold text-emerald-800">Distribution Completed</h4>
+                                            <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
+                                                We have reached 70% published on websites, so it is marked as completed. Some websites may or may not be published over time.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Metrics Grid */}
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">

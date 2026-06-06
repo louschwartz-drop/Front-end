@@ -7,7 +7,6 @@ export const pressReleaseService = {
         return response.data;
     },
     publish: async (campaignId, planId = null, storyPayload = null) => {
-        console.log("storyPayload", storyPayload);
         const response = await api.post("/user/press-releases/publish", { campaignId, planId, storyPayload });
         return response.data;
     },

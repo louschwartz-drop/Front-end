@@ -41,8 +41,6 @@ export default function PreviewPublishModal({
             return;
         }
 
-        console.log("XPR Media Final Payload:", JSON.stringify(storyPayload, null, 2));
-
         setIsPublishing(true);
         try {
             await onPublish(selectedPlanId);

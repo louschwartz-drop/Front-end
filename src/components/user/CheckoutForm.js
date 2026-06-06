@@ -10,7 +10,6 @@ import { motion } from "framer-motion";
 import Button from "@/components/ui/Button";
 import { toast } from "react-toastify";
 import { paymentService } from "@/lib/api/user/payments";
-import Tooltip from "@/components/ui/Tooltip";
 
 export default function CheckoutForm({ amount, campaignId, onSuccess, saveCard, setSaveCard, userEmail, paymentMethodId, clientSecret, isSetupIntent, isFreeTransaction, planId, promoCode }) {
     const stripe = useStripe();
@@ -207,7 +206,6 @@ export default function CheckoutForm({ amount, campaignId, onSuccess, saveCard, 
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
             >
-                <Tooltip text="Process payment securely" position="top">
                 <div className="w-full">
                 <Button
                     disabled={isLoading || !stripe || (!elements && !paymentMethodId)}
@@ -230,7 +228,6 @@ export default function CheckoutForm({ amount, campaignId, onSuccess, saveCard, 
                     )}
                 </Button>
                 </div>
-                </Tooltip>
             </motion.div>
 
             {message && (
