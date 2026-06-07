@@ -390,7 +390,7 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                                         <div className="flex items-center gap-4 text-xs text-gray-400 mb-4 font-medium">
                                             <div className="flex items-center gap-1.5">
                                                 <Calendar className="w-3.5 h-3.5 text-brand-blue" />
-                                                {article.published ? new Date(article.published).toLocaleDateString() : "Recently"}
+                                                {article.published ? new Date(article.published).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "Recently"}
                                             </div>
                                             <div className="flex items-center gap-1.5 capitalize">
                                                 <Tag className="w-3.5 h-3.5 text-brand-blue" />

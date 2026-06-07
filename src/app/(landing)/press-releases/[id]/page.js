@@ -1,513 +1,382 @@
-import Header from "@/components/landingPage/Header";
-import Footer from "@/components/landingPage/Footer";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Calendar, User, Tag, Share2, Globe } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+
+import LoginModal from "@/components/landingPage/LoginModal";
+import userAuthStore from "@/store/userAuthStore";
 import { BLOCKQUOTE_STYLES } from "@/components/editor/blockquoteStyles";
-import PressReleaseCta from "./PressReleaseCta";
-import FallbackImage from "./FallbackImage";
 
-export const dynamic = "force-dynamic";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const STANDARD_FOOTER = `
-<div style='margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5e7eb;'>
-  <h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:0.5rem;'>Media Contact</h4>
-  <p style='margin:0;font-weight:700;color:#111827;'>Drop PR AI Research &amp; Media Desk</p>
-  <p style='margin:2px 0;color:#4b5563;'>support@droppr.ai</p>
-  <p style='margin:2px 0;color:#4b5563;'>Austin, Texas</p>
-</div>
-<div style='margin-top:1.25rem;padding:1rem;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;'>
-  <h4 style='margin-top:0;color:#111827;font-size:1rem;margin-bottom:0.5rem;'>About Drop PR</h4>
-  <p style='margin-bottom:0.75rem;color:#374151;line-height:1.6;font-size:0.875rem;'><a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>Drop PR</a> transforms creator videos, podcasts, product reviews, and brand announcements into professionally written editorial-style articles distributed across a broad network of digital publishers. The platform helps brands, creators, agencies, and e-commerce companies expand search visibility, strengthen AI discoverability, generate backlinks, and extend the lifespan of short-form content beyond social media feeds.</p>
-  <h4 style='margin-top:1rem;color:#111827;font-size:1rem;margin-bottom:0.5rem;'>Call to Action</h4>
-  <p style='margin-bottom:0;color:#374151;line-height:1.6;font-size:0.875rem;'>Brands, creators, podcasters, and agencies interested in turning content into distributed editorial coverage can learn more at <a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>Drop PR</a>.</p>
-</div>
-`;
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function stripFooter(html) {
     if (!html) return "";
-    const footerKeywords = [
-        "<div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>",
-        "<div style=\"margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;\">",
-        "<div style='margin-top:3rem;",
-        "<div style=\"margin-top:3rem;",
-        "<h4>Media Contact</h4>",
-        "<h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>",
-        "<h4 style=\"text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;\">Media Contact</h4>",
-        "Media Contact",
-        "<div style='margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5e7eb;'>",
-        "<div style=\"margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5e7eb;\">",
-    ];
-
-    for (const keyword of footerKeywords) {
-        const index = html.indexOf(keyword);
-        if (index !== -1) {
-            let cleanHtml = html.substring(0, index).trim();
-            if (cleanHtml.endsWith("<div>")) {
-                cleanHtml = cleanHtml.slice(0, -5).trim();
-            }
-            return cleanHtml;
-        }
+    const markers = ["Media Contact", "<h4>Media Contact</h4>", "<div style='margin-top:3rem;"];
+    for (const m of markers) {
+        const idx = html.indexOf(m);
+        if (idx !== -1) return html.substring(0, idx).trim();
     }
-
     return html;
 }
 
-async function getArticle(id) {
-    const isLocalId = /^[0-9a-fA-F]{24}$/.test(id);
+function initials(name = "Drop PR") {
+    return name.split(" ").map((w) => w[0] || "").join("").slice(0, 2).toUpperCase();
+}
 
-    if (isLocalId) {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-        try {
-            const res = await fetch(`${baseUrl}/public/press-releases/${id}`);
-            if (!res.ok) return null;
-            const data = await res.json();
+// ─── Sub-components (no hooks — safe to keep inline) ─────────────────────────
 
-            const campaign = data.data;
-            if (!campaign) return null;
+function ArrowRight({ className }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            className={className}>
+            <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+        </svg>
+    );
+}
 
-            return {
-                id: campaign._id,
-                title: campaign.article?.headline,
-                description: campaign.article?.summary,
-                body: campaign.article?.body,
-                introduction: campaign.article?.introduction,
-                image: campaign.productCard?.thumbnail,
-                author: campaign.productCard?.authorName || campaign.userId?.name,
-                published: campaign.createdAt,
-                category: [campaign.article?.productSummary?.category || "Platform"],
-                isPlatform: true,
-                campaign: campaign
-            };
-        } catch (error) {
-            console.error("Platform Detail Fetch Error:", error);
-            return null;
+function Img({ src, fallback, alt, className }) {
+    const good = src && src !== "None" && src !== "";
+    const [cur, setCur] = useState(good ? src : fallback);
+    useEffect(() => { setCur(good ? src : fallback); }, [src, fallback]);
+    return (
+        <img src={cur} alt={alt} className={className}
+            onError={(e) => { e.target.onerror = null; setCur(fallback); }} />
+    );
+}
+
+// ─── CTA section (no hooks — safe inline) ────────────────────────────────────
+
+function CtaSection({ onGetStarted }) {
+    return (
+        <section className="max-w-4xl mx-auto mt-8 px-6">
+            <div className="bg-linear-to-r from-brand-dark to-brand-blue rounded-3xl p-8 md:p-12 text-center text-white shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl" />
+                <h2 className="text-2xl md:text-4xl font-extrabold mb-4 md:mb-6 relative z-10">
+                    Want to see your brand here?
+                </h2>
+                <p className="text-base md:text-lg text-blue-100 mb-6 md:mb-8 max-w-2xl mx-auto relative z-10">
+                    Use DropPR.ai to turn your content into professional press releases and distribute them across our global media network.
+                </p>
+                <button
+                    onClick={onGetStarted}
+                    className="inline-flex items-center gap-2 px-8 md:px-10 py-3 md:py-4 bg-white text-brand-dark font-bold rounded-xl hover:shadow-xl transition-all scale-100 hover:scale-105 relative z-10 cursor-pointer"
+                >
+                    Start Publishing Now
+                    <ArrowRight className="w-5 h-4" />
+                </button>
+            </div>
+        </section>
+    );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+export default function PressReleaseDetailPage() {
+    const params = useParams();
+    const router = useRouter();
+    const id = params?.id;
+
+    const { isAuthenticated } = userAuthStore();
+
+    const [article, setArticle] = useState(null);
+    const [related, setRelated] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showLogin, setShowLogin] = useState(false);
+
+    // Fetch main article
+    useEffect(() => {
+        if (!id) return;
+
+        // Non-MongoDB ID → show not found immediately
+        if (!/^[0-9a-fA-F]{24}$/.test(id)) {
+            setLoading(false);
+            return;
+        }
+
+        let alive = true;
+        setLoading(true);
+
+        (async () => {
+            try {
+                const res = await fetch(`${BASE_URL}/public/press-releases/${id}`);
+                if (res.ok) {
+                    const json = await res.json();
+                    if (alive && json?.success && json?.data) {
+                        const c = json.data;
+                        // article found — populate state
+                        setArticle({
+                            id: c._id,
+                            title: c.article?.headline || "",
+                            summary: c.article?.summary || "",
+                            body: c.article?.body || "",
+                            conclusion: c.article?.conclusion || "",
+                            creatorQuote: c.article?.creatorQuote || "",
+                            introduction: c.article?.introduction || "",
+                            category: c.article?.productSummary?.category || "",
+                            useCase: c.article?.productSummary?.useCase || "",
+                            positioning: c.article?.productSummary?.positioning || "",
+                            image: c.productCard?.thumbnail || "",
+                            productName: c.productCard?.productName || "",
+                            authorName: c.productCard?.authorName || c.userId?.name || "Drop PR Author",
+                            affiliateLink: c.productCard?.affiliateLink || "",
+                            sourceVideoLink: c.productCard?.sourceVideoLink || "",
+                            videoSource: c.videoSource || "",
+                            published: c.createdAt || "",
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error("Fetch error:", e);
+            } finally {
+                if (alive) setLoading(false);
+            }
+        })();
+
+        return () => { alive = false; };
+    }, [id, router]);
+
+    // Fetch related
+    useEffect(() => {
+        if (!id || !/^[0-9a-fA-F]{24}$/.test(id)) return;
+
+        let alive = true;
+        (async () => {
+            try {
+                const res = await fetch(`${BASE_URL}/public/press-releases/${id}/related?limit=3`);
+                if (res.ok) {
+                    const json = await res.json();
+                    if (alive && json?.success) setRelated(json.data || []);
+                }
+            } catch (e) {
+                console.error("Related fetch error:", e);
+            }
+        })();
+
+        return () => { alive = false; };
+    }, [id]);
+
+    // ─── CTA handler ──────────────────────────────────────────────────────────
+    function handleGetStarted() {
+        if (isAuthenticated) {
+            router.push("/user/dashboard/create");
+        } else {
+            setShowLogin(true);
         }
     }
 
-    const API_KEY = process.env.CURRENTS_API_KEY || "dXND77Am6Zv7gvZe37eGWWZEmDJwHIXNzAefrIvpqlg7vxqw";
-    const url = `https://api.currentsapi.services/v1/search?apiKey=${API_KEY}&keywords=press%20release%20AI&country=us&language=en&category=technology&page_size=100`;
+    // ─── Render ───────────────────────────────────────────────────────────────
 
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        const article = data.news?.find(a => a.id === id) || null;
-        if (article) article.isPlatform = false;
-        return article;
-    } catch (error) {
-        console.error("Fetch Article Error:", error);
-        return null;
-    }
-}
-
-async function getRelatedPressReleases(id) {
-    const isLocalId = /^[0-9a-fA-F]{24}$/.test(id);
-    if (!isLocalId) return [];
-
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-    try {
-        const res = await fetch(`${baseUrl}/public/press-releases/${id}/related?limit=3`);
-        if (!res.ok) return [];
-        const data = await res.json();
-        return data.data || [];
-    } catch (error) {
-        console.error("Related Press Releases Fetch Error:", error);
-        return [];
-    }
-}
-
-export default async function ArticleDetailsPage({ params }) {
-    const { id } = await params;
-    const [article, relatedCampaigns] = await Promise.all([
-        getArticle(id),
-        getRelatedPressReleases(id)
-    ]);
-
-    if (!article) {
+    if (loading) {
         return (
-            <div className="min-h-screen bg-white flex flex-col">
-                <Header />
-                <main className="flex-grow container mx-auto px-4 py-32 text-center">
-                    <h1 className="text-4xl font-bold mb-4">Article Not Found</h1>
-                    <p className="text-gray-600 mb-8">The article you are looking for might have been moved or is no longer available.</p>
-                    <Link href="/press-releases" className="text-brand-blue font-bold flex items-center justify-center gap-2">
-                        <ArrowLeft className="w-5 h-5" /> Back to Newsroom
-                    </Link>
-                </main>
-                <Footer />
+            <div className="flex flex-col items-center gap-3 py-32">
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-gray-500">Loading press release…</p>
             </div>
         );
     }
 
-    const displayProduct = article.campaign?.productCard || {};
-    const displayData = article.campaign?.article || {};
-    const authorInitials = (article.author || "Drop PR Author")
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase();
+    if (!article) {
+        return (
+            <div className="flex items-center justify-center py-32 px-6">
+                <div className="text-center max-w-md">
+                    <div className="text-7xl font-black text-gray-100 select-none mb-2">404</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-3">Press Release Not Found</h1>
+                    <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+                        The press release you&apos;re looking for doesn&apos;t exist or may have been removed.
+                    </p>
+                    <Link
+                        href="/press-releases"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to Newsroom
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div
-            className="min-h-screen flex flex-col selection:bg-primary/10"
-            style={{ background: "#fafaf7" }}
-        >
-            <Header />
+        <div style={{ background: "#fafaf7" }}>
+            <style dangerouslySetInnerHTML={{ __html: BLOCKQUOTE_STYLES }} />
 
-            <main className="pt-10 pb-20">
-                <article className="relative">
-                    {/* Breadcrumbs & Header section wrapper */}
-                    <div className="max-w-3xl mx-auto px-6 mt-4">
-                        {/* Breadcrumbs */}
-                        <nav className="flex items-center gap-2 text-xs text-gray-500 mb-6">
-                            <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-                            <span>/</span>
-                            <Link href="/press-releases" className="hover:text-primary transition-colors">Newsroom</Link>
-                            <span>/</span>
-                            <span className="text-gray-900 truncate max-w-[200px] md:max-w-md">{article.title}</span>
-                        </nav>
+            <div className="pt-6 pb-20">
+                <article className="max-w-3xl mx-auto px-6">
 
-                        {/* Title - styled exactly like blog detail */}
-                        <h1
-                            className="text-3xl md:text-[46px] leading-tight md:leading-[1.08]"
-                            style={{
-                                fontFamily: "var(--font-serif, Georgia, serif)",
-                                fontWeight: 700,
-                                letterSpacing: "-0.025em",
-                                marginBottom: "20px",
-                                color: "#0a0e1a",
-                            }}
+                    {/* Breadcrumbs */}
+                    <nav className="flex items-center gap-2 text-xs text-gray-500 mb-6">
+                        <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+                        <span>/</span>
+                        <Link href="/press-releases" className="hover:text-primary transition-colors">Newsroom</Link>
+                        <span>/</span>
+                        <span className="text-gray-900 truncate max-w-[200px] md:max-w-md">{article.title}</span>
+                    </nav>
+
+                    {/* Title */}
+                    <h1
+                        className="text-3xl md:text-[46px] leading-tight md:leading-[1.08]"
+                        style={{ fontFamily: "var(--font-serif, Georgia, serif)", fontWeight: 700, letterSpacing: "-0.025em", marginBottom: "20px", color: "#0a0e1a" }}
+                    >
+                        {article.title}
+                    </h1>
+
+                    {/* Summary */}
+                    {article.summary && (
+                        <div
+                            className="text-lg md:text-[22px] leading-normal md:leading-[1.45]"
+                            style={{ color: "#5f5f5f", fontStyle: "italic", marginBottom: "32px", fontFamily: "Charter, Georgia, serif" }}
                         >
-                            {article.title}
-                        </h1>
+                            {article.summary}
+                        </div>
+                    )}
 
-                        {/* Summary / Description (Lead style under title) */}
-                        {article.description && (
-                            <div
-                                className="text-lg md:text-[22px] leading-normal md:leading-[1.45]"
-                                style={{
-                                    color: "#5f5f5f",
-                                    fontStyle: "italic",
-                                    marginBottom: "32px",
-                                    fontFamily: "Charter, Georgia, serif",
-                                }}
-                            >
-                                {article.description}
-                            </div>
-                        )}
+                    <hr className="border-gray-200 mb-6" />
 
-                        <hr className="border-gray-200 mb-6" />
-
-                        {/* Author/Meta Row */}
-                        <div className="flex items-center gap-4 mb-6">
-                            {/* Avatar */}
-                            <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                <span className="text-white text-xs font-black">
-                                    {authorInitials}
+                    {/* Author row */}
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-xs font-black">{initials(article.authorName)}</span>
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-gray-900">Published by: {article.authorName}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-gray-500">
+                                    {article.published
+                                        ? new Date(article.published).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
+                                        : "Recently"}
+                                </span>
+                                {article.category && (
+                                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{article.category}</span>
+                                )}
+                                <span className="inline-flex items-center text-[10px] text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-100 font-bold tracking-tight">
+                                    Drop PR Verified
                                 </span>
                             </div>
-                            {/* Meta info */}
-                            <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <p className="text-sm font-bold text-gray-900 leading-tight">
-                                        Published by : {article.author || "Drop PR Author"}
-                                    </p>
-                                    <span className="text-xs text-gray-300">·</span>
-                                    <span className="text-xs text-gray-500">
-                                        Published {article.published ? new Date(article.published).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" }) : "Recently"}
-                                    </span>
-                                    {article.isPlatform && (
-                                        <span className="inline-flex items-center gap-1 text-[10px] text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-100 font-bold tracking-tight ml-2">
-                                            Drop PR Verified
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-0 mt-1.5">
-                                    <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
-                                        {article.category?.[0] || "General"}
-                                    </span>
-                                </div>
-                            </div>
                         </div>
-
-                        <hr className="border-gray-200 mb-8" />
                     </div>
 
-                    {/* Main article content - styled like blog detail page */}
-                    <div className="max-w-3xl mx-auto px-6">
-                        {/* Featured Product Block */}
-                        {article.isPlatform && displayProduct.productName && (
-                            <div className="bg-[#f2f2ee] rounded-2xl p-4 md:p-6 border border-gray-200/50 mb-8">
-                                <span className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest mb-3 block">
-                                    Featured Product
-                                </span>
-                                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 md:gap-6 text-center sm:text-left">
-                                    {displayProduct.thumbnail && (
-                                        <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden bg-white shadow-sm shrink-0">
-                                            <img
-                                                src={displayProduct.thumbnail}
-                                                alt="Product"
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                    )}
-                                    <div className="space-y-1">
-                                        <h4 className="text-lg md:text-xl font-bold text-gray-900">
-                                            {displayProduct.productName}
-                                        </h4>
-                                        <div className="space-y-1.5 mt-2">
-                                            <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                                                {(displayData.categories || displayData.productSummary?.category)?.split(",").map(c => c.trim()).filter(c => c).map((cat, idx) => (
-                                                    <span key={idx} className="px-2 py-0.5 bg-blue-50 text-primary text-[10px] font-bold rounded-full border border-blue-100">
-                                                        {cat}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                            <div className="text-xs text-gray-600 space-y-1 mt-2">
-                                                {displayData.productSummary?.useCase && (
-                                                    <div><span className="font-bold opacity-60">Use case:</span> {displayData.productSummary.useCase}</div>
-                                                )}
-                                                {displayData.productSummary?.positioning && (
-                                                    <div><span className="font-bold opacity-60">Positioning:</span> {displayData.productSummary.positioning}</div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                    <hr className="border-gray-200 mb-8" />
 
-                        {/* Styled HTML Body */}
-                        <style dangerouslySetInnerHTML={{ __html: BLOCKQUOTE_STYLES }} />
-                        <div className="blog-content space-y-6 text-gray-800">
-                            {article.isPlatform ? (
-                                <>
-                                    {article.body && /\<[a-z][\s\S]*\>/i.test(article.body) ? (
-                                        <div
-                                            className="html-content-preview article-html"
-                                            dangerouslySetInnerHTML={{ __html: `<div>${stripFooter(article.body)}</div>` }}
-                                        />
-                                    ) : (
-                                        <div className="whitespace-pre-wrap leading-relaxed">
-                                            {stripFooter(article.body)}
-                                        </div>
-                                    )}
-                                    {article.campaign?.article?.conclusion && (
-                                        <div className="mt-8 font-medium italic text-gray-700">
-                                            {article.campaign.article.conclusion}
-                                        </div>
-                                    )}
-                                </>
-                            ) : (
-                                <div className="space-y-4 leading-relaxed">
-                                    <p>
-                                        Artificial Intelligence continues to reshape the landscape of modern business and technology distribution. This latest announcement highlights the accelerating pace of innovation in the US market, particularly within the technology and media sectors.
-                                    </p>
-                                    <p>
-                                        As brands increasingly turn to automated solutions for content generation and media distribution, the role of professional press release services like DropPR.ai becomes even more critical in ensuring quality and authenticity.
-                                    </p>
-                                    <p>
-                                        For more detailed information regarding this breakthrough and its implications for your industry, we recommend viewing the full announcement on the original publication platform.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Creator Quote */}
-                        {article.campaign?.article?.creatorQuote && (
-                            <div className="py-6 md:py-8 my-8 border-y border-gray-200/60 flex flex-col items-center gap-2">
-                                <div className="italic text-base md:text-xl text-gray-800 text-center leading-relaxed font-serif">
-                                    &ldquo;{article.campaign.article.creatorQuote}&rdquo;
-                                </div>
-                                {displayProduct.authorName && (
-                                    <div className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                                        From {displayProduct.authorName}
+                    {/* Featured product block */}
+                    {article.productName && (
+                        <div className="bg-[#f2f2ee] rounded-2xl p-4 md:p-6 border border-gray-200/50 mb-8">
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Featured Product</span>
+                            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                                {article.image && (
+                                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-white shadow-sm shrink-0">
+                                        <Img src={article.image} fallback="/fallback-platform.jpeg" alt="Product" className="w-full h-full object-cover" />
                                     </div>
                                 )}
-                            </div>
-                        )}
-
-                        {/* Purchase Information */}
-                        {article.isPlatform && article.campaign?.videoSource !== "document_upload" && displayProduct.affiliateLink && (
-                            <div className="space-y-3 mt-10">
-                                <h4 className="text-lg md:text-xl font-bold text-gray-900">
-                                    Purchase Information
-                                </h4>
-                                <p className="text-sm text-gray-600 italic leading-relaxed">
-                                    If you&apos;ve seen the video and wondered whether{" "}
-                                    {displayProduct?.productName || "it"} could fit into your own routine,
-                                    product details, pricing, and availability are available through
-                                    the official product page.
-                                </p>
-                                <div className="pt-2 space-y-1">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                                        Product Page:
-                                    </p>
-                                    <a
-                                        href={displayProduct.affiliateLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-primary hover:text-blue-700 underline font-semibold text-sm transition-colors flex items-center gap-1.5 w-fit"
-                                    >
-                                        Click here to see product
-                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                        </svg>
-                                    </a>
+                                <div className="space-y-1">
+                                    <h4 className="text-lg font-bold text-gray-900">{article.productName}</h4>
+                                    {article.category && (
+                                        <span className="px-2 py-0.5 bg-blue-50 text-primary text-[10px] font-bold rounded-full border border-blue-100 inline-block">
+                                            {article.category}
+                                        </span>
+                                    )}
+                                    <div className="text-xs text-gray-600 space-y-1 mt-1">
+                                        {article.useCase && <div><span className="font-bold opacity-60">Use case:</span> {article.useCase}</div>}
+                                        {article.positioning && <div><span className="font-bold opacity-60">Positioning:</span> {article.positioning}</div>}
+                                    </div>
                                 </div>
                             </div>
-                        )}
-
-                        {/* Source Video / External Link */}
-                        <div className="pt-6 mt-8 border-t border-gray-200/60 text-xs text-gray-500 flex flex-col gap-3">
-                            {!article.isPlatform && article.url && (
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                                        Original Source:
-                                    </p>
-                                    <a
-                                        href={article.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-500 hover:text-blue-700 underline font-medium transition-colors flex items-center gap-1.5"
-                                    >
-                                        View Original Article
-                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                        </svg>
-                                    </a>
-                                </div>
-                            )}
-                            {article.isPlatform && article.campaign?.videoSource !== "document_upload" && displayProduct.sourceVideoLink && (
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                                        Original Source:
-                                    </p>
-                                    <a
-                                        href={displayProduct.sourceVideoLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-500 hover:text-blue-700 underline font-medium transition-colors flex items-center gap-1.5"
-                                    >
-                                        Watch Original Creator Video
-                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2-2v8a2 2 0 002 2z" />
-                                        </svg>
-                                    </a>
-                                </div>
-                            )}
-                            {article.isPlatform && article.campaign?.videoSource === "document_upload" && (
-                                <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100 w-fit">
-                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span className="text-[10px] font-bold uppercase tracking-tight">Article Generated from Document</span>
-                                </div>
-                            )}
-                            <p className="mt-2 text-[11px] opacity-80">
-                                {(displayProduct.authorName || article.author) &&
-                                    `© ${new Date().getFullYear()} ${displayProduct.authorName || article.author}`}
-                            </p>
                         </div>
+                    )}
+
+                    {/* Body */}
+                    <div className="blog-content space-y-6 text-gray-800">
+                        {article.body && /<[a-z][\s\S]*>/i.test(article.body) ? (
+                            <div className="html-content-preview article-html"
+                                dangerouslySetInnerHTML={{ __html: `<div>${stripFooter(article.body)}</div>` }} />
+                        ) : (
+                            <div className="whitespace-pre-wrap leading-relaxed">{stripFooter(article.body)}</div>
+                        )}
+                        {article.conclusion && (
+                            <div className="mt-8 font-medium italic text-gray-700">{article.conclusion}</div>
+                        )}
+                    </div>
+
+                    {/* Creator quote */}
+                    {article.creatorQuote && (
+                        <div className="py-6 my-8 border-y border-gray-200/60 text-center">
+                            <p className="italic text-base md:text-xl text-gray-800 font-serif">&ldquo;{article.creatorQuote}&rdquo;</p>
+                            {article.authorName && (
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">From {article.authorName}</p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Purchase info */}
+                    {article.videoSource !== "document_upload" && article.affiliateLink && (
+                        <div className="space-y-3 mt-10">
+                            <h4 className="text-lg font-bold text-gray-900">Purchase Information</h4>
+                            <a href={article.affiliateLink} target="_blank" rel="noopener noreferrer"
+                                className="text-primary underline font-semibold text-sm flex items-center gap-1.5 w-fit">
+                                Click here to see product
+                                <ArrowRight className="w-3.5 h-3.5" />
+                            </a>
+                        </div>
+                    )}
+
+                    {/* Source / footer */}
+                    <div className="pt-6 mt-8 border-t border-gray-200/60 text-xs text-gray-500 flex flex-col gap-3">
+                        {article.videoSource !== "document_upload" && article.sourceVideoLink && (
+                            <a href={article.sourceVideoLink} target="_blank" rel="noopener noreferrer"
+                                className="text-blue-500 underline font-medium flex items-center gap-1.5">
+                                Watch Original Creator Video
+                            </a>
+                        )}
+                        {article.videoSource === "document_upload" && (
+                            <span className="text-[10px] font-bold text-green-600 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100 w-fit uppercase tracking-tight">
+                                Article Generated from Document
+                            </span>
+                        )}
+                        <p className="text-[11px] opacity-80">
+                            © {new Date().getFullYear()} {article.authorName}
+                        </p>
                     </div>
                 </article>
 
-                {/* ─── Related Press Releases ─── */}
-                {relatedCampaigns.length > 0 && (
-                    <section
-                        className="mt-16 md:mt-20 border-t border-gray-200/60"
-                        style={{ background: "#fafaf7" }}
-                    >
+                {/* Related */}
+                {related.length > 0 && (
+                    <section className="mt-16 border-t border-gray-200/60" style={{ background: "#fafaf7" }}>
                         <div className="max-w-6xl mx-auto px-6 py-12">
-                            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-8 text-center">
-                                Related Press Releases
-                            </h2>
+                            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-8 text-center">Related Press Releases</h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {relatedCampaigns.map((rc) => {
+                                {related.map((rc) => {
                                     const rcTitle = rc.article?.headline || "Untitled";
                                     const rcSummary = rc.article?.summary || "";
-                                    const rcImage = rc.productCard?.thumbnail || "/fallback-platform.jpeg";
+                                    const rcImg = rc.productCard?.thumbnail || "/fallback-platform.jpeg";
                                     const rcAuthor = rc.productCard?.authorName || rc.userId?.name || "Drop PR Author";
                                     const rcDate = rc.createdAt;
-                                    const rcInitials = rcAuthor.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-
                                     return (
-                                        <Link
-                                            key={rc._id}
-                                            href={`/press-releases/${rc._id}`}
-                                            className="group bg-white rounded-2xl border border-gray-100 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-full"
-                                        >
-                                            {/* Card Image */}
+                                        <Link key={rc._id} href={`/press-releases/${rc._id}`}
+                                            className="group bg-white rounded-2xl border border-gray-100 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col">
                                             <div className="relative h-44 overflow-hidden bg-gray-100">
-                                                <FallbackImage
-                                                    src={rcImage}
-                                                    fallbackSrc="/fallback-platform.jpeg"
-                                                    alt={rcTitle}
-                                                    className="w-full h-full object-cover block group-hover:scale-105 transition-transform duration-500"
-                                                />
+                                                <Img src={rcImg} fallback="/fallback-platform.jpeg" alt={rcTitle}
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                                 <div className="absolute top-3 left-3">
-                                                    <span className="bg-primary text-white text-[9px] font-bold px-2.5 py-1 rounded-full tracking-widest shadow-md">
-                                                        Drop PR
-                                                    </span>
+                                                    <span className="bg-primary text-white text-[9px] font-bold px-2.5 py-1 rounded-full tracking-widest shadow-md">Drop PR</span>
                                                 </div>
                                             </div>
-
-                                            {/* Card Content */}
-                                            <div className="p-4 flex-grow flex flex-col">
-                                                {/* Tags */}
-                                                {rc.article?.productSummary?.category && (
-                                                    <div className="flex flex-wrap gap-1.5 mb-2">
-                                                        {rc.article.productSummary.category.split(",").map(c => c.trim()).filter(c => c).slice(0, 2).map((cat, idx) => (
-                                                            <span key={idx} className="px-2 py-0.5 bg-blue-50 text-primary text-[9px] font-bold rounded-full border border-blue-100">
-                                                                {cat}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                                
-                                                <div className="flex items-center gap-1.5 mb-2 flex-shrink-0">
-                                                    <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center">
-                                                        <span className="text-white text-[7px] font-black">{rcInitials}</span>
-                                                    </div>
-                                                    <span className="text-[11px] text-gray-600 font-medium">
-                                                        {rcAuthor}
-                                                    </span>
-                                                </div>
-
-                                                {/* Meta */}
-                                                <div className="flex items-center gap-1.5 mb-2">
-                                                    <span className="text-[10px] text-gray-400 font-medium">
-                                                        {rcDate ? new Date(rcDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Recently"}
-                                                    </span>
-                                                </div>
-
-                                                {/* Title */}
-                                                <h3
-                                                    className="line-clamp-2 group-hover:text-primary transition-colors mb-2"
-                                                    style={{
-                                                        fontFamily: "var(--font-serif, Georgia, serif)",
-                                                        fontSize: "15px",
-                                                        fontWeight: 700,
-                                                        lineHeight: 1.35,
-                                                        letterSpacing: "-0.01em",
-                                                        color: "#0a0e1a",
-                                                    }}
-                                                >
+                                            <div className="p-4 flex flex-col flex-1">
+                                                <span className="text-[11px] text-gray-600 font-medium mb-1">{rcAuthor}</span>
+                                                <span className="text-[10px] text-gray-400 mb-2">
+                                                    {rcDate ? new Date(rcDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "Recently"}
+                                                </span>
+                                                <h3 className="line-clamp-2 font-bold text-[15px] text-gray-900 group-hover:text-primary transition-colors mb-2"
+                                                    style={{ fontFamily: "var(--font-serif, Georgia, serif)" }}>
                                                     {rcTitle}
                                                 </h3>
-
-                                                {/* Excerpt */}
-                                                {rcSummary && (
-                                                    <div className="text-[12px] text-gray-500 line-clamp-2 leading-relaxed mb-3">
-                                                        {rcSummary}
-                                                    </div>
-                                                )}
-
-                                                {/* Footer */}
-                                                <div className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between">
-                                                    <span className="inline-flex items-center gap-1.5 text-primary font-bold text-[10px] uppercase tracking-widest">
-                                                        Read Press Release
-                                                        <ArrowRightIcon className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                                                {rcSummary && <p className="text-[12px] text-gray-500 line-clamp-2 mb-3">{rcSummary}</p>}
+                                                <div className="mt-auto pt-3 border-t border-gray-50">
+                                                    <span className="text-primary font-bold text-[10px] uppercase tracking-widest flex items-center gap-1.5">
+                                                        Read Press Release <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                                                     </span>
                                                 </div>
                                             </div>
@@ -519,31 +388,22 @@ export default async function ArticleDetailsPage({ params }) {
                     </section>
                 )}
 
-                {/* ─── "Want to see your brand here?" CTA Card ─── */}
-                <PressReleaseCta />
+                {/* CTA */}
+                <CtaSection onGetStarted={handleGetStarted} />
 
-                {/* Back Link */}
+                {/* Back link */}
                 <div className="mt-12 text-center">
-                    <Link
-                        href="/press-releases"
-                        className="inline-flex items-center gap-2 text-gray-500 hover:text-primary font-medium transition-colors"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        Back to all press releases
+                    <Link href="/press-releases" className="inline-flex items-center gap-2 text-gray-500 hover:text-primary font-medium transition-colors">
+                        <ArrowLeft className="w-4 h-4" /> Back to all press releases
                     </Link>
                 </div>
-            </main>
+            </div>
 
-            <Footer />
+            <LoginModal
+                isOpen={showLogin}
+                onClose={() => setShowLogin(false)}
+                onSuccess={() => { setShowLogin(false); router.push("/user/dashboard/create"); }}
+            />
         </div>
-    );
-}
-
-function ArrowRightIcon({ className }) {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="M5 12h14" />
-            <path d="m12 5 7 7-7 7" />
-        </svg>
     );
 }
