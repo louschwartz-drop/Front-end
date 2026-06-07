@@ -16,37 +16,37 @@ export const STANDARD_FOOTER = `
 </div>
 <div style='margin-top:2.5rem;padding:1.5rem;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;'>
   <h4 style='margin-top:0;color:#111827;'>About Drop PR</h4>
-  <p style='margin-bottom:1rem;color:#374151;line-height:1.7;'><a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>Drop PR</a> transforms creator videos, podcasts, product reviews, and brand announcements into professionally written editorial-style articles distributed across a broad network of digital publishers. The platform helps brands, creators, agencies, and e-commerce companies expand search visibility, strengthen AI discoverability, generate backlinks, and extend the lifespan of short-form content beyond social media feeds.</p>
+  <p style='margin-bottom:1rem;color:#374151;line-height:1.7;'><a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>DropPR</a> transforms creator videos, podcasts, product reviews, and brand announcements into professionally written editorial-style articles distributed across a broad network of digital publishers. The platform helps brands, creators, agencies, and e-commerce companies expand search visibility, strengthen AI discoverability, generate backlinks, and extend the lifespan of short-form content beyond social media feeds.</p>
   <h4 style='margin-top:1.5rem;color:#111827;'>Call to Action</h4>
-  <p style='margin-bottom:0;color:#374151;line-height:1.7;'>Brands, creators, podcasters, and agencies interested in turning content into distributed editorial coverage can learn more at <a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>Drop PR</a>.</p>
+  <p style='margin-bottom:0;color:#374151;line-height:1.7;'>Brands, creators, podcasters, and agencies interested in turning content into distributed editorial coverage can learn more at <a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>DropPR</a>.</p>
 </div>
 `;
 
 export function stripFooter(html) {
-  if (!html) return "";
-  const footerKeywords = [
-    "<div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>",
-    "<div style=\"margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;\">",
-    "<div style='margin-top:3rem;",
-    "<div style=\"margin-top:3rem;",
-    "<h4>Media Contact</h4>",
-    "<h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>",
-    "<h4 style=\"text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;\">Media Contact</h4>",
-    "Media Contact",
-  ];
+    if (!html) return "";
+    const footerKeywords = [
+        "<div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>",
+        "<div style=\"margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;\">",
+        "<div style='margin-top:3rem;",
+        "<div style=\"margin-top:3rem;",
+        "<h4>Media Contact</h4>",
+        "<h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>",
+        "<h4 style=\"text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;\">Media Contact</h4>",
+        "Media Contact",
+    ];
 
-  for (const keyword of footerKeywords) {
-    const index = html.indexOf(keyword);
-    if (index !== -1) {
-      let cleanHtml = html.substring(0, index).trim();
-      if (cleanHtml.endsWith("<div>")) {
-        cleanHtml = cleanHtml.slice(0, -5).trim();
-      }
-      return cleanHtml;
+    for (const keyword of footerKeywords) {
+        const index = html.indexOf(keyword);
+        if (index !== -1) {
+            let cleanHtml = html.substring(0, index).trim();
+            if (cleanHtml.endsWith("<div>")) {
+                cleanHtml = cleanHtml.slice(0, -5).trim();
+            }
+            return cleanHtml;
+        }
     }
-  }
 
-  return html;
+    return html;
 }
 
 export default function FullArticlePreview({ isOpen, onClose, campaign, article, productCard }) {
@@ -58,7 +58,7 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
 
     // Use a more robust way to get the ID, checking both campaign and provided article
     const campaignId = campaign?._id || campaign?.id || article?._id || article?.id;
-    
+
     const displayData = article || campaign?.article || {};
     const displayProduct = productCard || campaign?.productCard || {};
 
@@ -67,7 +67,7 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
 
         if (format === 'pdf') {
             setIsDownloading(true);
-            
+
             try {
                 await printArticleAsPdf({
                     displayData,
@@ -136,7 +136,7 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                                 </svg>
                                 {isDownloading ? "Processing..." : "Download"}
                             </button>
-                            
+
                             <AnimatePresence>
                                 {showDownloadDropdown && (
                                     <>
@@ -252,7 +252,7 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
 
                         {/* Styled HTML Body Rendering */}
                         <style dangerouslySetInnerHTML={{ __html: BLOCKQUOTE_STYLES }} />
-                        <div 
+                        <div
                             className="text-sm md:text-lg text-gray-700 leading-relaxed md:leading-loose space-y-4 md:space-y-6 html-content-preview article-html"
                             dangerouslySetInnerHTML={{ __html: `<div>${stripFooter(displayData.body || "")}${STANDARD_FOOTER}</div>` }}
                         />
@@ -333,10 +333,10 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                         </div>
                     </div>
 
-                    <VideoModal 
-                        isOpen={isVideoOpen} 
-                        onClose={() => setIsVideoOpen(false)} 
-                        videoUrl={displayProduct.sourceVideoLink} 
+                    <VideoModal
+                        isOpen={isVideoOpen}
+                        onClose={() => setIsVideoOpen(false)}
+                        videoUrl={displayProduct.sourceVideoLink}
                     />
                 </motion.div>
             </div>

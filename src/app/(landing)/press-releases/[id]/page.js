@@ -342,6 +342,27 @@ export default function PressReleaseDetailPage() {
                     </div>
                 </article>
 
+                {/* ─── About Drop PR ─── */}
+                <div className="max-w-3xl mx-auto px-6 mt-10">
+                    <div className="border-t border-gray-200 pt-8">
+                        <h4 className="text-xs font-black text-gray-400 mb-3">
+                            <Link href="/" className="hover:text-primary transition-colors">About Drop PR</Link>
+                        </h4>
+                        <p className="text-sm text-gray-600 leading-relaxed mb-6">
+                            <Link href="/" className="text-primary font-semibold hover:underline">Drop PR</Link>{" "}
+                            transforms creator videos, podcasts, product reviews, and brand announcements into professionally
+                            written editorial-style articles distributed across a broad network of digital publishers. The platform
+                            helps brands, creators, agencies, and e-commerce companies expand search visibility, strengthen AI
+                            discoverability, generate backlinks, and extend the lifespan of short-form content beyond social media feeds.
+                        </p>
+                        <h4 className="text-xs font-black text-gray-400 mb-3">Call to Action</h4>
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                            Brands, creators, podcasters, and agencies interested in turning content into distributed editorial coverage
+                            can learn more at <Link href="/" className="text-primary font-semibold hover:underline">Drop PR</Link>.
+                        </p>
+                    </div>
+                </div>
+
                 {/* Related */}
                 {related.length > 0 && (
                     <section className="mt-16 border-t border-gray-200/60" style={{ background: "#fafaf7" }}>
