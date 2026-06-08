@@ -13,11 +13,12 @@ export default function AdminUsersPage() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [dateFilter, setDateFilter] = useState("");
+    const [fromDateFilter, setFromDateFilter] = useState("");
+    const [toDateFilter, setToDateFilter] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalResults, setTotalResults] = useState(0);
-    const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "desc" });
+    const [sortConfig, setSortConfig] = useState({ key: "pressReleaseCount", direction: "desc" });
     const [paymentHistoryModal, setPaymentHistoryModal] = useState({
         isOpen: false,
         userId: null,
@@ -29,7 +30,7 @@ export default function AdminUsersPage() {
             fetchUsers();
         }, searchTerm ? 500 : 0);
         return () => clearTimeout(timeoutId);
-    }, [searchTerm, dateFilter, currentPage, sortConfig]);
+    }, [searchTerm, fromDateFilter, toDateFilter, currentPage, sortConfig]);
 
     const handleSort = (key) => {
         setSortConfig(prev => ({
@@ -41,7 +42,8 @@ export default function AdminUsersPage() {
 
     const clearFilters = () => {
         setSearchTerm("");
-        setDateFilter("");
+        setFromDateFilter("");
+        setToDateFilter("");
         setCurrentPage(1);
     };
 
@@ -52,7 +54,8 @@ export default function AdminUsersPage() {
                 page: currentPage,
                 limit: 10,
                 search: searchTerm,
-                date: dateFilter,
+                fromDate: fromDateFilter,
+                toDate: toDateFilter,
                 sortBy: sortConfig.key,
                 sortOrder: sortConfig.direction
             });
@@ -116,19 +119,32 @@ export default function AdminUsersPage() {
                 {/* Date filter + clear */}
                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm self-start sm:self-auto">
                     <div className="flex items-center gap-2 px-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 whitespace-nowrap">Joined Date</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 whitespace-nowrap">From</label>
                         <input
                             type="date"
-                            value={dateFilter}
+                            value={fromDateFilter}
                             onChange={(e) => {
-                                setDateFilter(e.target.value);
+                                setFromDateFilter(e.target.value);
                                 setCurrentPage(1);
                             }}
-                            className="bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary w-36 sm:w-40 p-2 outline-none transition-all cursor-pointer hover:border-primary/40"
+                            className="bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary w-32 sm:w-36 p-2 outline-none transition-all cursor-pointer hover:border-primary/40"
+                        />
+                    </div>
+                    
+                    <div className="flex items-center gap-2 px-2 border-l border-gray-100 pl-2 sm:pl-4">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 whitespace-nowrap">To</label>
+                        <input
+                            type="date"
+                            value={toDateFilter}
+                            onChange={(e) => {
+                                setToDateFilter(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                            className="bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary w-32 sm:w-36 p-2 outline-none transition-all cursor-pointer hover:border-primary/40"
                         />
                     </div>
 
-                    {(searchTerm !== "" || dateFilter !== "") && (
+                    {(searchTerm !== "" || fromDateFilter !== "" || toDateFilter !== "") && (
                         <button
                             onClick={clearFilters}
                             className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 rounded-xl transition-all whitespace-nowrap"

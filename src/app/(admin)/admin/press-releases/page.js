@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     FileText, Eye, Clock, CheckCircle, Search, Filter,
-    ChevronLeft, ChevronRight, Play, User, Globe, Activity, Flag, Calendar, X, Shield, EyeOff
+    ChevronLeft, ChevronRight, Play, User, Globe, Activity, Flag, Calendar, X, Shield, EyeOff, Check, ChevronDown
 } from "lucide-react";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
@@ -40,7 +40,19 @@ export default function AdminPressReleasesPage() {
     });
     const [statusFilter, setStatusFilter] = useState("all");
     const [visibilityFilter, setVisibilityFilter] = useState("all");
-    const [dateFilter, setDateFilter] = useState("");
+    const [sourceFilter, setSourceFilter] = useState("all");
+    const [fromDateFilter, setFromDateFilter] = useState("");
+    const [toDateFilter, setToDateFilter] = useState("");
+    const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
+
+    const sourceOptions = [
+        { value: "all", label: "All Sources" },
+        { value: "record_audio", label: "Audio Record" },
+        { value: "record_video", label: "Video Record" },
+        { value: "document_upload", label: "Document" },
+        { value: "social_link", label: "Social Link" },
+        { value: "upload", label: "Video Upload" }
+    ];
 
     const loadReleases = async (page = 1, search = "") => {
         setLoading(true);
@@ -51,7 +63,9 @@ export default function AdminPressReleasesPage() {
                 search,
                 status: statusFilter !== "all" ? statusFilter : undefined,
                 visibility: visibilityFilter !== "all" ? visibilityFilter : undefined,
-                date: dateFilter || undefined
+                source: sourceFilter !== "all" ? sourceFilter : undefined,
+                fromDate: fromDateFilter || undefined,
+                toDate: toDateFilter || undefined
             };
             const res = await adminPressReleaseService.getAll(params);
 
@@ -74,12 +88,12 @@ export default function AdminPressReleasesPage() {
             setCurrentPage(1);
             loadReleases(1, query);
         }, 500),
-        [statusFilter, visibilityFilter, dateFilter]
+        [statusFilter, visibilityFilter, sourceFilter, fromDateFilter, toDateFilter]
     );
 
     useEffect(() => {
         loadReleases(currentPage, searchTerm);
-    }, [currentPage, statusFilter, visibilityFilter, dateFilter]);
+    }, [currentPage, statusFilter, visibilityFilter, sourceFilter, fromDateFilter, toDateFilter]);
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
@@ -90,7 +104,9 @@ export default function AdminPressReleasesPage() {
     const clearFilters = () => {
         setStatusFilter("all");
         setVisibilityFilter("all");
-        setDateFilter("");
+        setSourceFilter("all");
+        setFromDateFilter("");
+        setToDateFilter("");
         setSearchTerm("");
         setCurrentPage(1);
     };
@@ -133,7 +149,7 @@ export default function AdminPressReleasesPage() {
         }
     };
 
-    const hasActiveFilters = statusFilter !== "all" || visibilityFilter !== "all" || dateFilter !== "" || searchTerm !== "";
+    const hasActiveFilters = statusFilter !== "all" || visibilityFilter !== "all" || sourceFilter !== "all" || fromDateFilter !== "" || toDateFilter !== "" || searchTerm !== "";
 
     return (
         <div className="w-full">
@@ -160,15 +176,27 @@ export default function AdminPressReleasesPage() {
                         />
                     </div>
                     <div className="flex items-center gap-2 sm:shrink-0">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 shrink-0">Date:</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 shrink-0">From:</label>
                         <input
                             type="date"
-                            value={dateFilter}
+                            value={fromDateFilter}
                             onChange={(e) => {
-                                setDateFilter(e.target.value);
+                                setFromDateFilter(e.target.value);
                                 setCurrentPage(1);
                             }}
-                            className="bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary block w-full sm:w-40 p-2 outline-none transition-all cursor-pointer hover:border-primary/40"
+                            className="bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary block w-full sm:w-36 p-2 outline-none transition-all cursor-pointer hover:border-primary/40 text-center"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 sm:shrink-0">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 shrink-0">To:</label>
+                        <input
+                            type="date"
+                            value={toDateFilter}
+                            onChange={(e) => {
+                                setToDateFilter(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                            className="bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary block w-full sm:w-36 p-2 outline-none transition-all cursor-pointer hover:border-primary/40 text-center"
                         />
                     </div>
                 </div>
@@ -229,6 +257,60 @@ export default function AdminPressReleasesPage() {
                                     {f.label}
                                 </button>
                             ))}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-1.5 ml-0 lg:ml-2 border-l border-gray-100 pl-0 lg:pl-3">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mr-1 block sm:inline">Source:</span>
+                            <div className="relative w-full sm:w-auto">
+                                <button
+                                    onClick={() => setIsSourceDropdownOpen(!isSourceDropdownOpen)}
+                                    className="flex items-center justify-between bg-white border border-gray-200 text-gray-700 text-[10px] font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary w-full sm:w-36 p-1.5 px-3 outline-none transition-all hover:border-primary/40 group h-[28px]"
+                                >
+                                    <span className="truncate">
+                                        {sourceOptions.find(opt => opt.value === sourceFilter)?.label}
+                                    </span>
+                                    <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${isSourceDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                <AnimatePresence>
+                                    {isSourceDropdownOpen && (
+                                        <>
+                                            <div 
+                                                className="fixed inset-0 z-50" 
+                                                onClick={() => setIsSourceDropdownOpen(false)}
+                                            />
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                transition={{ duration: 0.15 }}
+                                                className="absolute left-0 top-full mt-2 w-full sm:w-48 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden p-1.5 animate-in"
+                                            >
+                                                {sourceOptions.map((option) => (
+                                                    <button
+                                                        key={option.value}
+                                                        onClick={() => {
+                                                            setSourceFilter(option.value);
+                                                            setIsSourceDropdownOpen(false);
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                                            sourceFilter === option.value 
+                                                                ? "bg-primary text-white" 
+                                                                : "text-gray-600 hover:bg-gray-50 hover:text-primary"
+                                                        }`}
+                                                    >
+                                                        {option.label}
+                                                        {sourceFilter === option.value && (
+                                                            <Check className="w-3.5 h-3.5" />
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </motion.div>
+                                        </>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                         </div>
 
                         {hasActiveFilters && (

@@ -23,6 +23,7 @@ async function getPressReleases() {
             return [];
         }
         const data = await res.json();
+        console.log("Third Party API Full Response:", JSON.stringify(data, null, 2));
         return data.news || [];
     } catch (error) {
         console.error("Press Release Fetch Error:", error);

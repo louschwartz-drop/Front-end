@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
     FileText, Eye, Link, CheckCircle, Search, Filter, 
-    ChevronLeft, ChevronRight, Play, Activity, Clock, Flag, X
+    ChevronLeft, ChevronRight, Play, Activity, Clock, Flag, X, ChevronDown, Check
 } from "lucide-react";
 import { toast } from "react-toastify";
 import Button from "@/components/ui/Button";
@@ -36,14 +36,25 @@ export default function AdminUserPressReleasesPage() {
         title: "",
     });
     const [statusFilter, setStatusFilter] = useState("all");
-    const [dateFilter, setDateFilter] = useState("");
-    const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+    const [fromDateFilter, setFromDateFilter] = useState("");
+    const [toDateFilter, setToDateFilter] = useState("");
+    const [sourceFilter, setSourceFilter] = useState("all");
+    const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
 
     const statusOptions = [
         { id: "all", label: "All Press Releases" },
         { id: "in-progress", label: "In Progress", color: "amber" },
         { id: "completed", label: "Completed", color: "emerald" },
         { id: "pending", label: "Queued", color: "blue" }
+    ];
+
+    const sourceOptions = [
+        { value: "all", label: "All Sources" },
+        { value: "upload", label: "Upload Video" },
+        { value: "record_audio", label: "Audio Record" },
+        { value: "record_video", label: "Video Record" },
+        { value: "social_link", label: "From Social Link" },
+        { value: "document_upload", label: "Doc Uploaded" }
     ];
 
     const loadReleases = async (page = 1, search = "") => {
@@ -56,7 +67,11 @@ export default function AdminUserPressReleasesPage() {
                 userId,
                 page,
                 limit: 10,
-                search
+                search,
+                status: statusFilter,
+                source: sourceFilter,
+                fromDate: fromDateFilter,
+                toDate: toDateFilter
             });
 
             if (res.success) {
@@ -85,7 +100,7 @@ export default function AdminUserPressReleasesPage() {
         if (userId) {
             loadReleases(currentPage, searchTerm);
         }
-    }, [userId, currentPage]);
+    }, [userId, currentPage, statusFilter, sourceFilter, fromDateFilter, toDateFilter]);
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
@@ -95,7 +110,10 @@ export default function AdminUserPressReleasesPage() {
 
     const clearFilters = () => {
         setStatusFilter("all");
-        setDateFilter("");
+        setSourceFilter("all");
+        setFromDateFilter("");
+        setToDateFilter("");
+        setCurrentPage(1);
     };
 
     const getStatusStyle = (status, release) => {
@@ -136,19 +154,6 @@ export default function AdminUserPressReleasesPage() {
         return past.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     };
 
-    const filteredReleases = releases.filter(release => {
-        const label = getStatusLabel(release);
-        const matchesStatus = statusFilter === "all" || 
-            (statusFilter === "in-progress" ? label === "IN PROGRESS" :
-             statusFilter === "completed" ? label === "COMPLETED" :
-             statusFilter === "pending" ? (label === "PENDING" || label === "SUBMITTED_SUCCESSFULLY") : true);
-        
-        const matchesDate = !dateFilter || 
-            new Date(release.createdAt).toISOString().split('T')[0] === dateFilter;
-
-        return matchesStatus && matchesDate;
-    });
-
     return (
         <div className="mx-auto">
             {/* Page Header */}
@@ -167,16 +172,84 @@ export default function AdminUserPressReleasesPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
 
                     <div className="flex flex-wrap items-center gap-4 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+                        
                         <div className="flex items-center gap-2 px-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Date</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Source</label>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsSourceDropdownOpen(!isSourceDropdownOpen)}
+                                    className="flex items-center justify-between bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary w-44 p-2 pl-3 outline-none transition-all hover:border-primary/40 group"
+                                >
+                                    <span className="truncate">
+                                        {sourceOptions.find(opt => opt.value === sourceFilter)?.label}
+                                    </span>
+                                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isSourceDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                <AnimatePresence>
+                                    {isSourceDropdownOpen && (
+                                        <>
+                                            <div 
+                                                className="fixed inset-0 z-[60]" 
+                                                onClick={() => setIsSourceDropdownOpen(false)}
+                                            />
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                transition={{ duration: 0.15 }}
+                                                className="absolute left-0 top-full mt-2 w-56 bg-white border border-gray-100 rounded-2xl shadow-xl z-[70] overflow-hidden p-1.5"
+                                            >
+                                                {sourceOptions.map((option) => (
+                                                    <button
+                                                        key={option.value}
+                                                        onClick={() => {
+                                                            setSourceFilter(option.value);
+                                                            setIsSourceDropdownOpen(false);
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                                            sourceFilter === option.value 
+                                                                ? "bg-primary text-white" 
+                                                                : "text-gray-600 hover:bg-gray-50 hover:text-primary"
+                                                        }`}
+                                                    >
+                                                        {option.label}
+                                                        {sourceFilter === option.value && (
+                                                            <Check className="w-3.5 h-3.5" />
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </motion.div>
+                                        </>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        </div>
+
+                        <div className="h-6 w-px bg-gray-100 hidden md:block" />
+
+                        <div className="flex items-center gap-2 px-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">From</label>
                             <input 
                                 type="date"
-                                value={dateFilter}
-                                onChange={(e) => setDateFilter(e.target.value)}
-                                className="bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary block w-40 p-2 outline-none transition-all cursor-pointer hover:border-primary/40"
+                                value={fromDateFilter}
+                                onChange={(e) => { setFromDateFilter(e.target.value); setCurrentPage(1); }}
+                                className="bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary block w-32 p-2 outline-none transition-all cursor-pointer hover:border-primary/40"
                             />
                         </div>
-                        {(statusFilter !== "all" || dateFilter !== "" || searchTerm !== "") && (
+
+                        <div className="flex items-center gap-2 px-2 border-l border-gray-100 pl-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">To</label>
+                            <input 
+                                type="date"
+                                value={toDateFilter}
+                                onChange={(e) => { setToDateFilter(e.target.value); setCurrentPage(1); }}
+                                className="bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary block w-32 p-2 outline-none transition-all cursor-pointer hover:border-primary/40"
+                            />
+                        </div>
+
+                        {(statusFilter !== "all" || sourceFilter !== "all" || fromDateFilter !== "" || toDateFilter !== "" || searchTerm !== "") && (
                             <button
                                 onClick={() => {
                                     clearFilters();
@@ -197,7 +270,7 @@ export default function AdminUserPressReleasesPage() {
                     {statusOptions.map((f) => (
                         <button
                             key={f.id}
-                            onClick={() => setStatusFilter(f.id)}
+                            onClick={() => { setStatusFilter(f.id); setCurrentPage(1); }}
                             className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all flex items-center gap-2 ${statusFilter === f.id
                                 ? "bg-gray-900 text-white border-gray-900 shadow-sm scale-105"
                                 : "bg-white text-gray-500 border-gray-100 hover:border-gray-300"
@@ -207,16 +280,6 @@ export default function AdminUserPressReleasesPage() {
                                 <div className={`w-2 h-2 rounded-full bg-${f.color}-500 shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />
                             )}
                             {f.label}
-                            <span className={`ml-1 text-[9px] ${statusFilter === f.id ? "text-gray-400" : "text-gray-300"}`}>
-                                ({releases.filter(r => {
-                                    if (f.id === "all") return true;
-                                    const label = getStatusLabel(r);
-                                    if (f.id === "in-progress") return label === "IN PROGRESS";
-                                    if (f.id === "completed") return label === "COMPLETED";
-                                    if (f.id === "pending") return label === "PENDING" || label === "SUBMITTED_SUCCESSFULLY";
-                                    return true;
-                                }).length})
-                            </span>
                         </button>
                     ))}
                 </div>
@@ -252,7 +315,7 @@ export default function AdminUserPressReleasesPage() {
             ) : (
                 <div className="space-y-4 md:space-y-6">
                     <div className="grid grid-cols-1 gap-3 md:gap-4">
-                        {filteredReleases.map((release, index) => (
+                        {releases.map((release, index) => (
                             <motion.div
                                 key={release._id}
                                 initial={{ opacity: 0, y: 10 }}

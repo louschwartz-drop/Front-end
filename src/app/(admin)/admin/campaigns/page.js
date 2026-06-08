@@ -29,9 +29,12 @@ export default function AdminCampaignsPage() {
 
     // Filter states
     const [statusFilter, setStatusFilter] = useState("all");
-    const [dateFilter, setDateFilter] = useState("");
+    const [sourceFilter, setSourceFilter] = useState("all");
+    const [fromDateFilter, setFromDateFilter] = useState("");
+    const [toDateFilter, setToDateFilter] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
     const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+    const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
     const [pagination, setPagination] = useState({
         page: 1,
         limit: 20,
@@ -41,15 +44,24 @@ export default function AdminCampaignsPage() {
 
     const statusOptions = [
         { value: "all", label: "All Statuses" },
+        { value: "active", label: "Active" },
         { value: "finished", label: "Finished" },
-        { value: "failed", label: "Failed" },
-        { value: "irrelevant", label: "Irrelevant Content" },
-        { value: "processing", label: "Processing" }
+        { value: "published", label: "Published" },
+        { value: "failed", label: "Failed" }
+    ];
+
+    const sourceOptions = [
+        { value: "all", label: "All Sources" },
+        { value: "record_audio", label: "Audio Record" },
+        { value: "record_video", label: "Video Record" },
+        { value: "document_upload", label: "Document" },
+        { value: "social_link", label: "Social Link" },
+        { value: "upload", label: "Video Upload" }
     ];
 
     useEffect(() => {
         loadCampaigns();
-    }, [pagination.page, statusFilter, dateFilter]);
+    }, [pagination.page, statusFilter, sourceFilter, fromDateFilter, toDateFilter]);
 
     // Independent search effects to avoid overlapping with status/date
     useEffect(() => {
@@ -67,7 +79,9 @@ export default function AdminCampaignsPage() {
                 limit: pagination.limit,
                 search: searchTerm,
                 status: statusFilter !== "all" ? statusFilter : undefined,
-                date: dateFilter || undefined
+                source: sourceFilter !== "all" ? sourceFilter : undefined,
+                fromDate: fromDateFilter || undefined,
+                toDate: toDateFilter || undefined
             };
             const response = await adminCampaignService.getCampaigns(params);
             if (response && response.success) {
@@ -100,18 +114,22 @@ export default function AdminCampaignsPage() {
         setIsErrorModalOpen(true);
     };
 
-    const handleViewRawText = (article) => {
+    const handleViewRawText = (campaign) => {
+        const article = campaign?.article;
         setSelectedText({
             headline: article?.headline || "Generated Text",
-            body: article?.body || ""
+            body: campaign?.rawTranscript || article?.body || ""
         });
         setIsTextModalOpen(true);
     };
 
     const clearFilters = () => {
         setStatusFilter("all");
-        setDateFilter("");
+        setSourceFilter("all");
+        setFromDateFilter("");
+        setToDateFilter("");
         setSearchTerm("");
+        setPagination(p => ({ ...p, page: 1 }));
     };
 
     return (
@@ -196,25 +214,94 @@ export default function AdminCampaignsPage() {
                             </div>
                         </div>
 
+                        {/* Source Select */}
+                        <div className="flex items-center gap-2 justify-between sm:justify-start w-full sm:w-auto">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 whitespace-nowrap">Source</label>
+                            <div className="relative w-full sm:w-auto">
+                                <button
+                                    onClick={() => setIsSourceDropdownOpen(!isSourceDropdownOpen)}
+                                    className="flex items-center justify-between bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary w-full sm:w-40 p-2.5 pl-3 outline-none transition-all hover:border-primary/40 group"
+                                >
+                                    <span className="truncate">
+                                        {sourceOptions.find(opt => opt.value === sourceFilter)?.label}
+                                    </span>
+                                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${isSourceDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                <AnimatePresence>
+                                    {isSourceDropdownOpen && (
+                                        <>
+                                            <div 
+                                                className="fixed inset-0 z-50" 
+                                                onClick={() => setIsSourceDropdownOpen(false)}
+                                            />
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                transition={{ duration: 0.15 }}
+                                                className="absolute left-0 top-full mt-2 w-full sm:w-48 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden p-1.5 animate-in"
+                                            >
+                                                {sourceOptions.map((option) => (
+                                                    <button
+                                                        key={option.value}
+                                                        onClick={() => {
+                                                            setSourceFilter(option.value);
+                                                            setIsSourceDropdownOpen(false);
+                                                            setPagination(p => ({ ...p, page: 1 }));
+                                                        }}
+                                                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                                            sourceFilter === option.value 
+                                                                ? "bg-primary text-white" 
+                                                                : "text-gray-600 hover:bg-gray-50 hover:text-primary"
+                                                        }`}
+                                                    >
+                                                        {option.label}
+                                                        {sourceFilter === option.value && (
+                                                            <Check className="w-3.5 h-3.5" />
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </motion.div>
+                                        </>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        </div>
+
                         <div className="h-6 w-px bg-gray-150 hidden sm:block" />
 
-                        {/* Date Picker */}
-                        <div className="flex items-center gap-2 justify-between sm:justify-start w-full sm:w-auto">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 whitespace-nowrap">Date</label>
-                            <input 
-                                type="date"
-                                value={dateFilter}
-                                onChange={(e) => {
-                                    setDateFilter(e.target.value);
-                                    setPagination(p => ({ ...p, page: 1 }));
-                                }}
-                                className="bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary block w-full sm:w-40 p-2.5 outline-none transition-all cursor-pointer hover:border-primary/40 text-center"
-                            />
+                        {/* Date Pickers */}
+                        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                            <div className="flex items-center gap-2 justify-between sm:justify-start w-full sm:w-auto">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 whitespace-nowrap">From</label>
+                                <input 
+                                    type="date"
+                                    value={fromDateFilter}
+                                    onChange={(e) => {
+                                        setFromDateFilter(e.target.value);
+                                        setPagination(p => ({ ...p, page: 1 }));
+                                    }}
+                                    className="bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary block w-full sm:w-36 p-2.5 outline-none transition-all cursor-pointer hover:border-primary/40 text-center"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2 justify-between sm:justify-start w-full sm:w-auto">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 whitespace-nowrap">To</label>
+                                <input 
+                                    type="date"
+                                    value={toDateFilter}
+                                    onChange={(e) => {
+                                        setToDateFilter(e.target.value);
+                                        setPagination(p => ({ ...p, page: 1 }));
+                                    }}
+                                    className="bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary block w-full sm:w-36 p-2.5 outline-none transition-all cursor-pointer hover:border-primary/40 text-center"
+                                />
+                            </div>
                         </div>
                     </div>
 
                     {/* Clear Filters Button */}
-                    {(statusFilter !== "all" || dateFilter !== "" || searchTerm !== "") && (
+                    {(statusFilter !== "all" || sourceFilter !== "all" || fromDateFilter !== "" || toDateFilter !== "" || searchTerm !== "") && (
                         <button
                             onClick={clearFilters}
                             className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 rounded-xl transition-all w-full lg:w-auto mt-1 lg:mt-0 border border-transparent hover:border-red-100"
@@ -308,10 +395,10 @@ export default function AdminCampaignsPage() {
                                                     {campaign.status !== "failed" && (campaign.article?.headline || campaign.article?.body) ? (
                                                         <div className="flex flex-col gap-1">
                                                             <span className="text-gray-500 line-clamp-2 text-xs leading-relaxed">
-                                                                {campaign.article?.headline || campaign.article?.body}
+                                                                {campaign.article?.headline || campaign.article?.body || "Generating..."}
                                                             </span>
                                                             <button 
-                                                                onClick={() => handleViewRawText(campaign.article)}
+                                                                onClick={() => handleViewRawText(campaign)}
                                                                 className="text-[10px] text-primary font-bold uppercase tracking-wider underline hover:text-blue-700 w-fit"
                                                             >
                                                                 view_more
@@ -427,10 +514,10 @@ export default function AdminCampaignsPage() {
                                             {campaign.status !== "failed" && (campaign.article?.headline || campaign.article?.body) ? (
                                                 <div className="space-y-1.5">
                                                     <span className="text-gray-600 line-clamp-3 leading-relaxed break-words font-medium">
-                                                        {campaign.article?.headline || campaign.article?.body}
+                                                        {campaign.article?.headline || campaign.article?.body || "Generating..."}
                                                     </span>
                                                     <button 
-                                                        onClick={() => handleViewRawText(campaign.article)}
+                                                        onClick={() => handleViewRawText(campaign)}
                                                         className="text-[10px] text-primary font-bold uppercase tracking-wider underline hover:text-blue-700 block"
                                                     >
                                                         view full text

@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { adminUserService } from "@/lib/api/admin/users";
 import { toast } from "react-toastify";
 import Link from "next/link";
 import FullArticlePreview from "@/components/user/FullArticlePreview";
 import VideoModal from "@/components/ui/VideoModal";
-import { Play, Eye, AlertCircle, X, FileText, ExternalLink, Check, ChevronDown } from "lucide-react";
+import { Play, Eye, AlertCircle, X, FileText, ExternalLink, Check, ChevronDown, ListFilter } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Pagination from "@/components/ui/Pagination";
+import debounce from "lodash/debounce";
 
 export default function UserCampaignsPage() {
     const params = useParams();
@@ -26,31 +28,52 @@ export default function UserCampaignsPage() {
     const [isTextModalOpen, setIsTextModalOpen] = useState(false);
     const [selectedText, setSelectedText] = useState({ headline: "", body: "" });
     
-    // Filter states
     const [statusFilter, setStatusFilter] = useState("all");
-    const [dateFilter, setDateFilter] = useState("");
+    const [fromDateFilter, setFromDateFilter] = useState("");
+    const [toDateFilter, setToDateFilter] = useState("");
+    const [sourceFilter, setSourceFilter] = useState("all");
     const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+    const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
+    
+    // Pagination states
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalResults, setTotalResults] = useState(0);
 
     const statusOptions = [
         { value: "all", label: "All Statuses" },
-        { value: "finished", label: "Finished" },
-        { value: "failed", label: "Failed" },
-        { value: "irrelevant", label: "Irrelevant Content" },
-        { value: "processing", label: "Processing" }
+        { value: "active", label: "Active" },
+        { value: "finished", label: "Ready for Publish" },
+        { value: "published", label: "Published" },
+        { value: "failed", label: "Failed" }
     ];
 
-    useEffect(() => {
-        if (userId) {
-            fetchUserCampaigns();
-        }
-    }, [userId]);
+    const sourceOptions = [
+        { value: "all", label: "All Sources" },
+        { value: "upload", label: "Upload Video" },
+        { value: "record_audio", label: "Audio Record" },
+        { value: "record_video", label: "Video Record" },
+        { value: "social_link", label: "From Social Link" },
+        { value: "document_upload", label: "Doc Uploaded" }
+    ];
 
-    const fetchUserCampaigns = async () => {
+    const fetchUserCampaigns = async (page = 1) => {
         try {
             setLoading(true);
-            const response = await adminUserService.getUserCampaigns(userId);
+            const response = await adminUserService.getUserCampaigns(userId, {
+                page,
+                limit: 10,
+                status: statusFilter,
+                source: sourceFilter,
+                fromDate: fromDateFilter,
+                toDate: toDateFilter
+            });
             if (response && response.success) {
                 setCampaigns(response.data);
+                if (response.pagination) {
+                    setTotalPages(response.pagination.totalPages);
+                    setTotalResults(response.pagination.total);
+                }
             }
         } catch (error) {
             console.error("Error fetching user campaigns:", error);
@@ -59,6 +82,21 @@ export default function UserCampaignsPage() {
             setLoading(false);
         }
     };
+
+    // Debounced fetch wrapper
+    const debouncedFetch = useCallback(
+        debounce((page) => {
+            fetchUserCampaigns(page);
+        }, 500),
+        [userId, statusFilter, sourceFilter, fromDateFilter, toDateFilter]
+    );
+
+    useEffect(() => {
+        if (userId) {
+            debouncedFetch(currentPage);
+        }
+        return () => debouncedFetch.cancel();
+    }, [userId, currentPage, statusFilter, sourceFilter, fromDateFilter, toDateFilter, debouncedFetch]);
 
     const handleViewCampaign = (campaign) => {
         setSelectedCampaign(campaign);
@@ -75,28 +113,21 @@ export default function UserCampaignsPage() {
         setIsErrorModalOpen(true);
     };
 
-    const handleViewRawText = (article) => {
+    const handleViewRawText = (campaign) => {
         setSelectedText({
-            headline: article?.headline || "Generated Text",
-            body: article?.body || ""
+            headline: campaign?.videoSource === "document_upload" ? "Document Content" : "Transcript",
+            body: campaign?.rawTranscript || "Not available"
         });
         setIsTextModalOpen(true);
     };
 
     const clearFilters = () => {
         setStatusFilter("all");
-        setDateFilter("");
+        setSourceFilter("all");
+        setFromDateFilter("");
+        setToDateFilter("");
+        setCurrentPage(1);
     };
-
-    const filteredCampaigns = campaigns.filter(campaign => {
-        const matchesStatus = statusFilter === "all" || 
-            (statusFilter === "irrelevant" ? campaign.errorMessage?.toLowerCase().includes("irrelevant") : campaign.status === statusFilter);
-        
-        const matchesDate = !dateFilter || 
-            new Date(campaign.createdAt).toISOString().split('T')[0] === dateFilter;
-
-        return matchesStatus && matchesDate;
-    });
 
     return (
         <div className="mx-auto">
@@ -153,6 +184,7 @@ export default function UserCampaignsPage() {
                                                     onClick={() => {
                                                         setStatusFilter(option.value);
                                                         setIsStatusDropdownOpen(false);
+                                                        setCurrentPage(1);
                                                     }}
                                                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
                                                         statusFilter === option.value 
@@ -176,16 +208,82 @@ export default function UserCampaignsPage() {
                     <div className="h-6 w-px bg-gray-100 hidden md:block" />
 
                     <div className="flex items-center gap-2 px-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Date</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Source</label>
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsSourceDropdownOpen(!isSourceDropdownOpen)}
+                                className="flex items-center justify-between bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary w-44 p-2 pl-3 outline-none transition-all hover:border-primary/40 group"
+                            >
+                                <span className="truncate">
+                                    {sourceOptions.find(opt => opt.value === sourceFilter)?.label}
+                                </span>
+                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isSourceDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            <AnimatePresence>
+                                {isSourceDropdownOpen && (
+                                    <>
+                                        <div 
+                                            className="fixed inset-0 z-[60]" 
+                                            onClick={() => setIsSourceDropdownOpen(false)}
+                                        />
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="absolute left-0 top-full mt-2 w-56 bg-white border border-gray-100 rounded-2xl shadow-xl z-[70] overflow-hidden p-1.5"
+                                        >
+                                            {sourceOptions.map((option) => (
+                                                <button
+                                                    key={option.value}
+                                                    onClick={() => {
+                                                        setSourceFilter(option.value);
+                                                        setIsSourceDropdownOpen(false);
+                                                        setCurrentPage(1);
+                                                    }}
+                                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                                        sourceFilter === option.value 
+                                                            ? "bg-primary text-white" 
+                                                            : "text-gray-600 hover:bg-gray-50 hover:text-primary"
+                                                    }`}
+                                                >
+                                                    {option.label}
+                                                    {sourceFilter === option.value && (
+                                                        <Check className="w-3.5 h-3.5" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
+
+                    <div className="h-6 w-px bg-gray-100 hidden md:block" />
+
+                    <div className="flex items-center gap-2 px-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">From</label>
                         <input 
                             type="date"
-                            value={dateFilter}
-                            onChange={(e) => setDateFilter(e.target.value)}
-                            className="bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary block w-40 p-2 outline-none transition-all cursor-pointer hover:border-primary/40"
+                            value={fromDateFilter}
+                            onChange={(e) => { setFromDateFilter(e.target.value); setCurrentPage(1); }}
+                            className="bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary block w-32 p-2 outline-none transition-all cursor-pointer hover:border-primary/40"
+                        />
+                    </div>
+                    
+                    <div className="flex items-center gap-2 px-2 border-l border-gray-100 pl-4">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">To</label>
+                        <input 
+                            type="date"
+                            value={toDateFilter}
+                            onChange={(e) => { setToDateFilter(e.target.value); setCurrentPage(1); }}
+                            className="bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary block w-32 p-2 outline-none transition-all cursor-pointer hover:border-primary/40"
                         />
                     </div>
 
-                    {(statusFilter !== "all" || dateFilter !== "") && (
+                    {(statusFilter !== "all" || sourceFilter !== "all" || fromDateFilter !== "" || toDateFilter !== "") && (
                         <button
                             onClick={clearFilters}
                             className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 rounded-xl transition-all"
@@ -216,8 +314,8 @@ export default function UserCampaignsPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                                {filteredCampaigns.length > 0 ? (
-                                    filteredCampaigns.map((campaign) => (
+                                {campaigns.length > 0 ? (
+                                    campaigns.map((campaign) => (
                                         <tr key={campaign._id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col">
@@ -262,20 +360,20 @@ export default function UserCampaignsPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                {campaign.status !== "failed" && (campaign.article?.headline || campaign.article?.body) ? (
+                                                {campaign.status !== "failed" && (campaign.rawTranscript || campaign.article?.headline || campaign.article?.body) ? (
                                                     <div className="flex flex-col gap-1">
                                                         <span className="text-gray-500 line-clamp-2 text-xs leading-relaxed">
-                                                            {campaign.article?.headline || campaign.article?.body}
+                                                            {campaign.article?.headline || campaign.rawTranscript || campaign.article?.body}
                                                         </span>
                                                         <button 
-                                                            onClick={() => handleViewRawText(campaign.article)}
+                                                            onClick={() => handleViewRawText(campaign)}
                                                             className="text-[10px] text-primary font-bold uppercase tracking-wider underline hover:text-blue-700 w-fit"
                                                         >
-                                                            view_more
+                                                            view_source
                                                         </button>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-gray-300 italic text-xs">Not generated</span>
+                                                    <span className="text-gray-300 italic text-xs">Not available</span>
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 text-right">
@@ -314,6 +412,17 @@ export default function UserCampaignsPage() {
                     </div>
                 )}
             </div>
+
+            {!loading && (
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    totalResults={totalResults}
+                    itemsPerPage={10}
+                    className="mt-6"
+                />
+            )}
 
             <FullArticlePreview
                 isOpen={isModalOpen}

@@ -5,8 +5,8 @@ export const adminUserService = {
         const response = await apiAdmin.get("/admin/users", { params });
         return response.data;
     },
-    getUserCampaigns: async (userId) => {
-        const response = await apiAdmin.get(`/admin/users/${userId}/campaigns`);
+    getUserCampaigns: async (userId, params = {}) => {
+        const response = await apiAdmin.get(`/admin/users/${userId}/campaigns`, { params });
         return response.data;
     },
     getUserPayments: async (userId) => {
