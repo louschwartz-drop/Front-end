@@ -41,11 +41,8 @@ export function AdminSocketProvider({ children }) {
       const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || '/socket.io';
 
       if (!socketUrl) {
-        console.error('❌ NEXT_PUBLIC_SOCKET_URL is not defined in environment!');
         return;
       }
-
-      console.log('🛠️  Connecting admin socket to:', `${socketUrl}/admin`, 'Path:', socketPath);
 
       const instance = io(`${socketUrl}/admin`, {
         path: socketPath,
@@ -57,21 +54,19 @@ export function AdminSocketProvider({ children }) {
       });
 
       instance.on('connect', () => {
-        console.log('✅ Admin socket connected:', instance.id);
         
         // Re-join persistent rooms on every connection
         const admin = adminAuthStore.getState().admin;
         const adminId = admin?._id || admin?.id;
         if (adminId) {
-          console.log(`👤 Joining/Re-joining personal admin room: admin_${adminId}`);
           instance.emit('join_admin', { adminId });
         }
       });
       instance.on('connect_error', (err) =>
-        console.error('❌ Admin socket error:', err.message)
+        {}
       );
       instance.on('disconnect', (reason) =>
-        console.log('🔌 Admin socket disconnected:', reason)
+        {}
       );
 
       socketRef.current = instance;

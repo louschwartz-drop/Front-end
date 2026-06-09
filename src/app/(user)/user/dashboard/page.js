@@ -79,7 +79,6 @@ function DashboardContent() {
   useEffect(() => {
     if (socket) {
       socket.on("campaign_updated", (data) => {
-        console.log("🔄 Dashboard updated via socket:", data);
         loadDashboardData();
       });
 

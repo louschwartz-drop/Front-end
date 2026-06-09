@@ -70,8 +70,6 @@ function CampaignsPageContent() {
         // Listen for real-time updates via Socket
         if (socket) {
             const onCampaignUpdated = (data) => {
-                console.log("🔄 Campaign updated via socket:", data.campaignId, data.status);
-
                 if (data.campaign) {
                     setCampaigns(prev => prev.map(c => c._id === data.campaignId ? data.campaign : c));
                 }
@@ -79,7 +77,6 @@ function CampaignsPageContent() {
 
             const onStatusChange = (data) => {
                 if (!data.campaignId) return;
-                console.log("🚦 Campaign status changed:", data.campaignId, data.status);
                 setCampaigns(prev => prev.map(c =>
                     c._id === data.campaignId ? { ...c, status: data.status } : c
                 ));
@@ -97,7 +94,6 @@ function CampaignsPageContent() {
             };
 
             const onCampaignCreated = (data) => {
-                console.log("🆕 New campaign created via socket:", data.campaignId);
                 if (data.campaign) {
                     setCampaigns(prev => {
                         // Check if it already exists to avoid duplicates
@@ -140,7 +136,6 @@ function CampaignsPageContent() {
         // SYNC ON FOCUS: If user comes back to this tab, refresh silently 
         // to catch any updates that might have happened while backgrounded.
         const handleFocus = () => {
-            console.log("🪟 Tab focused, syncing campaigns...");
             fetchCampaigns(true);
         };
 

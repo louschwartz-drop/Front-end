@@ -35,7 +35,6 @@ function ProcessingContent() {
   // 1. Move status update logic to a stable callback
   const handleStatusUpdate = useCallback((status, errorMessage = null) => {
     if (!status) return;
-    console.log(`🎯 [Processing] Updating status: ${status}`);
 
     const statusToStep = {
       uploading: 0,
@@ -93,7 +92,6 @@ function ProcessingContent() {
         const userId = user._id || user.id;
 
         try {
-          console.log("Starting optimized background upload...");
 
           if (store.pendingUpload.type === "document") {
             await campaignService.uploadDocument(campaignId, file, (progress) => {
@@ -110,8 +108,7 @@ function ProcessingContent() {
           store.clearPendingUpload();
           toast.success("Upload & Analysis started!", { toastId: "upload-start-toast" });
         } catch (error) {
-          console.error("Background upload failed:", error);
-          toast.error("Upload failed: " + error.message);
+          toast.error("Upload failed: " + error.message, { toastId: "failed-toast" });
 
           // Report failure to backend
           try {
@@ -160,7 +157,8 @@ function ProcessingContent() {
   useEffect(() => {
     if (!socket || !campaignId) return;
 
-    console.log(`🔌 [Processing] Registering socket listeners for: ${campaignId}`);
+    // Explicitly join the campaign room to ensure we receive updates directly
+    socket.emit("join_campaign", { campaignId });
 
     const onMediaProgress = (data) => {
       if (data.campaignId && data.campaignId !== campaignId) return;
@@ -169,20 +167,17 @@ function ProcessingContent() {
 
     const onCampaignUpdated = (data) => {
       if (data.campaignId !== campaignId) return;
-      console.log("🔄 [Socket] Campaign Updated:", data.status);
       handleStatusUpdate(data.status || data.campaign?.status, data.campaign?.errorMessage);
     };
 
     const onStatusChange = (data) => {
       if (data.campaignId !== campaignId) return;
-      console.log("🚦 [Socket] Status Change:", data.status);
       handleStatusUpdate(data.status, data.errorMessage);
     };
 
     const onMediaError = (data) => {
       if (data.campaignId && data.campaignId !== campaignId) return;
-      console.error("❌ [Socket] Media Error:", data.message);
-      toast.error(data.message || "Processing failed");
+      toast.error(data.message || "Processing failed", { toastId: "failed-toast" });
       router.replace("/user/dashboard/campaigns");
     };
 
@@ -202,7 +197,6 @@ function ProcessingContent() {
   // SYNC ON FOCUS: Fallback for missed socket events while tab was backgrounded
   useEffect(() => {
     const handleFocus = () => {
-      console.log("🪟 Tab focused, syncing status...");
       const syncStatus = async () => {
         try {
           const { campaignService } = await import("@/lib/api/user/campaigns");

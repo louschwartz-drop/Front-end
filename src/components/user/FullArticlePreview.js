@@ -24,26 +24,45 @@ export const STANDARD_FOOTER = `
 
 export function stripFooter(html) {
     if (!html) return "";
-    const footerKeywords = [
-        "<div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>",
-        "<div style=\"margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;\">",
-        "<div style='margin-top:3rem;",
-        "<div style=\"margin-top:3rem;",
-        "<h4>Media Contact</h4>",
-        "<h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>",
-        "<h4 style=\"text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;\">Media Contact</h4>",
-        "Media Contact",
-    ];
+    
+    // 1. Try to find the exact outer wrapper we know about
+    const divIndex = html.search(/<div[^>]*style=["'][^"']*margin-top:\s*3rem/i);
+    if (divIndex !== -1) {
+        let clean = html.substring(0, divIndex).trim();
+        if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
+        return clean;
+    }
 
-    for (const keyword of footerKeywords) {
-        const index = html.indexOf(keyword);
-        if (index !== -1) {
-            let cleanHtml = html.substring(0, index).trim();
-            if (cleanHtml.endsWith("<div>")) {
-                cleanHtml = cleanHtml.slice(0, -5).trim();
-            }
-            return cleanHtml;
+    // 2. Try to find the h4 tag
+    const h4Index = html.search(/<h4[^>]*>[\s]*Media Contact[\s]*<\/h4>/i);
+    if (h4Index !== -1) {
+        // Find if it is wrapped in an immediate <div
+        const lastDiv = html.lastIndexOf("<div", h4Index);
+        let cutIndex = h4Index;
+        if (lastDiv !== -1 && (h4Index - lastDiv) < 100) {
+            cutIndex = lastDiv;
         }
+        let clean = html.substring(0, cutIndex).trim();
+        if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
+        return clean;
+    }
+
+    // 3. Fallback to just the text "Media Contact" but ensure we cut before the tag
+    const textIndex = html.indexOf("Media Contact");
+    if (textIndex !== -1) {
+        const lastH4 = html.lastIndexOf("<h4", textIndex);
+        const lastP = html.lastIndexOf("<p", textIndex);
+        let cutIndex = textIndex;
+        
+        if (lastH4 !== -1 && (textIndex - lastH4) < 150) cutIndex = lastH4;
+        else if (lastP !== -1 && (textIndex - lastP) < 150) cutIndex = lastP;
+        
+        const lastDiv = html.lastIndexOf("<div", cutIndex);
+        if (lastDiv !== -1 && (cutIndex - lastDiv) < 100) cutIndex = lastDiv;
+
+        let clean = html.substring(0, cutIndex).trim();
+        if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
+        return clean;
     }
 
     return html;

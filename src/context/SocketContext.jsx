@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
+import { usePathname } from 'next/navigation';
 import userAuthStore from '@/store/userAuthStore';
 
 const SocketContext = createContext();
@@ -20,6 +21,7 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [authState, setAuthState] = useState({ token: null, userId: null, isAuthenticated: false });
   const [isRequested, setIsRequested] = useState(false);
+  const pathname = usePathname();
 
   // Function to explicitly request a socket connection (e.g. from ChatWidget)
   const requestSocket = useCallback(() => {
@@ -41,19 +43,29 @@ export const SocketProvider = ({ children }) => {
     return userAuthStore.subscribe(sync);
   }, []);
 
+  // Reference to hold current auth state without causing re-renders
+  const authRef = React.useRef(authState);
   useEffect(() => {
-    const isDashboard = typeof window !== 'undefined' && 
-      (window.location.pathname.startsWith('/user') || window.location.pathname.startsWith('/admin'));
+    authRef.current = authState;
+  }, [authState]);
 
-    // Only connect if:
-    // 1. A component specifically requested it (e.g. guest opening chat)
-    // 2. OR the user is on a dashboard/admin page where real-time updates are essential
+  // Main connection effect
+  useEffect(() => {
+    const isDashboard = typeof window !== 'undefined' && pathname &&
+      (pathname.startsWith('/user') || pathname.startsWith('/admin'));
+
+    // If we shouldn't connect, disconnect existing socket
     if (!isRequested && !isDashboard) {
       if (socket) {
-        console.log('🔌 Disconnecting socket (Not on dashboard and not requested)...');
         socket.disconnect();
         setSocket(null);
       }
+      return;
+    }
+
+    // If we already have a socket and we're just navigating within the dashboard, don't recreate it
+    // Only recreate if the token/userId actually changed
+    if (socket) {
       return;
     }
 
@@ -66,7 +78,7 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    console.log(`🔌 Socket init [${token ? 'Auth' : 'Guest Demand'}]`);
+
 
     const socketInstance = io(socketUrl, {
       path: socketPath,
@@ -81,24 +93,28 @@ export const SocketProvider = ({ children }) => {
     });
 
     socketInstance.on('connect', () => {
-      console.log('✅ Socket connected:', socketInstance.id);
-      if (userId) {
-        console.log(`👤 Joining personal room: user_${userId}`);
-        socketInstance.emit('join_user', { userId });
+      const currentUserId = authRef.current.userId;
+      if (currentUserId) {
+        socketInstance.emit('join_user', { userId: currentUserId });
       }
     });
 
     socketInstance.on('connect_error', (error) => {
-      console.warn('⚠️ Socket connection attempt failed:', error.message);
+      // Keep warnings for production debugging if needed, or remove completely. Let's remove it.
     });
 
     setSocket(socketInstance);
 
+  }, [pathname, isRequested, authState.token, authState.userId]);
+
+  // Clean up on unmount
+  useEffect(() => {
     return () => {
-      console.log('🔌 Disconnecting socket...');
-      socketInstance.disconnect();
+      if (socket) {
+        socket.disconnect();
+      }
     };
-  }, [authState.isAuthenticated, authState.token, authState.userId, isRequested]);
+  }, [socket]);
 
   return (
     <SocketContext.Provider value={{ socket, requestSocket }}>
