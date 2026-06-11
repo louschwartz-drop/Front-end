@@ -138,11 +138,11 @@ export default function Home() {
                     transition={{ delay: 0.2, duration: 0.6 }}
                     className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight mb-2"
                   >
-                    PR Just Became
+                    Performance PR for AI
                     <br />
                     <span className="relative">
                       <span className="relative z-10">
-                        Affordable.
+                        discovery
                       </span>
                       <div className="absolute -bottom-4 left-0 w-full md:w-[120%] h-[3px] pointer-events-none">
                         <motion.div
