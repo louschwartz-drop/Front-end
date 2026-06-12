@@ -45,11 +45,13 @@ export const metadata = {
     title: "DropPR.ai - AI-Powered Media & PR Distribution Platform",
     description: "Build instant exposure with DropPR.ai. Convert your videos into AI-written articles and distribute them to top media outlets.",
     type: "website",
+    images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "DropPR.ai - AI-Powered Media & PR Distribution Platform",
     description: "Build instant exposure with DropPR.ai. Convert your videos into AI-written articles and distribute them to top media outlets.",
+    images: ["/logo.png"],
   },
   robots: {
     index: true,

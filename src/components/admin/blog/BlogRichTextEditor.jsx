@@ -44,40 +44,58 @@ import ImageUploadModal from "./ImageUploadModal";
 
 // --- Custom Extensions ---
 
-const CustomTextStyle = TextStyle.extend({
-    addAttributes() {
+const FontSize = Extension.create({
+    name: 'fontSize',
+    addOptions() { return { types: ['textStyle'] }; },
+    addGlobalAttributes() {
+        return [
+            {
+                types: this.options.types,
+                attributes: {
+                    fontSize: {
+                        default: null,
+                        parseHTML: element => element.style.fontSize || null,
+                        renderHTML: attributes => {
+                            if (!attributes.fontSize) return {};
+                            return { style: `font-size: ${attributes.fontSize}` };
+                        },
+                    },
+                },
+            },
+        ];
+    },
+    addCommands() {
         return {
-            ...this.parent?.(),
-            color: {
-                default: null,
-                parseHTML: element => element.style.color || null,
-                renderHTML: attributes => {
-                    if (!attributes.color) {
-                        return {};
-                    }
-                    return { style: `color: ${attributes.color}` };
+            setFontSize: fontSize => ({ chain }) => chain().setMark('textStyle', { fontSize }).run(),
+            unsetFontSize: () => ({ chain }) => chain().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run(),
+        };
+    },
+});
+
+const TextTransform = Extension.create({
+    name: 'textTransform',
+    addOptions() { return { types: ['textStyle'] }; },
+    addGlobalAttributes() {
+        return [
+            {
+                types: this.options.types,
+                attributes: {
+                    textTransform: {
+                        default: null,
+                        parseHTML: element => element.style.textTransform || null,
+                        renderHTML: attributes => {
+                            if (!attributes.textTransform) return {};
+                            return { style: `text-transform: ${attributes.textTransform}` };
+                        },
+                    },
                 },
             },
-            fontSize: {
-                default: null,
-                parseHTML: element => element.style.fontSize,
-                renderHTML: attributes => {
-                    if (!attributes.fontSize) {
-                        return {};
-                    }
-                    return { style: `font-size: ${attributes.fontSize}` };
-                },
-            },
-            textTransform: {
-                default: null,
-                parseHTML: element => element.style.textTransform,
-                renderHTML: attributes => {
-                    if (!attributes.textTransform) {
-                        return {};
-                    }
-                    return { style: `text-transform: ${attributes.textTransform}` };
-                },
-            },
+        ];
+    },
+    addCommands() {
+        return {
+            setTextTransform: textTransform => ({ chain }) => chain().setMark('textStyle', { textTransform }).run(),
+            unsetTextTransform: () => ({ chain }) => chain().setMark('textStyle', { textTransform: null }).removeEmptyTextStyle().run(),
         };
     },
 });
@@ -198,11 +216,10 @@ const ToolbarButton = ({
         onMouseDown={(e) => e.preventDefault()}
         disabled={disabled}
         title={title}
-        className={`flex items-center justify-center h-8 w-8 rounded-md transition-all ${
-            isActive 
-                ? "bg-primary/10 text-primary ring-1 ring-primary/20" 
+        className={`flex items-center justify-center h-8 w-8 rounded-md transition-all ${isActive
+                ? "bg-primary/10 text-primary ring-1 ring-primary/20"
                 : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-        } disabled:opacity-30 disabled:cursor-not-allowed ${className}`}
+            } disabled:opacity-30 disabled:cursor-not-allowed ${className}`}
     >
         {children}
     </button>
@@ -256,50 +273,6 @@ const ImageNodeView = (props) => {
         </NodeViewWrapper>
     );
 };
-
-const NodeStyles = Extension.create({
-    name: 'nodeStyles',
-    addGlobalAttributes() {
-        return [];
-    },
-    addCommands() {
-        return {
-            setFontSize: fontSize => ({ chain }) => {
-                return chain()
-                    .setMark('textStyle', { fontSize })
-                    .run();
-            },
-            unsetFontSize: () => ({ chain }) => {
-                return chain()
-                    .setMark('textStyle', { fontSize: null })
-                    .removeEmptyTextStyle()
-                    .run();
-            },
-            setTextTransform: textTransform => ({ chain }) => {
-                return chain()
-                    .setMark('textStyle', { textTransform })
-                    .run();
-            },
-            unsetTextTransform: () => ({ chain }) => {
-                return chain()
-                    .setMark('textStyle', { textTransform: null })
-                    .removeEmptyTextStyle()
-                    .run();
-            },
-            setColor: color => ({ chain }) => {
-                return chain()
-                    .setMark('textStyle', { color })
-                    .run();
-            },
-            unsetColor: () => ({ chain }) => {
-                return chain()
-                    .setMark('textStyle', { color: null })
-                    .removeEmptyTextStyle()
-                    .run();
-            },
-        };
-    },
-});
 
 const editorCss = `
     .ProseMirror { font-family: var(--font-serif), Georgia, serif; font-size: 1.125rem; line-height: 1.75; color: #1a1a2e; }
@@ -478,7 +451,7 @@ const MenuBar = ({ editor, showHtml, toggleHtml }) => {
                 <section class="cta">
                     <div class="cta-kicker">Close the Citation Gap</div>
                     <h2 class="cta-headline" style="margin-top:0;">Be cited where the answers are written — not buried in the candidate set.</h2>
-                    <p class="cta-deck">Drop PR places your expertise on the publishers AI engines already cite. One upload becomes one editorially-written, publisher-hosted article.</p>
+                    <p class="cta-deck">DropPR places your expertise on the publishers AI engines already cite. One upload becomes one editorially-written, publisher-hosted article.</p>
                     <div class="offer-stack">
                         <div class="offer-stack-title">Citation Acceleration Stack — Charter Cohort</div>
                         <ul class="offer-list">
@@ -516,7 +489,7 @@ const MenuBar = ({ editor, showHtml, toggleHtml }) => {
 
     return (
         <>
-            <div className="overflow-x-auto no-scrollbar"><div className="flex items-center gap-0.5 p-1 border-b border-gray-100 bg-white sticky top-0 z-20 transition-all rounded-t-xl min-w-max">
+            <div className="flex flex-wrap items-center gap-y-2 gap-x-1 p-2 border-b border-gray-100 bg-white sticky top-0 z-20 transition-all rounded-t-xl">
                 {/* History */}
                 <div className="flex items-center gap-0.5 pr-1 mr-1 border-r border-gray-100">
                     <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo() || showHtml} title="Undo">
@@ -529,32 +502,32 @@ const MenuBar = ({ editor, showHtml, toggleHtml }) => {
 
                 {/* Typography */}
                 <div className="flex items-center gap-0.5 pr-1 mr-1 border-r border-gray-100">
-                    <ToolbarButton 
-                        onClick={() => editor.chain().focus().setParagraph().run()} 
+                    <ToolbarButton
+                        onClick={() => editor.chain().focus().setParagraph().run()}
                         isActive={editor.isActive('paragraph')}
                         title="Paragraph"
                         className="w-10"
                     >
                         <span className="text-[12px] font-bold">P</span>
                     </ToolbarButton>
-                    <ToolbarButton 
-                        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} 
+                    <ToolbarButton
+                        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
                         isActive={editor.isActive('heading', { level: 1 })}
                         title="Heading 1"
                         className="w-10"
                     >
                         <span className="text-[12px] font-bold">H1</span>
                     </ToolbarButton>
-                    <ToolbarButton 
-                        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} 
+                    <ToolbarButton
+                        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
                         isActive={editor.isActive('heading', { level: 2 })}
                         title="Heading 2"
                         className="w-10"
                     >
                         <span className="text-[12px] font-bold">H2</span>
                     </ToolbarButton>
-                    <ToolbarButton 
-                        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} 
+                    <ToolbarButton
+                        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
                         isActive={editor.isActive('heading', { level: 3 })}
                         title="Heading 3"
                         className="w-10"
@@ -608,11 +581,10 @@ const MenuBar = ({ editor, showHtml, toggleHtml }) => {
                                         editor.chain().focus().setFontSize(size.value).run();
                                         setIsFontSizeOpen(false);
                                     }}
-                                    className={`w-full text-left px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
-                                        getCurrentFontSize() === size.label
+                                    className={`w-full text-left px-3 py-1 text-xs font-bold rounded-lg transition-colors ${getCurrentFontSize() === size.label
                                             ? 'bg-primary/10 text-primary'
                                             : 'text-gray-700 hover:bg-gray-50'
-                                    }`}
+                                        }`}
                                 >
                                     {size.label}px
                                 </button>
@@ -661,13 +633,12 @@ const MenuBar = ({ editor, showHtml, toggleHtml }) => {
                                             }
                                             setIsColorOpen(false);
                                         }}
-                                        className={`relative w-10 h-10 rounded-lg border-2 transition-all hover:scale-110 hover:shadow-md ${
-                                            getCurrentColor() === color.value
+                                        className={`relative w-10 h-10 rounded-lg border-2 transition-all hover:scale-110 hover:shadow-md ${getCurrentColor() === color.value
                                                 ? 'border-primary ring-2 ring-primary/30 scale-110 shadow-md'
                                                 : color.value === '#0A5CFF'
                                                     ? 'border-blue-400 hover:border-primary'
                                                     : 'border-gray-200 hover:border-gray-400'
-                                        }`}
+                                            }`}
                                         style={{
                                             backgroundColor: color.value || '#f3f4f6',
                                             backgroundImage: color.value === '' ? 'linear-gradient(135deg, #f3f4f6 40%, #ef4444 40%, #ef4444 60%, #f3f4f6 60%)' : 'none',
@@ -718,7 +689,7 @@ const MenuBar = ({ editor, showHtml, toggleHtml }) => {
                         title="Insert Editorial Template"
                     >
                         <LayoutGrid size={13} />
-                        Templates 
+                        Templates
                         <ChevronDown size={11} />
                     </button>
                     {isTemplatesOpen && (
@@ -771,7 +742,7 @@ const MenuBar = ({ editor, showHtml, toggleHtml }) => {
                 <div className="flex items-center gap-0.5 ml-auto">
                     <ToolbarButton onClick={toggleHtml} isActive={showHtml} title="View HTML Source" className={showHtml ? "ring-1 ring-primary/20" : ""}><Code size={14} /></ToolbarButton>
                 </div>
-            </div></div>
+            </div>
 
             <ImageUploadModal
                 isOpen={isImageModalOpen}
@@ -795,8 +766,10 @@ export default function BlogRichTextEditor({ value, onChange, placeholder }) {
                 paragraph: { HTMLAttributes: { class: "mb-4" } }
             }),
             Underline,
-            CustomTextStyle,
-            NodeStyles,
+            TextStyle,
+            Color,
+            FontSize,
+            TextTransform,
             AsideNode,
             SectionNode,
             DivNode,

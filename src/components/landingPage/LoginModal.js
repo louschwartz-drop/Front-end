@@ -248,7 +248,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
               <div className="mb-6">
                 <Image
                   src="/logo.png"
-                  alt="Drop PR"
+                  alt="DropPR"
                   width={120}
                   height={35}
                   className="brightness-0 invert opacity-90"
@@ -381,10 +381,10 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
                   <SocialButton
                     icon={
                       <svg width="20" height="20" viewBox="0 0 48 48" className="w-5 h-5">
-                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
                       </svg>
                     }
                     label="Google"
@@ -417,117 +417,117 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
 
                 {/* Email Form */}
                 <form onSubmit={handleEmailAuth} className="space-y-3 px-2">
-              {authMode === "signup" && (
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700 uppercase ml-1">Name</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Your Full Name"
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
-                    <User className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
+                  {authMode === "signup" && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-slate-700 uppercase ml-1">Name</label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Your Full Name"
+                          className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          required
+                        />
+                        <User className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-700 uppercase ml-1">Email Address</label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        placeholder="Enter your email"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                      <Mail className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
+                    </div>
                   </div>
-                </div>
-              )}
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700 uppercase ml-1">Email Address</label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                  <Mail className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
-                </div>
-              </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-700 uppercase ml-1">Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter your password"
+                        className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        minLength={6}
+                      />
+                      <Lock className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700 uppercase ml-1">Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                  <Lock className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
+                  {authMode === "signup" && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-slate-700 uppercase ml-1">Confirm Password</label>
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm your password"
+                          className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                          minLength={6}
+                        />
+                        <Lock className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {authMode === "signup" && (
+                    <div className="flex items-center gap-2 mt-2 px-1">
+                      <input
+                        type="checkbox"
+                        id="terms"
+                        checked={agreeTerms}
+                        onChange={(e) => setAgreeTerms(e.target.checked)}
+                        className="w-4 h-4 shrink-0 rounded text-primary focus:ring-primary border-slate-300 cursor-pointer"
+                        required
+                      />
+                      <label htmlFor="terms" className="text-[10px] text-slate-500 leading-snug">
+                        By checking this, you agree to our <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms & Conditions</Link> and <Link href="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>.
+                      </label>
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="w-full py-3 rounded-xl font-bold text-sm space-x-2 mt-2"
+                    disabled={isLoading || (authMode === "signup" && !agreeTerms)}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {authMode === "signup" && (
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700 uppercase ml-1">Confirm Password</label>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Confirm your password"
-                      className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      minLength={6}
-                    />
-                    <Lock className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {authMode === "signup" && (
-                <div className="flex items-center gap-2 mt-2 px-1">
-                  <input
-                    type="checkbox"
-                    id="terms"
-                    checked={agreeTerms}
-                    onChange={(e) => setAgreeTerms(e.target.checked)}
-                    className="w-4 h-4 shrink-0 rounded text-primary focus:ring-primary border-slate-300 cursor-pointer"
-                    required
-                  />
-                  <label htmlFor="terms" className="text-[10px] text-slate-500 leading-snug">
-                    By checking this, you agree to our <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms & Conditions</Link> and <Link href="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>.
-                  </label>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                variant="primary"
-                className="w-full py-3 rounded-xl font-bold text-sm space-x-2 mt-2"
-                disabled={isLoading || (authMode === "signup" && !agreeTerms)}
-              >
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <span>{authMode === "login" ? "Sign In" : "Create My Account"}</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </Button>
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <span>{authMode === "login" ? "Sign In" : "Create My Account"}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </Button>
                 </form>
 
                 <div className="mt-4 text-center">

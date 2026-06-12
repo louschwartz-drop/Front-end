@@ -9,7 +9,7 @@ import Tooltip from "@/components/ui/Tooltip";
 export const USER_MENU_ITEMS = [
   {
     href: "/user/dashboard/droppr-gpt",
-    label: "Drop PR GPT",
+    label: "DropPR GPT",
     description: "Generate content with AI assistant",
     icon: (
       <svg

@@ -6,6 +6,8 @@ import Header from "@/components/landingPage/Header";
 import Footer from "@/components/landingPage/Footer";
 import Button from "@/components/ui/Button";
 import ShareMenu from "@/components/ui/ShareMenu";
+import Script from "next/script";
+
 
 async function getBlog(slug) {
   try {
@@ -106,11 +108,37 @@ export default async function BlogDetail({ params }) {
     .slice(0, 2)
     .toUpperCase();
 
+  const blogSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": blog.title,
+    "description": blog.excerpt || blog.description || "",
+    "image": blog.featuredImage || undefined,
+    "datePublished": blog.publishedAt || blog.createdAt,
+    "author": {
+      "@type": "Person",
+      "name": blog.authorName || "Hayden Hollis"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "DropPR.ai",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.droppr.ai/logo.png"
+      }
+    }
+  };
+
   return (
     <div
       className="min-h-screen selection:bg-primary/10"
       style={{ background: "#fafaf7" }}
     >
+      <Script
+        id="blog-posting-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogSchema) }}
+      />
       <Header />
 
       <main className="pt-28 pb-8">

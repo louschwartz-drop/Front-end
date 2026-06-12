@@ -309,21 +309,23 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Content</label>
+                            <div className="flex items-center justify-between px-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Content</label>
+                                {isAIGenerated && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsGenerateModalOpen(true)}
+                                        className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg font-black uppercase tracking-widest text-[10px] flex items-center gap-1.5 shadow-md hover:bg-indigo-700 transition-all active:scale-95"
+                                    >
+                                        <Sparkles size={12} /> Improve with AI
+                                    </button>
+                                )}
+                            </div>
                             <div className="relative">
                                 <BlogRichTextEditor 
                                     value={formData.content}
                                     onChange={(html) => setFormData(prev => ({ ...prev, content: html }))}
                                 />
-                                {isAIGenerated && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsGenerateModalOpen(true)}
-                                        className="absolute top-4 right-4 z-30 px-4 py-2 bg-indigo-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 shadow-xl hover:bg-indigo-700 transition-all active:scale-95"
-                                    >
-                                        <Sparkles size={14} /> Improve with AI
-                                    </button>
-                                )}
                             </div>
                         </div>
                     </div>

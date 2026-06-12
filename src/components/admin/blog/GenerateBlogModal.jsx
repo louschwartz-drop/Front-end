@@ -31,7 +31,7 @@ export default function GenerateBlogModal({ isOpen, onClose, onGenerateSuccess, 
                 setMessages([
                     {
                         role: "assistant",
-                        content: "Hello! I'm Drop PR GPT. Tell me about the blog post you want to create today. Include the topic, category, and any brands to mention."
+                        content: "Hello! I'm DropPR GPT. Tell me about the blog post you want to create today. Include the topic, category, and any brands to mention."
                     }
                 ]);
             }
@@ -49,7 +49,8 @@ export default function GenerateBlogModal({ isOpen, onClose, onGenerateSuccess, 
         if (!inputValue.trim() || loading) return;
 
         const userPrompt = inputValue.trim();
-        setMessages(prev => [...prev, { role: "user", content: userPrompt }]);
+        const currentMessages = [...messages, { role: "user", content: userPrompt }];
+        setMessages(currentMessages);
         setInputValue("");
         setLoading(true);
 
@@ -59,33 +60,45 @@ export default function GenerateBlogModal({ isOpen, onClose, onGenerateSuccess, 
 
             const type = initialContent ? "improve-content" : "generate-content";
             const response = await adminBlogService.generateBlogContent(
-                userPrompt, 
-                "AI Content", 
-                type, 
-                initialContent
+                userPrompt,
+                "AI Content",
+                type,
+                initialContent,
+                currentMessages.filter(m => !m.isThinking)
             );
 
             if (response.success) {
-                setMessages(prev => {
-                    const last = [...prev];
-                    last[last.length - 1] = { 
-                        role: "assistant", 
-                        content: initialContent 
-                            ? "I've applied those improvements for you. Check the editor!" 
-                            : "Your full article has been generated and populated in the form. What else can I help with?"
-                    };
-                    return last;
-                });
-                onGenerateSuccess(response.data);
+                if (response.data.isQuestion) {
+                    setMessages(prev => {
+                        const last = [...prev];
+                        last[last.length - 1] = {
+                            role: "assistant",
+                            content: response.data.questionText
+                        };
+                        return last;
+                    });
+                } else {
+                    setMessages(prev => {
+                        const last = [...prev];
+                        last[last.length - 1] = {
+                            role: "assistant",
+                            content: initialContent
+                                ? "I've applied those improvements for you. Check the editor!"
+                                : "Your full article has been generated and populated in the form. What else can I help with?"
+                        };
+                        return last;
+                    });
+                    onGenerateSuccess(response.data);
+                }
             } else {
                 throw new Error(response.message || "Failed");
             }
         } catch (error) {
             setMessages(prev => {
                 const last = [...prev];
-                last[last.length - 1] = { 
-                    role: "assistant", 
-                    content: "I'm sorry, I encountered an error while processing that. Please try again." 
+                last[last.length - 1] = {
+                    role: "assistant",
+                    content: "I'm sorry, I encountered an error while processing that. Please try again."
                 };
                 return last;
             });
@@ -109,26 +122,24 @@ export default function GenerateBlogModal({ isOpen, onClose, onGenerateSuccess, 
                     </DialogTitle>
                 </DialogHeader>
 
-                <div 
+                <div
                     ref={scrollRef}
                     className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-4 sm:space-y-8 no-scrollbar min-h-0"
                 >
                     {messages.map((msg, idx) => (
-                        <div 
-                            key={idx} 
+                        <div
+                            key={idx}
                             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}
                         >
                             <div className={`flex gap-3 sm:gap-4 max-w-[90%] ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-                                <div className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center ${
-                                    msg.role === "user" ? "bg-gray-100 text-gray-500" : "bg-primary/10 text-primary"
-                                }`}>
+                                <div className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center ${msg.role === "user" ? "bg-gray-100 text-gray-500" : "bg-primary/10 text-primary"
+                                    }`}>
                                     {msg.role === "user" ? <User size={16} /> : <Bot size={16} />}
                                 </div>
-                                <div className={`p-5 rounded-[2rem] text-sm font-bold leading-relaxed shadow-sm ${
-                                    msg.role === "user" 
-                                        ? "bg-gray-900 text-white rounded-tr-none" 
+                                <div className={`p-5 rounded-[2rem] text-sm font-bold leading-relaxed shadow-sm ${msg.role === "user"
+                                        ? "bg-gray-900 text-white rounded-tr-none"
                                         : "bg-gray-50 text-gray-700 rounded-tl-none border border-gray-100"
-                                }`}>
+                                    }`}>
                                     {msg.isThinking ? (
                                         <div className="flex gap-1 py-1">
                                             <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" />
@@ -159,7 +170,7 @@ export default function GenerateBlogModal({ isOpen, onClose, onGenerateSuccess, 
                             className="w-full h-[60px] pl-6 pr-16 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-gray-700 resize-none shadow-sm"
                             disabled={loading}
                         />
-                        <button 
+                        <button
                             onClick={handleSend}
                             disabled={!inputValue.trim() || loading}
                             className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center hover:bg-primary/90 transition-all disabled:opacity-50 shadow-lg shadow-primary/20"

@@ -761,9 +761,9 @@ export default function Home() {
                         />
                       </svg>
                     </div>
-                    <h4 className="text-xl font-bold text-gray-900 mb-2">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
                       {feature.title}
-                    </h4>
+                    </h3>
                     <p className="text-gray-600 leading-relaxed">
                       {feature.description}
                     </p>

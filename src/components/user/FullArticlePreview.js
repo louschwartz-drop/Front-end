@@ -10,12 +10,12 @@ import { BLOCKQUOTE_STYLES } from "@/components/editor/blockquoteStyles";
 export const STANDARD_FOOTER = `
 <div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>
   <h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>
-  <p style='margin:0;font-weight:700;color:#111827;'>Drop PR AI Research & Media Desk</p>
+  <p style='margin:0;font-weight:700;color:#111827;'>DropPR AI Research & Media Desk</p>
   <p style='margin:4px 0;color:#4b5563;'>support@droppr.ai</p>
   <p style='margin:4px 0;color:#4b5563;'>Austin, Texas</p>
 </div>
 <div style='margin-top:2.5rem;padding:1.5rem;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;'>
-  <h4 style='margin-top:0;color:#111827;'>About Drop PR</h4>
+  <h4 style='margin-top:0;color:#111827;'>About DropPR</h4>
   <p style='margin-bottom:1rem;color:#374151;line-height:1.7;'><a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>DropPR</a> transforms creator videos, podcasts, product reviews, and brand announcements into professionally written editorial-style articles distributed across a broad network of digital publishers. The platform helps brands, creators, agencies, and e-commerce companies expand search visibility, strengthen AI discoverability, generate backlinks, and extend the lifespan of short-form content beyond social media feeds.</p>
   <h4 style='margin-top:1.5rem;color:#111827;'>Call to Action</h4>
   <p style='margin-bottom:0;color:#374151;line-height:1.7;'>Brands, creators, podcasters, and agencies interested in turning content into distributed editorial coverage can learn more at <a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>DropPR</a>.</p>
@@ -24,7 +24,7 @@ export const STANDARD_FOOTER = `
 
 export function stripFooter(html) {
     if (!html) return "";
-    
+
     // 1. Try to find the exact outer wrapper we know about
     const divIndex = html.search(/<div[^>]*style=["'][^"']*margin-top:\s*3rem/i);
     if (divIndex !== -1) {
@@ -53,10 +53,10 @@ export function stripFooter(html) {
         const lastH4 = html.lastIndexOf("<h4", textIndex);
         const lastP = html.lastIndexOf("<p", textIndex);
         let cutIndex = textIndex;
-        
+
         if (lastH4 !== -1 && (textIndex - lastH4) < 150) cutIndex = lastH4;
         else if (lastP !== -1 && (textIndex - lastP) < 150) cutIndex = lastP;
-        
+
         const lastDiv = html.lastIndexOf("<div", cutIndex);
         if (lastDiv !== -1 && (cutIndex - lastDiv) < 100) cutIndex = lastDiv;
 

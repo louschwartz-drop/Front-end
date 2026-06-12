@@ -7,8 +7,15 @@ export const metadata = {
   keywords: "AI article generation, press release distribution, media outlets, PR distribution, video to article, content publishing",
   openGraph: {
     title: "DropPR.ai - AI-Powered Media & PR Distribution Platform",
-    description: "Build instant exposure with Drop PR. Convert your videos into AI-written articles and distribute them to top media outlets.",
+    description: "Build instant exposure with DropPR. Convert your videos into AI-written articles and distribute them to top media outlets.",
     type: "website",
+    images: ["/logo.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DropPR.ai - AI-Powered Media & PR Distribution Platform",
+    description: "Build instant exposure with DropPR.ai. Convert your videos into AI-written articles and distribute them to top media outlets.",
+    images: ["/logo.png"],
   },
   icons: {
     icon: "/drop-logo.png",

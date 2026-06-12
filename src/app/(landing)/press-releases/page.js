@@ -49,6 +49,18 @@ async function getPlatformArticles() {
 export const metadata = {
     title: "Newsroom | DropPR.ai - Latest AI News & Industry Updates",
     description: "Stay updated with the latest press releases, AI advancements, and media distribution news from DropPR.ai and the global tech industry.",
+    openGraph: {
+        title: "Newsroom | DropPR.ai - Latest AI News & Industry Updates",
+        description: "Stay updated with the latest press releases, AI advancements, and media distribution news from DropPR.ai and the global tech industry.",
+        type: "website",
+        images: ["/logo.png"],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Newsroom | DropPR.ai - Latest AI News & Industry Updates",
+        description: "Stay updated with the latest press releases, AI advancements, and media distribution news from DropPR.ai and the global tech industry.",
+        images: ["/logo.png"],
+    },
 };
 
 export default async function PressReleasesPage() {

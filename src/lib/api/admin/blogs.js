@@ -63,8 +63,8 @@ export const adminBlogService = {
     /**
      * Generate full blog content using AI
      */
-    generateBlogContent: async (topic, selectedTitle, type = "generate-content", existingContent = null) => {
-        const response = await apiAdmin.post("/admin/blogs/generate", { topic, selectedTitle, type, existingContent });
+    generateBlogContent: async (topic, selectedTitle, type = "generate-content", existingContent = null, history = []) => {
+        const response = await apiAdmin.post("/admin/blogs/generate", { topic, selectedTitle, type, existingContent, history });
         return response.data;
     },
 

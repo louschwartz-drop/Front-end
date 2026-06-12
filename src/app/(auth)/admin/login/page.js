@@ -74,11 +74,11 @@ function LoginForm({ redirectPath }) {
       // We need a verifyOTP method in the store or service
       const { adminAuthService } = await import("@/lib/api/admin/auth");
       await adminAuthService.verifyOTP({ otp });
-      
+
       // Update local state to verified
       const { admin, updateAdmin } = adminAuthStore.getState();
       updateAdmin({ isEmailVerified: true });
-      
+
       router.push("/admin/dashboard");
     } catch (error) {
       setSubmitError(error.message || "OTP verification failed.");
@@ -99,14 +99,14 @@ function LoginForm({ redirectPath }) {
             >
               <Image
                 src="/drop-logo.png"
-                alt="Drop PR"
+                alt="DropPR"
                 width={50}
                 height={50}
                 className=""
               />
 
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Drop PR</h1>
+                <h1 className="text-3xl font-bold text-gray-900">DropPR</h1>
                 <p className="text-sm text-gray-600">Admin Portal</p>
               </div>
             </Link>
@@ -204,14 +204,14 @@ function LoginForm({ redirectPath }) {
               <Link href="/" className="inline-flex items-center gap-3 group">
                 <Image
                   src="/drop-logo.png"
-                  alt="Drop PR"
+                  alt="DropPR"
                   width={36}
                   height={36}
                   className=""
                 />
                 <div className="text-left">
                   <h1 className="text-2xl font-bold text-gray-900">
-                    Drop PR
+                    DropPR
                   </h1>
                   <p className="text-xs text-gray-600">Admin Portal</p>
                 </div>
@@ -299,15 +299,15 @@ function LoginForm({ redirectPath }) {
                 >
                   {showOTP ? "Verify & Continue" : "Sign In to Dashboard"}
                 </Button>
-                
+
                 {showOTP && (
-                   <button 
+                  <button
                     type="button"
                     onClick={() => setShowOTP(false)}
                     className="w-full text-center text-sm text-gray-500 hover:text-brand-blue transition-colors mt-2"
-                   >
-                     Back to Login
-                   </button>
+                  >
+                    Back to Login
+                  </button>
                 )}
               </form>
 

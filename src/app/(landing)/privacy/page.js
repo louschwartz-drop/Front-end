@@ -1,6 +1,18 @@
 export const metadata = {
   title: "Privacy Policy - DropPR.ai",
   description: "Privacy policy for DropPR.ai. Secure, enterprise-grade data protection for your article and press release content.",
+  openGraph: {
+    title: "Privacy Policy - DropPR.ai",
+    description: "Privacy policy for DropPR.ai. Secure, enterprise-grade data protection for your article and press release content.",
+    type: "website",
+    images: ["/logo.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Privacy Policy - DropPR.ai",
+    description: "Privacy policy for DropPR.ai. Secure, enterprise-grade data protection for your article and press release content.",
+    images: ["/logo.png"],
+  },
 };
 
 export default function PrivacyPage() {
@@ -21,7 +33,7 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Introduction</h2>
               <p className="text-gray-700 leading-relaxed mb-4">
-                Drop PR ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI-powered media and PR distribution platform.
+                DropPR ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI-powered media and PR distribution platform.
               </p>
             </section>
 

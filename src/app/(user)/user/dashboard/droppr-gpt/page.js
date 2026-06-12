@@ -752,7 +752,7 @@ export default function DropprGPTPage() {
         {/* Mobile Header */}
         <div className="md:hidden flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-50 bg-white z-30">
           <div className="flex items-center gap-2">
-            <h2 className="font-bold text-gray-900 text-lg">Drop PR GPT</h2>
+            <h2 className="font-bold text-gray-900 text-lg">DropPR GPT</h2>
           </div>
           <Tooltip text="View history" position="left">
             <button onClick={() => setShowHistory(true)} className="p-2 text-gray-500 hover:bg-gray-50 rounded-lg transition-colors">
@@ -842,7 +842,7 @@ export default function DropprGPTPage() {
               if (isStreaming) return "Wait for response...";
               if (isDailyChatLimitReached) return "Daily chat limit reached (Max 10). Delete a chat.";
               if (isDailyMessageLimitReached) return "Daily message limit reached (Max 25). Try tomorrow.";
-              return "Message Drop PR GPT...";
+              return "Message DropPR GPT...";
             };
 
             // Touch comment to clear Next.js compile cache
@@ -909,7 +909,7 @@ export default function DropprGPTPage() {
               </form>
             );
           })()}
-          <p className="text-[8px] md:text-[10px] text-center text-gray-400 mt-2">Drop PR GPT can make mistakes. Check important info.</p>
+          <p className="text-[8px] md:text-[10px] text-center text-gray-400 mt-2">DropPR GPT can make mistakes. Check important info.</p>
         </div>
 
         {/* Mobile History Drawer */}

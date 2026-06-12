@@ -68,7 +68,7 @@ const normalizePlatformArticle = (campaign) => ({
     description: campaign.article?.summary || "",
     image: campaign.productCard?.thumbnail || "/fallback-platform.jpeg",
     published: campaign.createdAt,
-    author: campaign.productCard?.authorName || campaign.userId?.name || "Drop PR Author",
+    author: campaign.productCard?.authorName || campaign.userId?.name || "DropPR Author",
     category: [campaign.article?.productSummary?.category || "Platform"],
     url: `/press-releases/${campaign._id}`,
     isPlatform: true
@@ -299,7 +299,7 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                                     { id: "all", label: "All" },
                                     { id: "news", label: "News Articles" },
                                     { id: "discussion", label: "Discussion" },
-                                    { id: "platform", label: "Drop PR Press Releases" }
+                                    { id: "platform", label: "DropPR Press Releases" }
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
@@ -376,7 +376,7 @@ export default function PressRoomClient({ initialNews, initialPlatform }) {
                                         <div className="absolute top-4 left-4 flex gap-2">
                                             {article.isPlatform && (
                                                 <span className="bg-primary text-white text-[10px] font-bold px-3 py-1.5 rounded-full tracking-widest shadow-lg">
-                                                    Drop PR
+                                                    DropPR
                                                 </span>
                                             )}
                                             <span className="bg-white/90 backdrop-blur-md text-brand-dark text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">

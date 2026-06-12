@@ -17,59 +17,59 @@ import Tooltip from "@/components/ui/Tooltip";
 const STANDARD_FOOTER = `
 <div style='margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb;'>
   <h4 style='text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-size:0.875rem;margin-bottom:1rem;'>Media Contact</h4>
-  <p style='margin:0;font-weight:700;color:#111827;text-transform:none;'>Drop PR AI Research &amp; Media Desk</p>
+  <p style='margin:0;font-weight:700;color:#111827;text-transform:none;'>DropPR AI Research &amp; Media Desk</p>
   <p style='margin:4px 0;color:#4b5563;text-transform:none;'>support@droppr.ai</p>
   <p style='margin:4px 0;color:#4b5563;text-transform:none;'>Austin, Texas</p>
 </div>
 <div style='margin-top:2.5rem;padding:1.5rem;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;'>
-  <h4 style='margin-top:0;color:#111827;text-transform:none;'>About Drop PR</h4>
+  <h4 style='margin-top:0;color:#111827;text-transform:none;'>About DropPR</h4>
   <p style='margin-bottom:1rem;color:#374151;line-height:1.7;text-transform:none;'><a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>DropPR</a> transforms creator videos, podcasts, product reviews, and brand announcements into professionally written editorial-style articles distributed across a broad network of digital publishers. The platform helps brands, creators, agencies, and e-commerce companies expand search visibility, strengthen AI discoverability, generate backlinks, and extend the lifespan of short-form content beyond social media feeds.</p>
   <h4 style='margin-top:1.5rem;color:#111827;text-transform:none;'>Call to Action</h4>
-  <p style='margin-bottom:0;color:#374151;line-height:1.7;text-transform:none;'>Brands, creators, podcasters, and agencies interested in turning content into distributed editorial coverage can learn more at <a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>Drop PR</a>.</p>
+  <p style='margin-bottom:0;color:#374151;line-height:1.7;text-transform:none;'>Brands, creators, podcasters, and agencies interested in turning content into distributed editorial coverage can learn more at <a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>DropPR</a>.</p>
 </div>
 `;
 
 function stripFooter(html) {
   if (!html) return "";
-  
+
   // 1. Try to find the exact outer wrapper we know about
   const divIndex = html.search(/<div[^>]*style=["'][^"']*margin-top:\s*3rem/i);
   if (divIndex !== -1) {
-      let clean = html.substring(0, divIndex).trim();
-      if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
-      return clean;
+    let clean = html.substring(0, divIndex).trim();
+    if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
+    return clean;
   }
 
   // 2. Try to find the h4 tag
   const h4Index = html.search(/<h4[^>]*>[\s]*Media Contact[\s]*<\/h4>/i);
   if (h4Index !== -1) {
-      // Find if it is wrapped in an immediate <div
-      const lastDiv = html.lastIndexOf("<div", h4Index);
-      let cutIndex = h4Index;
-      if (lastDiv !== -1 && (h4Index - lastDiv) < 100) {
-          cutIndex = lastDiv;
-      }
-      let clean = html.substring(0, cutIndex).trim();
-      if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
-      return clean;
+    // Find if it is wrapped in an immediate <div
+    const lastDiv = html.lastIndexOf("<div", h4Index);
+    let cutIndex = h4Index;
+    if (lastDiv !== -1 && (h4Index - lastDiv) < 100) {
+      cutIndex = lastDiv;
+    }
+    let clean = html.substring(0, cutIndex).trim();
+    if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
+    return clean;
   }
 
   // 3. Fallback to just the text "Media Contact" but ensure we cut before the tag
   const textIndex = html.indexOf("Media Contact");
   if (textIndex !== -1) {
-      const lastH4 = html.lastIndexOf("<h4", textIndex);
-      const lastP = html.lastIndexOf("<p", textIndex);
-      let cutIndex = textIndex;
-      
-      if (lastH4 !== -1 && (textIndex - lastH4) < 150) cutIndex = lastH4;
-      else if (lastP !== -1 && (textIndex - lastP) < 150) cutIndex = lastP;
-      
-      const lastDiv = html.lastIndexOf("<div", cutIndex);
-      if (lastDiv !== -1 && (cutIndex - lastDiv) < 100) cutIndex = lastDiv;
+    const lastH4 = html.lastIndexOf("<h4", textIndex);
+    const lastP = html.lastIndexOf("<p", textIndex);
+    let cutIndex = textIndex;
 
-      let clean = html.substring(0, cutIndex).trim();
-      if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
-      return clean;
+    if (lastH4 !== -1 && (textIndex - lastH4) < 150) cutIndex = lastH4;
+    else if (lastP !== -1 && (textIndex - lastP) < 150) cutIndex = lastP;
+
+    const lastDiv = html.lastIndexOf("<div", cutIndex);
+    if (lastDiv !== -1 && (cutIndex - lastDiv) < 100) cutIndex = lastDiv;
+
+    let clean = html.substring(0, cutIndex).trim();
+    if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
+    return clean;
   }
 
   return html;
@@ -327,7 +327,7 @@ export default function EditPage() {
                     <h4 style="text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">Media Contact:</h4>
                     <p style="margin: 0; font-weight: 700; color: #111827;">${authorText}</p>
                     <p style="margin: 4px 0; color: #4b5563;">${userEmail}</p>
-                    <p style="margin: 0; color: #9ca3af; font-size: 0.75rem;">Source: Drop PR AI Newsroom Network</p>
+                    <p style="margin: 0; color: #9ca3af; font-size: 0.75rem;">Source: DropPR AI Newsroom Network</p>
                   </div>
                 `;
 
@@ -810,11 +810,11 @@ export default function EditPage() {
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 px-3 md:px-6 py-2 md:py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2 md:gap-4 max-w-[40%] sm:max-w-none">
           <Tooltip text="Go back" position="right">
-          <button onClick={() => router.back()} className="text-gray-500 hover:text-gray-700 p-1">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
+            <button onClick={() => router.back()} className="text-gray-500 hover:text-gray-700 p-1">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
           </Tooltip>
           <h1 className="text-base md:text-xl font-bold text-gray-900 hidden xs:block">Editor</h1>
           <div className="h-4 w-px bg-gray-200 hidden xs:block"></div>
@@ -825,51 +825,51 @@ export default function EditPage() {
 
         <div className="flex items-center gap-1 sm:gap-3">
           <Tooltip text="Save manual changes" position="bottom">
-          <button
-            onClick={handleManualSave}
-            disabled={isSavingManual || isLimitReached}
-            className={`p-1.5 sm:px-3.5 sm:py-1.5 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${isLimitReached
+            <button
+              onClick={handleManualSave}
+              disabled={isSavingManual || isLimitReached}
+              className={`p-1.5 sm:px-3.5 sm:py-1.5 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${isLimitReached
                 ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
                 : "bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md disabled:bg-blue-400 disabled:shadow-none"
-              }`}
-          >
-            {isSavingManual ? (
-              <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-              </svg>
-            )}
-            <span>{isSavingManual ? "Saving..." : "Save"}</span>
-          </button>
+                }`}
+            >
+              {isSavingManual ? (
+                <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+              )}
+              <span>{isSavingManual ? "Saving..." : "Save"}</span>
+            </button>
           </Tooltip>
 
           <Tooltip text="View revision history" position="bottom">
-          <button
-            onClick={() => setShowVersions(true)}
-            className="p-1.5 sm:px-3 sm:py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg flex items-center gap-1.5 transition-colors border border-gray-200"
-          >
-            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="hidden sm:inline">Versions ({versions.length})</span>
-            <span className="sm:hidden">({versions.length})</span>
-          </button>
+            <button
+              onClick={() => setShowVersions(true)}
+              className="p-1.5 sm:px-3 sm:py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg flex items-center gap-1.5 transition-colors border border-gray-200"
+            >
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="hidden sm:inline">Versions ({versions.length})</span>
+              <span className="sm:hidden">({versions.length})</span>
+            </button>
           </Tooltip>
           <Tooltip text="Preview article" position="bottom">
-          <button
-            onClick={() => setShowPreview(true)}
-            className="p-1.5 sm:px-4 sm:py-1.5 text-xs font-semibold text-primary hover:bg-blue-50 rounded-lg flex items-center gap-1.5 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            <span className="hidden sm:inline">Preview</span>
-          </button>
+            <button
+              onClick={() => setShowPreview(true)}
+              className="p-1.5 sm:px-4 sm:py-1.5 text-xs font-semibold text-primary hover:bg-blue-50 rounded-lg flex items-center gap-1.5 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <span className="hidden sm:inline">Preview</span>
+            </button>
           </Tooltip>
         </div>
       </nav>
@@ -919,13 +919,13 @@ export default function EditPage() {
                   </div>
                 ))}
                 <Tooltip text="Apply changes with AI" position="top">
-                <button
-                  onClick={() => setShowRegenConfirm(true)}
-                  disabled={regenerating || isLimitReached}
-                  className="ml-auto bg-primary text-white text-[10px] font-bold px-4 py-1.5 rounded-lg hover:bg-blue-600 shadow-sm disabled:bg-gray-400 transition-all"
-                >
-                  {regenerating && regeneratingAction === "REWRITE_WITH_CONTEXT" ? "Rewriting..." : "Apply All"}
-                </button>
+                  <button
+                    onClick={() => setShowRegenConfirm(true)}
+                    disabled={regenerating || isLimitReached}
+                    className="ml-auto bg-primary text-white text-[10px] font-bold px-4 py-1.5 rounded-lg hover:bg-blue-600 shadow-sm disabled:bg-gray-400 transition-all"
+                  >
+                    {regenerating && regeneratingAction === "REWRITE_WITH_CONTEXT" ? "Rewriting..." : "Apply All"}
+                  </button>
                 </Tooltip>
               </div>
             </div>
@@ -1003,18 +1003,18 @@ export default function EditPage() {
                   <div className="mt-8 pt-6 border-t border-gray-200 text-left opacity-85">
                     <div className="mb-6">
                       <h4 className="text-xs uppercase font-extrabold text-gray-500 tracking-wider mb-2">Media Contact</h4>
-                      <p className="text-sm font-bold text-gray-900">Drop PR AI Research & Media Desk</p>
+                      <p className="text-sm font-bold text-gray-900">DropPR AI Research & Media Desk</p>
                       <p className="text-xs text-gray-600">support@droppr.ai</p>
                       <p className="text-xs text-gray-500">Austin, Texas</p>
                     </div>
                     <div className="bg-gray-50/80 rounded-xl p-4 border border-gray-100">
-                      <h4 className="text-xs font-bold text-gray-900 mb-1">About Drop PR</h4>
+                      <h4 className="text-xs font-bold text-gray-900 mb-1">About DropPR</h4>
                       <p className="text-xs text-gray-600 leading-relaxed font-medium mb-3">
-                        <a href="https://droppr.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold underline hover:text-blue-700">Drop PR</a> transforms creator videos, podcasts, product reviews, and brand announcements into professionally written editorial-style articles distributed across a broad network of digital publishers. The platform helps brands, creators, agencies, and e-commerce companies expand search visibility, strengthen AI discoverability, generate backlinks, and extend the lifespan of short-form content beyond social media feeds.
+                        <a href="https://droppr.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold underline hover:text-blue-700">DropPR</a> transforms creator videos, podcasts, product reviews, and brand announcements into professionally written editorial-style articles distributed across a broad network of digital publishers. The platform helps brands, creators, agencies, and e-commerce companies expand search visibility, strengthen AI discoverability, generate backlinks, and extend the lifespan of short-form content beyond social media feeds.
                       </p>
                       <h4 className="text-xs font-bold text-gray-900 mb-1 mt-3">Call to Action</h4>
                       <p className="text-xs text-gray-600 leading-relaxed font-medium">
-                        Brands, creators, podcasters, and agencies interested in turning content into distributed editorial coverage can learn more at <a href="https://droppr.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold underline hover:text-blue-700">Drop PR</a>.
+                        Brands, creators, podcasters, and agencies interested in turning content into distributed editorial coverage can learn more at <a href="https://droppr.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold underline hover:text-blue-700">DropPR</a>.
                       </p>
                     </div>
                   </div>
@@ -1026,30 +1026,30 @@ export default function EditPage() {
           {/* Sidebar / Sidebar Cards */}
           <div className="lg:col-span-4 space-y-4 md:space-y-6">
             <Tooltip text={isPublishDisabled ? "Please fill all required information in the Mandatory Service Card first" : "Validate and publish"} position="top">
-            <div className="w-full">
-            <button
-              disabled={isPublishDisabled || validating || regenerating}
-              onClick={handlePublishClick}
-              className={`w-full py-3 rounded-xl font-bold text-sm transition-all shadow-md flex justify-center items-center gap-2 ${isPublishDisabled || validating || regenerating
-                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "bg-linear-to-r from-blue-600 to-primary text-white hover:shadow-lg focus:ring-4 focus:ring-blue-100"
-                }`}
-            >
-              {regenerating ? (
-                <>
-                  <div className="w-4 h-4 rounded-full border-2 border-gray-400 border-t-transparent animate-spin" />
-                  Regenerating...
-                </>
-              ) : validating ? (
-                <>
-                  <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                  Validating...
-                </>
-              ) : (
-                "Go Next to Release it"
-              )}
-            </button>
-            </div>
+              <div className="w-full">
+                <button
+                  disabled={isPublishDisabled || validating || regenerating}
+                  onClick={handlePublishClick}
+                  className={`w-full py-3 rounded-xl font-bold text-sm transition-all shadow-md flex justify-center items-center gap-2 ${isPublishDisabled || validating || regenerating
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "bg-linear-to-r from-blue-600 to-primary text-white hover:shadow-lg focus:ring-4 focus:ring-blue-100"
+                    }`}
+                >
+                  {regenerating ? (
+                    <>
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-400 border-t-transparent animate-spin" />
+                      Regenerating...
+                    </>
+                  ) : validating ? (
+                    <>
+                      <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                      Validating...
+                    </>
+                  ) : (
+                    "Go Next to Release it"
+                  )}
+                </button>
+              </div>
             </Tooltip>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -1074,13 +1074,13 @@ export default function EditPage() {
                   <div className="flex items-center justify-between">
                     <label className="text-[10px] font-black text-gray-400 tracking-wider">Thumbnail Url *</label>
                     <Tooltip text="Upload new thumbnail" position="top">
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`text-[10px] font-bold ${uploadingThumbnail ? "text-gray-400" : "text-primary hover:underline"}`}
-                      disabled={uploadingThumbnail}
-                    >
-                      {uploadingThumbnail ? "Uploading..." : "Upload Image"}
-                    </button>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`text-[10px] font-bold ${uploadingThumbnail ? "text-gray-400" : "text-primary hover:underline"}`}
+                        disabled={uploadingThumbnail}
+                      >
+                        {uploadingThumbnail ? "Uploading..." : "Upload Image"}
+                      </button>
                     </Tooltip>
                     <input
                       type="file"
@@ -1163,30 +1163,30 @@ export default function EditPage() {
                   </div>
 
                   <Tooltip text={isPublishDisabled ? "Please fill all required information in the Mandatory Service Card first" : "Validate and publish"} position="top">
-                  <div className="w-full">
-                  <button
-                    disabled={isPublishDisabled || validating || regenerating}
-                    onClick={handlePublishClick}
-                    className={`w-full py-2.5 rounded-xl font-bold text-sm transition-all shadow-md flex justify-center items-center gap-2 ${isPublishDisabled || validating || regenerating
-                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      : "bg-linear-to-r from-blue-600 to-primary text-white hover:shadow-lg focus:ring-4 focus:ring-blue-100"
-                      }`}
-                  >
-                    {regenerating ? (
-                      <>
-                        <div className="w-4 h-4 rounded-full border-2 border-gray-400 border-t-transparent animate-spin" />
-                        Regenerating...
-                      </>
-                    ) : validating ? (
-                      <>
-                        <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                        Validating...
-                      </>
-                    ) : (
-                       "Continue with Press Release"
-                    )}
-                  </button>
-                  </div>
+                    <div className="w-full">
+                      <button
+                        disabled={isPublishDisabled || validating || regenerating}
+                        onClick={handlePublishClick}
+                        className={`w-full py-2.5 rounded-xl font-bold text-sm transition-all shadow-md flex justify-center items-center gap-2 ${isPublishDisabled || validating || regenerating
+                          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                          : "bg-linear-to-r from-blue-600 to-primary text-white hover:shadow-lg focus:ring-4 focus:ring-blue-100"
+                          }`}
+                      >
+                        {regenerating ? (
+                          <>
+                            <div className="w-4 h-4 rounded-full border-2 border-gray-400 border-t-transparent animate-spin" />
+                            Regenerating...
+                          </>
+                        ) : validating ? (
+                          <>
+                            <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                            Validating...
+                          </>
+                        ) : (
+                          "Continue with Press Release"
+                        )}
+                      </button>
+                    </div>
                   </Tooltip>
                 </div>
               </div>
@@ -1222,7 +1222,7 @@ export default function EditPage() {
                   </div>
                 </div>
                 <Tooltip text="Close" position="left">
-                <button onClick={() => setShowAiScoreSheet(false)} className="text-gray-400 hover:text-gray-600 p-1">✕</button>
+                  <button onClick={() => setShowAiScoreSheet(false)} className="text-gray-400 hover:text-gray-600 p-1">✕</button>
                 </Tooltip>
               </div>
 
@@ -1324,52 +1324,52 @@ export default function EditPage() {
                 <div className="flex gap-2 sm:gap-3">
                   {aiAnalysis.score < 60 && (
                     <Tooltip text="Improve using AI" position="top">
-                    <button
-                      disabled={regenerating}
-                      onClick={async () => {
-                        setShowAiScoreSheet(false);
-                        setRegenerating(true);
-                        setRegeneratingAction("IMPROVE_AI_SCORE");
-                        try {
-                          const { campaignService } = await import("@/lib/api/user/campaigns");
-                          const response = await campaignService.performAiEdit(campaignId, "IMPROVE_AI_SCORE", aiAnalysis);
-                          if (response.success) {
-                            setEditData(prev => ({
-                              ...prev,
-                              headline: response.data.article.headline || prev.headline,
-                              summary: response.data.article.summary || prev.summary,
-                              introduction: response.data.article.introduction || prev.introduction,
-                              body: response.data.article.body || prev.body,
-                              creatorQuote: response.data.article.creatorQuote || prev.creatorQuote,
-                              conclusion: response.data.article.conclusion || prev.conclusion,
-                              ctaText: response.data.article.ctaText || prev.ctaText,
-                              locationDate: response.data.article.locationDate || prev.locationDate,
-                            }));
-                            setVersions(response.data.versions);
-                            toast.success("AI significantly improved your content!");
+                      <button
+                        disabled={regenerating}
+                        onClick={async () => {
+                          setShowAiScoreSheet(false);
+                          setRegenerating(true);
+                          setRegeneratingAction("IMPROVE_AI_SCORE");
+                          try {
+                            const { campaignService } = await import("@/lib/api/user/campaigns");
+                            const response = await campaignService.performAiEdit(campaignId, "IMPROVE_AI_SCORE", aiAnalysis);
+                            if (response.success) {
+                              setEditData(prev => ({
+                                ...prev,
+                                headline: response.data.article.headline || prev.headline,
+                                summary: response.data.article.summary || prev.summary,
+                                introduction: response.data.article.introduction || prev.introduction,
+                                body: response.data.article.body || prev.body,
+                                creatorQuote: response.data.article.creatorQuote || prev.creatorQuote,
+                                conclusion: response.data.article.conclusion || prev.conclusion,
+                                ctaText: response.data.article.ctaText || prev.ctaText,
+                                locationDate: response.data.article.locationDate || prev.locationDate,
+                              }));
+                              setVersions(response.data.versions);
+                              toast.success("AI significantly improved your content!");
+                            }
+                          } catch (e) {
+                            console.error(e);
+                            toast.error("AI improvement failed.");
+                          } finally {
+                            setRegenerating(false);
+                            setRegeneratingAction(null);
                           }
-                        } catch (e) {
-                          console.error(e);
-                          toast.error("AI improvement failed.");
-                        } finally {
-                          setRegenerating(false);
-                          setRegeneratingAction(null);
-                        }
-                      }}
-                      className="bg-primary text-white px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold shadow-md hover:bg-blue-700 transition-all flex items-center gap-1.5"
-                    >
-                      {regenerating ? "Improving..." : "Improve with AI"}
-                    </button>
+                        }}
+                        className="bg-primary text-white px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold shadow-md hover:bg-blue-700 transition-all flex items-center gap-1.5"
+                      >
+                        {regenerating ? "Improving..." : "Improve with AI"}
+                      </button>
                     </Tooltip>
                   )}
                   {aiAnalysis.score >= 60 && (
                     <Tooltip text="Proceed to publish" position="top">
-                    <button
-                      onClick={handleInitiatePublish}
-                      className="bg-gray-900 text-white px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold hover:bg-gray-800 transition-all shadow-md"
-                    >
-                      Publish
-                    </button>
+                      <button
+                        onClick={handleInitiatePublish}
+                        className="bg-gray-900 text-white px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold hover:bg-gray-800 transition-all shadow-md"
+                      >
+                        Publish
+                      </button>
                     </Tooltip>
                   )}
                 </div>
@@ -1411,12 +1411,12 @@ export default function EditPage() {
               </div>
               <div className="px-5 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
                 <Tooltip text="Close" position="top">
-                <button
-                  onClick={() => setShowValidationModal(false)}
-                  className="px-6 py-2 bg-gray-900 text-white rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors"
-                >
-                  Close
-                </button>
+                  <button
+                    onClick={() => setShowValidationModal(false)}
+                    className="px-6 py-2 bg-gray-900 text-white rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors"
+                  >
+                    Close
+                  </button>
                 </Tooltip>
               </div>
             </motion.div>
@@ -1463,7 +1463,7 @@ export default function EditPage() {
               <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                 <h3 className="font-bold text-gray-900 text-sm">Previous Versions</h3>
                 <Tooltip text="Close" position="left">
-                <button onClick={() => setShowVersions(false)} className="text-gray-400 hover:text-gray-600 p-1">✕</button>
+                  <button onClick={() => setShowVersions(false)} className="text-gray-400 hover:text-gray-600 p-1">✕</button>
                 </Tooltip>
               </div>
               <div className="max-h-80 overflow-y-auto">
@@ -1511,38 +1511,38 @@ function SectionCard({ label, children, onAiAction, aiLabel, aiDisabled, seconda
           <span className="text-[10px] font-bold text-gray-400 tracking-tight">{label}</span>
           {onSpeak && (
             <Tooltip text={isSpeaking ? "Stop listening" : "Listen to content"} position="top">
-            <button
-              onClick={onSpeak}
-              className={`p-1 rounded-md transition-all ${isSpeaking ? "bg-red-50 text-red-500" : "hover:bg-gray-200 text-gray-400 hover:text-gray-600"}`}
-            >
-              <motion.div animate={isSpeaking ? { scale: [1, 1.2, 1] } : {}} transition={{ duration: 1.5, repeat: Infinity }}>
-                {isSpeaking ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-              </motion.div>
-            </button>
+              <button
+                onClick={onSpeak}
+                className={`p-1 rounded-md transition-all ${isSpeaking ? "bg-red-50 text-red-500" : "hover:bg-gray-200 text-gray-400 hover:text-gray-600"}`}
+              >
+                <motion.div animate={isSpeaking ? { scale: [1, 1.2, 1] } : {}} transition={{ duration: 1.5, repeat: Infinity }}>
+                  {isSpeaking ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+                </motion.div>
+              </button>
             </Tooltip>
           )}
         </div>
         <div className="flex gap-2">
           {onAiAction && (
             <Tooltip text={aiLabel} position="top">
-            <button
-              onClick={onAiAction}
-              disabled={disabled || aiDisabled}
-              className="bg-white border border-blue-100 text-primary text-[9px] font-bold px-2.5 py-1 rounded-lg hover:bg-blue-50 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {aiLabel}
-            </button>
+              <button
+                onClick={onAiAction}
+                disabled={disabled || aiDisabled}
+                className="bg-white border border-blue-100 text-primary text-[9px] font-bold px-2.5 py-1 rounded-lg hover:bg-blue-50 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {aiLabel}
+              </button>
             </Tooltip>
           )}
           {secondaryAction && (
             <Tooltip text={secondaryLabel} position="top">
-            <button
-              onClick={secondaryAction}
-              disabled={disabled || secondaryDisabled}
-              className="bg-white border border-gray-100 text-gray-600 text-[9px] font-bold px-2.5 py-1 rounded-lg hover:bg-gray-50 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {secondaryLabel}
-            </button>
+              <button
+                onClick={secondaryAction}
+                disabled={disabled || secondaryDisabled}
+                className="bg-white border border-gray-100 text-gray-600 text-[9px] font-bold px-2.5 py-1 rounded-lg hover:bg-gray-50 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {secondaryLabel}
+              </button>
             </Tooltip>
           )}
         </div>
@@ -1598,12 +1598,12 @@ function CategorySelector({ categories, onChange }) {
           >
             {cat}
             <Tooltip text="Remove category" position="top">
-            <button
-              onClick={() => handleRemoveCategory(cat)}
-              className="text-gray-300 group-hover:text-red-500 transition-colors"
-            >
-              <X className="w-3 h-3" />
-            </button>
+              <button
+                onClick={() => handleRemoveCategory(cat)}
+                className="text-gray-300 group-hover:text-red-500 transition-colors"
+              >
+                <X className="w-3 h-3" />
+              </button>
             </Tooltip>
           </motion.span>
         ))}
@@ -1619,15 +1619,15 @@ function CategorySelector({ categories, onChange }) {
           <div className="flex flex-wrap gap-1">
             {suggestions.slice(0, 10).map(cat => (
               <Tooltip text="Add suggested category" position="top" key={cat}>
-              <button
-                onClick={() => handleAddCategory(cat)}
-                className="text-[10px] bg-white border border-gray-200 px-2 py-1 rounded-md hover:border-blue-300 hover:text-primary hover:shadow-sm transition-all flex items-center gap-1 font-semibold text-gray-600 group"
-              >
-                <svg className="w-2.5 h-2.5 text-gray-300 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-                </svg>
-                {cat}
-              </button>
+                <button
+                  onClick={() => handleAddCategory(cat)}
+                  className="text-[10px] bg-white border border-gray-200 px-2 py-1 rounded-md hover:border-blue-300 hover:text-primary hover:shadow-sm transition-all flex items-center gap-1 font-semibold text-gray-600 group"
+                >
+                  <svg className="w-2.5 h-2.5 text-gray-300 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                  </svg>
+                  {cat}
+                </button>
               </Tooltip>
             ))}
           </div>
@@ -1661,14 +1661,14 @@ function SidebarField({ label, value, onChange, error, placeholder, onSpeak, isS
         <label className="text-[10px] font-bold text-gray-400">{label}</label>
         {onSpeak && (
           <Tooltip text={isSpeaking ? "Stop listening" : "Listen to field"} position="top">
-          <button
-            onClick={onSpeak}
-            className={`p-1 rounded-md transition-all ${isSpeaking ? "text-red-500" : "text-gray-400 hover:text-primary"}`}
-          >
-            <motion.div animate={isSpeaking ? { scale: [1, 1.2, 1] } : {}} transition={{ duration: 1.5, repeat: Infinity }}>
-              {isSpeaking ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-            </motion.div>
-          </button>
+            <button
+              onClick={onSpeak}
+              className={`p-1 rounded-md transition-all ${isSpeaking ? "text-red-500" : "text-gray-400 hover:text-primary"}`}
+            >
+              <motion.div animate={isSpeaking ? { scale: [1, 1.2, 1] } : {}} transition={{ duration: 1.5, repeat: Infinity }}>
+                {isSpeaking ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+              </motion.div>
+            </button>
           </Tooltip>
         )}
       </div>
