@@ -24,6 +24,7 @@ import {
   FolderOpen,
   List,
   Mail,
+  Target,
 } from "lucide-react";
 
 export const ADMIN_MENU_ITEMS = [
@@ -51,6 +52,11 @@ export const ADMIN_MENU_ITEMS = [
     href: "/admin/pricing",
     label: "Pricing Plans",
     icon: CreditCard,
+  },
+  {
+    href: "/admin/distribution-targets",
+    label: "Distribution Targets",
+    icon: Target,
   },
   {
     href: "/admin/promo-codes",

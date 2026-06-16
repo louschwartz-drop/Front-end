@@ -213,7 +213,7 @@ export default async function BlogDetail({ params }) {
                 </p>
                 <div className="flex items-center gap-0 mt-0.5">
                   <span className="text-xs text-gray-500">
-                    {blog.authorRole || "Founder · DropPR.ai"}
+                    {blog.authorRole || "Head of Growth Marketing · DropPR.ai"}
                   </span>
                   <span className="text-xs text-gray-300 mx-2">·</span>
                   <span className="text-xs text-gray-500">
@@ -340,7 +340,7 @@ export default async function BlogDetail({ params }) {
                       className="text-xs font-black uppercase tracking-widest mb-3"
                       style={{ color: "#0A5CFF" }}
                     >
-                      {blog.authorRole || "Founder · DropPR.ai"}
+                      {blog.authorRole || "Head of Growth Marketing · DropPR.ai"}
                     </p>
                     {blog.authorBio && (
                       <p

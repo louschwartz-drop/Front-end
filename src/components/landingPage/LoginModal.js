@@ -25,6 +25,7 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
+  User,
 } from "lucide-react";
 
 export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect = true }) {
@@ -240,7 +241,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[92vw] max-w-[400px] md:w-[85vw] md:max-w-[800px] p-0 overflow-hidden bg-white border-none shadow-2xl max-h-[95vh] sm:max-h-[80vh] flex flex-col">
         <DialogTitle className="sr-only">Login or Create Account</DialogTitle>
-        <div className="flex flex-col md:flex-row flex-1 min-h-0 md:min-h-[550px]">
+        <div className="flex flex-col md:flex-row flex-1 min-h-0 md:min-h-[550px] overflow-hidden">
 
           {/* Left Column: Branding & Features - HIDDEN ON MOBILE */}
           <div className="hidden md:flex md:w-[40%] bg-slate-900 p-6 text-white flex-col justify-between relative overflow-hidden">
@@ -289,7 +290,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess, shouldRedirect 
           </div>
 
           {/* Right Column: Auth Flows */}
-          <div className="w-full md:w-[60%] px-2 py-6 md:p-8 flex flex-col bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 hover:scrollbar-thumb-primary/50 scrollbar-track-transparent">
+          <div className="w-full md:w-[60%] flex-1 min-h-0 px-2 py-6 md:p-8 flex flex-col bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 hover:scrollbar-thumb-primary/50 scrollbar-track-transparent">
 
             {/* ── OTP VERIFICATION STEP ── */}
             {authMode === "otp" ? (

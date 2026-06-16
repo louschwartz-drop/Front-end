@@ -2,28 +2,46 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Activity, CheckCircle, Clock, AlertCircle, RefreshCw, ExternalLink } from "lucide-react";
+import { X, Activity, CheckCircle, Clock, AlertCircle, RefreshCw, ExternalLink, Search } from "lucide-react";
 import { toast } from "react-toastify";
 import xprArticleRelease from "@/lib/api/user/xprArticleRelease";
 import apiAdmin from "@/lib/api/admin/apiAdmin";
+import { distributionTargetService as userTargetService } from "@/lib/api/user/distributionTargets";
+import { distributionTargetService as adminTargetService } from "@/lib/api/admin/distributionTargets";
 
-export default function DistributionStatusModal({ isOpen, onClose, campaignId, title, onStatusUpdate, isAdmin = false }) {
+export default function DistributionStatusModal({ isOpen, onClose, campaignId, title, packageName, onStatusUpdate, isAdmin = false }) {
     const [statusData, setStatusData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("liveAt");
+    const [searchQuery, setSearchQuery] = useState("");
 
     const fetchStatus = async () => {
         if (!campaignId) return;
         setLoading(true);
         try {
-            // Using campaignId as guid
             let res;
+            let targetsRes;
+            
             if (isAdmin) {
-                const response = await apiAdmin.get('/admin/press-releases/status-check', { params: { guid: campaignId } });
+                const [response, targets] = await Promise.all([
+                    apiAdmin.get('/admin/press-releases/status-check', { params: { guid: campaignId } }),
+                    adminTargetService.getAll()
+                ]);
                 res = response.data;
+                targetsRes = targets;
             } else {
-                res = await xprArticleRelease.checkStatus({ guid: campaignId });
+                const [response, targets] = await Promise.all([
+                    xprArticleRelease.checkStatus({ guid: campaignId }),
+                    userTargetService.getAll()
+                ]);
+                res = response;
+                targetsRes = targets;
             }
+
+            const targetsList = targetsRes?.data || [];
+            const matchingTarget = targetsList.find(t => t.packageName === packageName);
+            const expectedWebsiteCount = matchingTarget ? matchingTarget.expectedWebsiteCount : 0;
+            const totalWebsiteCount = matchingTarget ? matchingTarget.totalWebsiteCount : 0;
 
             // Handle 202 (Processing) - The backend returns { success: true, message: "..." } with 202 status
             // If the message contains "processed", or if data is missing, it's likely a processing state
@@ -44,15 +62,18 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
             if (res.success && res.data) {
                 const data = res.data;
 
-                // Metrics
                 const pendingCount = data.status?.publisherCount?.pending || 0;
                 const publishedCount = data.status?.publisherCount?.live || 0;
-                const totalCount = data.status?.publisherCount?.total || (pendingCount + publishedCount);
+                
+                // Use static total website count from package targets instead of raw API total
+                const totalCount = totalWebsiteCount > 0 ? totalWebsiteCount : (data.status?.publisherCount?.total || (pendingCount + publishedCount));
+                const expectedCount = expectedWebsiteCount > 0 ? expectedWebsiteCount : totalCount;
+                
                 const needsReviewCount = data.needsReview?.length || 0;
 
-                // Determine overall status
+                // Determine overall status using expectedWebsiteCount and 75% rule
                 let overallStatus = "pending";
-                if (totalCount > 0 && (publishedCount / totalCount) >= 0.7) overallStatus = "completed";
+                if (expectedCount > 0 && (publishedCount / expectedCount) >= 0.75) overallStatus = "completed";
                 else if (data.status?.isLive) overallStatus = "published";
                 else if (data.status?.isReviewedDenied) overallStatus = "rejected";
                 else if (data.status?.isNeedsReview) overallStatus = "needs review";
@@ -90,10 +111,13 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
                 addDestinations(data.needsReview, "needs review");
                 addDestinations(data.deniedReview, "rejected");
 
+                // The user requested: pending count will be static website minus website that coming from xpr
+                const computedPendingCount = Math.max(0, totalCount - publishedCount);
+
                 const updatedStatus = {
                     overallStatus,
                     liveAt: liveAtStr,
-                    pending: pendingCount,
+                    pending: computedPendingCount,
                     published: publishedCount,
                     total: totalCount,
                     needsReview: needsReviewCount,
@@ -105,12 +129,12 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
 
                 setStatusData(updatedStatus);
 
-                // Notify parent to update dashboard card locally (Just Now effect)
                 if (typeof onStatusUpdate === "function") {
-                    const isOverThreshold = totalCount > 0 && (publishedCount / totalCount) >= 0.7;
+                    const isOverThreshold = expectedCount > 0 && (publishedCount / expectedCount) >= 0.75;
                     onStatusUpdate({
-                        total: totalCount,
-                        pending: pendingCount,
+                        total: totalCount, // static
+                        pending: computedPendingCount,
+                        published: publishedCount, // actual live count
                         publishedDate: liveAtStr,
                         lastStatusCheck: new Date().toISOString(), // Instant update locally
                         isPending: isOverThreshold ? false : pendingCount > 0,
@@ -243,7 +267,7 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
                                                 )}
                                                 {statusData.total > 0 && (
                                                     <span className="ml-2 px-2.5 py-1 text-[11px] font-bold tracking-wide rounded-full bg-gray-100 text-gray-600 uppercase border border-gray-200 shadow-sm">
-                                                        Total Websites: {statusData.total}
+                                                        Total Websites: {statusData.total}+
                                                     </span>
                                                 )}
                                             </h3>
@@ -268,20 +292,14 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
                                         <div>
                                             <h4 className="text-sm font-bold text-emerald-800">Distribution Completed</h4>
                                             <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
-                                                We have reached 70% published on websites, so it is marked as completed. Some websites may or may not be published over time.
+                                                We have reached 75%+ published on our expected websites, so it is marked as complete. Due to strict website guidelines, your press release may or may not be published on the full total count.
                                             </p>
                                         </div>
                                     </div>
                                 )}
 
                                 {/* Metrics Grid */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                                    {renderMetricCard(
-                                        "Pending",
-                                        statusData.pending || 0,
-                                        <Clock className="w-4 h-4 text-amber-600" />,
-                                        "bg-white border-amber-200"
-                                    )}
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                                     {renderMetricCard(
                                         "Published",
                                         statusData.published || 0,
@@ -289,10 +307,10 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
                                         "bg-white border-green-200"
                                     )}
                                     {renderMetricCard(
-                                        "Needs Review",
-                                        statusData.needsReview || 0,
-                                        <AlertCircle className="w-4 h-4 text-purple-600" />,
-                                        "bg-white border-purple-200"
+                                        "Pending",
+                                        statusData.pending || 0,
+                                        <Clock className="w-4 h-4 text-amber-600" />,
+                                        "bg-white border-amber-200"
                                     )}
                                     {renderMetricCard(
                                         "AI Score",
@@ -308,29 +326,27 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
                                         <div className="bg-gray-50 border-b border-gray-200 px-5 py-3 flex items-center justify-between">
                                             <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest flex items-center gap-2">
                                                 <Activity className="w-4 h-4 text-gray-400" />
-                                                Network Destinations
+                                                Live Websites
                                             </h4>
-                                        </div>
-                                        <div className="flex border-b border-gray-200">
-                                            <button
-                                                onClick={() => setActiveTab("liveAt")}
-                                                className={`flex-1 py-3 text-[13px] sm:text-sm font-bold transition-colors ${activeTab === "liveAt" ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}`}
-                                            >
-                                                Live At ({statusData.rawLiveAt?.length || 0})
-                                            </button>
-                                            <button
-                                                onClick={() => setActiveTab("pendingAt")}
-                                                className={`flex-1 py-3 text-[13px] sm:text-sm font-bold transition-colors ${activeTab === "pendingAt" ? "text-amber-600 border-b-2 border-amber-600 bg-amber-50/50" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}`}
-                                            >
-                                                Pending At ({statusData.rawPendingAt?.length || 0})
-                                            </button>
+                                            {statusData.rawLiveAt?.length > 0 && (
+                                                <div className="relative">
+                                                    <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="Search websites..."
+                                                        value={searchQuery}
+                                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                                        className="pl-8 pr-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none w-48"
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
 
-                                        <div className="max-h-[300px] overflow-y-auto bg-white">
+                                        <div className="max-h-[300px] overflow-y-auto bg-white custom-scrollbar">
                                             {activeTab === "liveAt" && (
-                                                statusData.rawLiveAt && statusData.rawLiveAt.length > 0 ? (
+                                                statusData.rawLiveAt && statusData.rawLiveAt.filter(d => !searchQuery || d.name?.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
                                                     <div className="divide-y divide-gray-100">
-                                                        {statusData.rawLiveAt.map((dest, idx) => (
+                                                        {statusData.rawLiveAt.filter(d => !searchQuery || d.name?.toLowerCase().includes(searchQuery.toLowerCase())).map((dest, idx) => (
                                                             <div key={idx} className="p-4 hover:bg-gray-50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                                                 <div className="flex items-start gap-3 sm:gap-4">
                                                                     <div className="p-1.5 mt-0.5 rounded-full bg-green-100 text-green-600 shrink-0">
@@ -375,29 +391,6 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
                                                     <div className="py-10 px-4 text-center text-gray-500 flex flex-col items-center">
                                                         <AlertCircle className="w-8 h-8 mb-3 text-gray-300" />
                                                         <p className="text-sm font-medium">No live websites currently available.</p>
-                                                    </div>
-                                                )
-                                            )}
-
-                                            {activeTab === "pendingAt" && (
-                                                statusData.rawPendingAt && statusData.rawPendingAt.length > 0 ? (
-                                                    <div className="divide-y divide-gray-100">
-                                                        {statusData.rawPendingAt.map((dest, idx) => (
-                                                            <div key={idx} className="p-4 hover:bg-gray-50 transition-colors flex items-center gap-3 sm:gap-4">
-                                                                <div className="p-1.5 rounded-full bg-amber-100 text-amber-600 shrink-0">
-                                                                    <Clock className="w-4 h-4" />
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-sm font-bold text-gray-900">{dest.name || "Pending Network"}</p>
-                                                                    {dest.network && <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5"><span className="font-semibold text-gray-700">Network:</span> {dest.network}</p>}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <div className="py-10 px-4 text-center text-gray-500 flex flex-col items-center">
-                                                        <CheckCircle className="w-8 h-8 mb-3 text-green-300" />
-                                                        <p className="text-sm font-medium">No pending websites in queue at this time.</p>
                                                     </div>
                                                 )
                                             )}

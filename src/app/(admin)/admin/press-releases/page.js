@@ -412,26 +412,29 @@ export default function AdminPressReleasesPage() {
 
                                         {/* Dynamic Badges Line */}
                                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-3 font-black uppercase tracking-widest text-[8px] sm:text-[9px]">
-                                            <span className="flex items-center gap-1 text-blue-600 bg-blue-50/50 px-2 py-0.5 rounded-full border border-blue-100/50">
+                                            <span className="flex items-center gap-1 font-bold uppercase tracking-wider text-[9px] sm:text-[11px] leading-none px-2.5 py-1 h-[22px] sm:h-[26px] whitespace-nowrap text-blue-600 bg-blue-50/50 rounded-full border border-blue-100/50">
                                                 {release.plan?.name || "Standard Plan"}
                                             </span>
-                                            <span className="flex items-center gap-1 text-gray-400">
-                                                <Clock className="w-3 h-3 text-gray-300" />
-                                                {new Date(release.createdAt).toLocaleDateString("en-US", {
-                                                    month: "short",
-                                                    day: "numeric",
-                                                    year: "numeric"
-                                                })}
-                                            </span>
+                                            {release.distributionStatus?.publishedDate ? (
+                                                <span className="flex items-center gap-1 font-bold text-[9px] sm:text-[11px] leading-none px-2.5 py-1 h-[22px] sm:h-[26px] whitespace-nowrap text-indigo-600 bg-indigo-50 rounded-full border border-indigo-100">
+                                                    <Activity className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                                                    Live: {new Date(release.distributionStatus.publishedDate).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center gap-1 font-bold text-[9px] sm:text-[11px] leading-none px-2.5 py-1 h-[22px] sm:h-[26px] whitespace-nowrap text-gray-500 bg-gray-50 rounded-full border border-gray-200">
+                                                    <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                                                    Created: {new Date(release.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                                                </span>
+                                            )}
                                             {release.campaign?._id && (
-                                                <span className="flex items-center gap-1 text-gray-400 font-mono text-[8px] bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100" title="Publish GUID">
+                                                <span className="flex items-center gap-1 font-mono text-[8px] sm:text-[9px] leading-none px-2.5 py-1 h-[22px] sm:h-[26px] whitespace-nowrap text-gray-400 bg-gray-50 rounded-full border border-gray-100" title="Publish GUID">
                                                     ID: {release.campaign._id}
                                                 </span>
                                             )}
                                             {release.distributionStatus?.total > 0 && (
-                                                <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                                                    <CheckCircle className="w-2.5 h-2.5" />
-                                                    {release.distributionStatus.total} Websites
+                                                <span className="flex items-center gap-1 font-bold text-[9px] sm:text-[11px] leading-none px-2.5 py-1 h-[22px] sm:h-[26px] whitespace-nowrap text-emerald-600 bg-emerald-50 rounded-full border border-emerald-100">
+                                                    <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                                                    {release.distributionStatus.published !== undefined ? release.distributionStatus.published : Math.max(0, release.distributionStatus.total - (release.distributionStatus.pending || 0))} Published
                                                 </span>
                                             )}
                                             {release.campaign && (
@@ -473,7 +476,7 @@ export default function AdminPressReleasesPage() {
                                         </button>
 
                                         <button
-                                            onClick={() => setStatusModal({ show: true, campaignId: release.campaign?._id, title: release.campaign?.article?.headline })}
+                                            onClick={() => setStatusModal({ show: true, campaignId: release.campaign?._id, title: release.campaign?.article?.headline, packageName: release.plan?.name })}
                                             className="px-2.5 py-1.5 hover:bg-white hover:shadow-sm rounded-lg transition-all text-blue-600 hover:text-blue-700 flex items-center gap-1.5 flex-1 sm:flex-none justify-center cursor-pointer"
                                             title="Click to check live publication status"
                                         >
@@ -522,9 +525,10 @@ export default function AdminPressReleasesPage() {
 
             <DistributionStatusModal
                 isOpen={statusModal.show}
-                onClose={() => setStatusModal({ show: false, campaignId: null, title: "" })}
+                onClose={() => setStatusModal({ show: false, campaignId: null, title: "", packageName: "" })}
                 campaignId={statusModal.campaignId}
                 title={statusModal.title}
+                packageName={statusModal.packageName}
                 isAdmin={true}
                 onStatusUpdate={(newStatus) => {
                     setReleases(prev => prev.map(r =>

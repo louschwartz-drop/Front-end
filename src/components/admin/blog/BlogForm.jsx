@@ -36,7 +36,7 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
         categories: [],
         status: "draft",
         authorName: "Hayden Hollis",
-        authorRole: "Founder · DropPR.ai",
+        authorRole: "Head of Growth Marketing · DropPR.ai",
         authorBio: "Hayden Hollis writes about content distribution, digital PR, SEO, AI search, and creator marketing. His work focuses on how brands and creators can extend the reach of their content beyond social media and improve visibility across search engines, news publishers, and AI-powered discovery platforms. He regularly covers strategies related to earned media, audience growth, authority building, and the evolving role of AI in online discovery.",
         authorImage: "",
         seo: {
@@ -95,7 +95,7 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
             categories: (data.categories || []).map(c => c._id || c),
             status: data.status || "draft",
             authorName: data.authorName || "Hayden Hollis",
-            authorRole: data.authorRole || "Founder · DropPR.ai",
+            authorRole: data.authorRole || "Head of Growth Marketing · DropPR.ai",
             authorBio: data.authorBio || "Hayden Hollis writes about content distribution, digital PR, SEO, AI search, and creator marketing. His work focuses on how brands and creators can extend the reach of their content beyond social media and improve visibility across search engines, news publishers, and AI-powered discovery platforms. He regularly covers strategies related to earned media, audience growth, authority building, and the evolving role of AI in online discovery.",
             authorImage: data.authorImage || "",
             seo: {
@@ -496,7 +496,7 @@ export default function BlogForm({ initialData = null, isEditing: initialIsEditi
                                 name="authorRole"
                                 value={formData.authorRole}
                                 onChange={handleChange}
-                                placeholder="Founder · DropPR.ai"
+                                placeholder="Head of Growth Marketing · DropPR.ai"
                                 className="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold text-sm text-gray-900"
                                 required
                             />

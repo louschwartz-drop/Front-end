@@ -113,7 +113,6 @@ export default function UserPressReleasesPage() {
 
 
     const getStatusStyle = (status, release) => {
-        if (release.distributionStatus?.needsReview) return "bg-rose-100 text-rose-700 border-rose-200";
         if (release.distributionStatus?.isPending) return "bg-amber-100 text-amber-700 border-amber-200";
 
         switch (status) {
@@ -126,7 +125,6 @@ export default function UserPressReleasesPage() {
     };
 
     const getStatusLabel = (release) => {
-        if (release.distributionStatus?.needsReview) return "FLAGGED / REVIEW";
         if (release.distributionStatus?.isPending) return "IN PROGRESS";
         if (release.status === "completed" || release.status === "published" || (!release.distributionStatus?.isPending && release.distributionStatus?.total > 0)) return "COMPLETED";
         return release.status.toUpperCase();
@@ -299,48 +297,38 @@ export default function UserPressReleasesPage() {
                                             </h3>
                                             <div className="flex flex-wrap items-center gap-x-3 md:gap-x-4 gap-y-2 text-[10px] md:text-sm">
                                                 {release.campaign && getSourceDetails(release.campaign) && (
-                                                    <span className={`flex items-center gap-1.5 font-bold uppercase tracking-tight text-[8px] md:text-[10px] px-2 md:px-2.5 py-0.5 md:py-1 rounded-full border ${getSourceDetails(release.campaign).color}`}>
+                                                    <span className={`flex items-center gap-1.5 font-bold uppercase tracking-tight text-[9px] sm:text-[11px] leading-none px-2.5 py-1 h-[22px] sm:h-[26px] whitespace-nowrap rounded-full border ${getSourceDetails(release.campaign).color}`}>
                                                         {getSourceDetails(release.campaign).icon}
                                                         {getSourceDetails(release.campaign).label}
                                                     </span>
                                                 )}
                                                 <div className="flex items-center gap-2">
-                                                    <span className="flex items-center gap-1 font-bold uppercase tracking-widest text-[8px] md:text-[10px] text-blue-600 bg-blue-50 px-2 md:px-2.5 py-0.5 md:py-1 rounded-full border border-blue-100">
+                                                    <span className="flex items-center gap-1 font-bold uppercase tracking-wider text-[9px] sm:text-[11px] leading-none px-2.5 py-1 h-[22px] sm:h-[26px] whitespace-nowrap text-blue-600 bg-blue-50 rounded-full border border-blue-100">
                                                         {release.plan?.name || "Standard Plan"}
                                                     </span>
-                                                    <span className={`px-2 md:px-2.5 py-0.5 md:py-1 rounded-full text-[8px] md:text-[10px] font-bold tracking-widest border flex items-center gap-1.5 ${getStatusStyle(release.status, release)}`}>
-                                                        {release.distributionStatus?.needsReview && <Flag className="w-2.5 h-2.5 fill-current" />}
+                                                    <span className={`flex items-center gap-1.5 font-bold uppercase tracking-wider text-[9px] sm:text-[11px] leading-none px-2.5 py-1 h-[22px] sm:h-[26px] whitespace-nowrap rounded-full border ${getStatusStyle(release.status, release)}`}>
                                                         {getStatusLabel(release)}
                                                     </span>
-                                                    {release.distributionStatus && release.distributionStatus.pending > 0 && (
-                                                        <span className="flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-600 rounded-lg border border-amber-100 font-bold text-[8px] sm:text-[10px]">
-                                                            <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                                            {release.distributionStatus.pending} Pending
-                                                        </span>
-                                                    )}
                                                 </div>
-                                                <span className="flex items-center gap-1 text-gray-400 font-semibold">
-                                                    <Clock className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                                                    {new Date(release.createdAt).toLocaleDateString("en-US", {
-                                                        month: "short",
-                                                        day: "numeric",
-                                                        year: "numeric"
-                                                    })}
-                                                </span>
-                                                {release.distributionStatus && release.distributionStatus.total > 0 && (
-                                                    <span className="flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100 font-bold text-[8px] sm:text-[10px]">
-                                                        <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                                        {release.distributionStatus.total} Websites
+                                                {release.distributionStatus?.publishedDate ? (
+                                                    <span className="flex items-center gap-1.5 font-bold text-[9px] sm:text-[11px] leading-none px-2.5 py-1 h-[22px] sm:h-[26px] whitespace-nowrap rounded-full border text-indigo-600 bg-indigo-50 border-indigo-100">
+                                                        <Activity className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                                                        Live: {new Date(release.distributionStatus.publishedDate).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1.5 font-bold text-[9px] sm:text-[11px] leading-none px-2.5 py-1 h-[22px] sm:h-[26px] whitespace-nowrap rounded-full border text-gray-500 bg-gray-50 border-gray-200">
+                                                        <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                                                        Created: {new Date(release.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                                                     </span>
                                                 )}
-                                                {release.distributionStatus?.publishedDate && (
-                                                    <span className="flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100 font-bold text-[8px] sm:text-[10px]">
-                                                        <Activity className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                                        Live Since: {new Date(release.distributionStatus.publishedDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                                {release.distributionStatus && release.distributionStatus.total > 0 && (
+                                                    <span className="flex items-center gap-1.5 font-bold text-[9px] sm:text-[11px] leading-none px-2.5 py-1 h-[22px] sm:h-[26px] whitespace-nowrap rounded-full border text-emerald-600 bg-emerald-50 border-emerald-100">
+                                                        <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                                                        {release.distributionStatus.published !== undefined ? release.distributionStatus.published : Math.max(0, release.distributionStatus.total - (release.distributionStatus.pending || 0))} Published
                                                     </span>
                                                 )}
                                                 {release.distributionStatus?.lastStatusCheck && getStatusLabel(release) !== "FINISHED" && (
-                                                    <span className="flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 bg-gray-50 text-gray-500 rounded-lg border border-gray-100 font-bold text-[8px] sm:text-[10px]">
+                                                    <span className="flex items-center gap-1.5 font-bold text-[9px] sm:text-[11px] leading-none px-2.5 py-1 h-[22px] sm:h-[26px] whitespace-nowrap rounded-full border text-gray-500 bg-gray-50 border-gray-200">
                                                         Last Updated: {getRelativeTime(release.distributionStatus.lastStatusCheck)}
                                                     </span>
                                                 )}
@@ -395,7 +383,7 @@ export default function UserPressReleasesPage() {
 
                                         <Tooltip text="Check live status" position="top">
                                             <button
-                                                onClick={() => setStatusModal({ show: true, campaignId: release.campaign._id, title: release.campaign.article?.headline })}
+                                                onClick={() => setStatusModal({ show: true, campaignId: release.campaign._id, title: release.campaign.article?.headline, packageName: release.plan?.name })}
                                                 className="flex-1 md:flex-none justify-center px-2 md:px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all text-blue-600 hover:text-blue-700 flex items-center gap-1.5 border border-blue-100"
                                             >
                                                 <Activity className="w-4 h-4 md:w-4 md:h-4" />
@@ -463,9 +451,10 @@ export default function UserPressReleasesPage() {
             {/* Live Distribution Status Modal */}
             <DistributionStatusModal
                 isOpen={statusModal.show}
-                onClose={() => setStatusModal({ show: false, campaignId: null, title: "" })}
+                onClose={() => setStatusModal({ show: false, campaignId: null, title: "", packageName: "" })}
                 campaignId={statusModal.campaignId}
                 title={statusModal.title}
+                packageName={statusModal.packageName}
                 onStatusUpdate={(newStatus) => {
                     setReleases(prev => prev.map(r =>
                         r.campaign?._id === statusModal.campaignId
