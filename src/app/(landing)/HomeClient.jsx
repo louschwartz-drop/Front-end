@@ -523,6 +523,8 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Testimonials Section Hidden per request */}
+        {false && (
         <section className="w-full bg-primary py-20 relative overflow-x-hidden">
           <div className="absolute inset-0 bg-linear-to-br from-primary via-brand-dark to-primary opacity-50"></div>
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -617,6 +619,7 @@ export default function Home() {
             </div>
           </div>
         </section>
+        )}
 
         <section className="w-full bg-linear-to-b from-white via-gray-50 to-white py-24 overflow-x-hidden">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">

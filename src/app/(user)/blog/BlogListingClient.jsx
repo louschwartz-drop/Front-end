@@ -203,7 +203,7 @@ export default function BlogListingClient() {
                                         className="group flex flex-col h-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-400 relative"
                                     >
                                         {/* Thumbnail */}
-                                        <div className="relative h-52 overflow-hidden rounded-t-2xl bg-gray-100 flex-shrink-0">
+                                        <div className="relative aspect-[1200/630] overflow-hidden rounded-t-2xl bg-gray-100 flex-shrink-0">
                                             <img
                                                 src={blog.featuredImage || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800"}
                                                 alt={blog.title}

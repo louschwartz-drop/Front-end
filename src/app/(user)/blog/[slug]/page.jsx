@@ -191,55 +191,57 @@ export default async function BlogDetail({ params }) {
             <hr className="border-gray-200 mb-6" />
 
             {/* Author Row */}
-            <div className="flex items-center gap-4 mb-6">
-              {/* Avatar */}
-              <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {blog.authorImage ? (
-                  <img
-                    src={blog.authorImage}
-                    alt={blog.authorName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-white text-xs font-black">
-                    {authorInitials}
-                  </span>
-                )}
-              </div>
-              {/* Meta */}
-              <div>
-                <p className="text-sm font-bold text-gray-900 leading-tight">
-                  By {blog.authorName || "Hayden Hollis"}
-                </p>
-                <div className="flex items-center gap-0 mt-0.5">
-                  <span className="text-xs text-gray-500">
-                    {blog.authorRole || "Head of Growth Marketing · DropPR.ai"}
-                  </span>
-                  <span className="text-xs text-gray-300 mx-2">·</span>
-                  <span className="text-xs text-gray-500">
-                    {readTime}&thinsp;min read
-                  </span>
-                  <span className="text-xs text-gray-300 mx-2">·</span>
-                  <span className="text-xs text-gray-500">
-                    Published&nbsp;
-                    {format(
-                      new Date(blog.publishedAt || blog.createdAt),
-                      "MMMM d, yyyy",
-                    )}
-                  </span>
-                  {blog.viewCount > 0 && (
-                    <>
-                      <span className="text-xs text-gray-300 mx-2">·</span>
-                      <span className="text-xs text-gray-500 flex items-center gap-1">
-                        <Eye size={12} className="text-primary/60" />
-                        {blog.viewCount.toLocaleString()}&thinsp;views
-                      </span>
-                    </>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                {/* Avatar */}
+                <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {blog.authorImage ? (
+                    <img
+                      src={blog.authorImage}
+                      alt={blog.authorName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white text-xs font-black">
+                      {authorInitials}
+                    </span>
                   )}
+                </div>
+                {/* Meta */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-900 leading-tight truncate">
+                    By {blog.authorName || "Hayden Hollis"}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                      {blog.authorRole || "Head of Growth Marketing · DropPR.ai"}
+                    </span>
+                    <span className="text-xs text-gray-300 hidden sm:inline-block">·</span>
+                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                      {readTime}&thinsp;min read
+                    </span>
+                    <span className="text-xs text-gray-300 hidden sm:inline-block">·</span>
+                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                      Published&nbsp;
+                      {format(
+                        new Date(blog.publishedAt || blog.createdAt),
+                        "MMM d, yyyy",
+                      )}
+                    </span>
+                    {blog.viewCount > 0 && (
+                      <>
+                        <span className="text-xs text-gray-300 hidden sm:inline-block">·</span>
+                        <span className="text-xs text-gray-500 flex items-center gap-1 whitespace-nowrap">
+                          <Eye size={12} className="text-primary/60" />
+                          {blog.viewCount.toLocaleString()}&thinsp;views
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="ml-auto z-10 flex items-center gap-2">
+              <div className="sm:ml-auto z-10 flex items-center gap-2">
                 <ShareMenu
                   url={`/blog/${blog.slug}`}
                   title={blog.title}
@@ -426,7 +428,7 @@ export default async function BlogDetail({ params }) {
                       className="group flex flex-col h-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-400 relative"
                     >
                       {/* Thumbnail — no badges on image */}
-                      <div className="relative h-52 overflow-hidden rounded-t-2xl bg-gray-100 flex-shrink-0">
+                      <div className="relative aspect-[1200/630] overflow-hidden rounded-t-2xl bg-gray-100 flex-shrink-0">
                         <img
                           src={rBlog.featuredImage || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800"}
                           alt={rBlog.title}
