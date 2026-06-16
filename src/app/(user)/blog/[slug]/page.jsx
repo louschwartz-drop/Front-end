@@ -337,7 +337,7 @@ export default async function BlogDetail({ params }) {
                       {blog.authorName || "Hayden Hollis"}
                     </p>
                     <p
-                      className="text-xs font-black uppercase tracking-widest mb-3"
+                      className="text-sm font-bold mb-3"
                       style={{ color: "#0A5CFF" }}
                     >
                       {blog.authorRole || "Head of Growth Marketing · DropPR.ai"}

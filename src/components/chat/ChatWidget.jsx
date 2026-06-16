@@ -39,7 +39,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 
 // ── FAQ suggestions shown in AI Chat ──────────────────────────────────────────
 const FAQ_SUGGESTIONS = [
-  'What is Droppr.ai and how does it work?',
+  'What is DropPR.ai and how does it work?',
   'How do I create a campaign?',
   'What are the pricing plans?',
 ];
@@ -824,7 +824,7 @@ export default function ChatWidget() {
                 )}
                 <div>
                   <h3 className="font-extrabold text-sm flex items-center gap-1.5 leading-none">
-                    <LifeBuoy size={16} /> Droppr.ai Support
+                    <LifeBuoy size={16} /> DropPR.ai Support
                   </h3>
                 </div>
               </div>
@@ -867,7 +867,7 @@ export default function ChatWidget() {
                     </div>
                     <h2 className="text-xl font-extrabold text-gray-800">How can we help?</h2>
                     <p className="text-xs text-gray-400">
-                      Welcome to Droppr Support. Choose a method below.
+                      Welcome to DropPR Support. Choose a method below.
                     </p>
                   </div>
 
@@ -978,7 +978,7 @@ export default function ChatWidget() {
                         <div className="bg-blue-50 text-primary p-3 rounded-full">
                           <Sparkles size={24} className="animate-pulse" />
                         </div>
-                        <p className="text-xs text-gray-500 font-bold">Ask Droppr AI any question!</p>
+                        <p className="text-xs text-gray-500 font-bold">Ask DropPR AI any question!</p>
                         <div className="flex flex-col gap-2 w-full max-w-xs mx-auto">
                           {FAQ_SUGGESTIONS.map((q) => (
                             <button

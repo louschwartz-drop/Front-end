@@ -116,7 +116,7 @@ export default function GenerateBlogModal({ isOpen, onClose, onGenerateSuccess, 
                             <Sparkles className="text-white" size={20} />
                         </div>
                         <div>
-                            <span className="block text-xs uppercase tracking-widest text-primary font-black">Droppr GPT</span>
+                            <span className="block text-xs uppercase tracking-widest text-primary font-black">DropPR GPT</span>
                             <span className="text-lg font-black text-gray-900 tracking-tight">AI Writing Partner</span>
                         </div>
                     </DialogTitle>

@@ -441,9 +441,9 @@ export default function DropprGPTPage() {
       if (isTooLong) {
         refusalText = "I'm sorry, but I can only process messages up to 4000 characters. Please shorten your message.";
       } else if (hasHtmlTags) {
-        refusalText = "I'm sorry, but I can only answer questions related to press releases, blogs, public relations strategies, and the Droppr.ai platform. HTML input is not permitted.";
+        refusalText = "I'm sorry, but I can only answer questions related to press releases, blogs, public relations strategies, and the DropPR.ai platform. HTML input is not permitted.";
       } else {
-        refusalText = "I'm sorry, but I can only answer questions related to press releases, blogs, public relations strategies, and the Droppr.ai platform. Programming code input is not permitted.";
+        refusalText = "I'm sorry, but I can only answer questions related to press releases, blogs, public relations strategies, and the DropPR.ai platform. Programming code input is not permitted.";
       }
 
       const words = refusalText.split(" ");

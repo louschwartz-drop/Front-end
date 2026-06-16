@@ -234,7 +234,7 @@ export default function UserAuthPage() {
               Empowering your Press Release journey.
             </h2>
             <p className="text-slate-400 text-sm leading-relaxed mb-8">
-              Join thousands of creators using Droppr.ai to generate and publish professional articles in seconds.
+              Join thousands of creators using DropPR.ai to generate and publish professional articles in seconds.
             </p>
 
             <ul className="space-y-4">
