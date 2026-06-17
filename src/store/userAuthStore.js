@@ -35,9 +35,9 @@ const userAuthStore = create(
           await signOut({ redirect: false });
         } catch (e) {}
 
-        // Remove cookie
+        // Remove cookie (must match creation attributes to successfully delete)
         document.cookie =
-          "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+          "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure";
 
         set({
           user: null,

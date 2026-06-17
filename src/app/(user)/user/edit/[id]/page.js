@@ -671,10 +671,10 @@ export default function EditPage() {
       if (editData.body) {
         const containsHTML = /<[a-z][\s\S]*>/i.test(editData.body);
         if (containsHTML) {
-          htmlContent = stripFooter(editData.body.trim(), isDocUpload);
+          htmlContent = editData.body.trim();
         } else {
           // Fallback plain text formatting
-          htmlContent = stripFooter(`<p>${editData.body.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`, isDocUpload);
+          htmlContent = `<p>${editData.body.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`;
         }
       }
 
@@ -722,13 +722,14 @@ export default function EditPage() {
       }
 
       // Combine all parts into a clean runtime HTML content payload
+      // Fix: Append ABOUT_DROPPR_BLOCK universally so we don't overwrite custom media contact with a hardcoded one
       const wrappedContent = `
         <div>
           ${htmlContent}
           ${creatorQuoteHtml}
           ${purchaseInfoHtml}
           ${originalSourceHtml}
-          ${isDocUpload ? ABOUT_DROPPR_BLOCK : STANDARD_FOOTER}
+          ${ABOUT_DROPPR_BLOCK}
         </div>
       `;
 
@@ -754,10 +755,14 @@ export default function EditPage() {
         xprStoryPayload.categories = categoriesArray;
       }
 
+      console.log("=== XPR STORY PAYLOAD (FRONTEND) ===", xprStoryPayload);
+
       setXprStoryPayload(xprStoryPayload);
 
       const xprArticleRelease = (await import("@/lib/api/user/xprArticleRelease")).default;
       const response = await xprArticleRelease.precheck(xprStoryPayload, campaignId);
+
+      console.log("=== XPR VALIDATION RESPONSE (FRONTEND) ===", response);
 
       // Validation passed, check AI score
       const aiAnalysisData = response?.data?.aiAnalysis;
