@@ -106,6 +106,7 @@ export const printArticleAsPdf = async ({ displayData, displayProduct, standardF
 
     // Add inline styles directly to the element to ensure html2pdf catches them
     const style = document.createElement('style');
+    style.id = 'pdf-custom-style';
     style.innerHTML = `
         .pdf-container { font-family: 'Inter', sans-serif; color: #111827; background: #fff; padding: 20px; max-width: 800px; margin: 0 auto; }
         h1 { font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: 1.25rem; }
@@ -132,7 +133,23 @@ export const printArticleAsPdf = async ({ displayData, displayProduct, standardF
         margin: 15,
         filename: `article-${safeFilename}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            allowTaint: true, 
+            logging: false,
+            onclone: (clonedDoc) => {
+                // Strip all stylesheets from the cloned document to avoid
+                // unsupported color functions (like oklch, lab, etc.) that crash html2canvas,
+                // while keeping our custom styles specifically defined for the PDF.
+                const styles = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]');
+                styles.forEach(styleNode => {
+                    if (styleNode.id !== 'pdf-custom-style') {
+                        styleNode.remove();
+                    }
+                });
+            }
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 

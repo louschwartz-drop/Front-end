@@ -22,50 +22,104 @@ export const STANDARD_FOOTER = `
 </div>
 `;
 
-export function stripFooter(html) {
+export const ABOUT_DROPPR_BLOCK = `
+<div style='margin-top:2.5rem;padding:1.5rem;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;'>
+  <h4 style='margin-top:0;color:#111827;'>About DropPR</h4>
+  <p style='margin-bottom:1rem;color:#374151;line-height:1.7;'><a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>DropPR</a> transforms creator videos, podcasts, product reviews, and brand announcements into professionally written editorial-style articles distributed across a broad network of digital publishers. The platform helps brands, creators, agencies, and e-commerce companies expand search visibility, strengthen AI discoverability, generate backlinks, and extend the lifespan of short-form content beyond social media feeds.</p>
+  <h4 style='margin-top:1.5rem;color:#111827;'>Call to Action</h4>
+  <p style='margin-bottom:0;color:#374151;line-height:1.7;'>Brands, creators, podcasters, and agencies interested in turning content into distributed editorial coverage can learn more at <a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>DropPR</a>.</p>
+</div>
+`;
+
+function closeUnclosedTags(html) {
     if (!html) return "";
+    
+    let cleanedHtml = html;
+    const lastOpenBracket = cleanedHtml.lastIndexOf("<");
+    const lastCloseBracket = cleanedHtml.lastIndexOf(">");
+    if (lastOpenBracket > lastCloseBracket) {
+        cleanedHtml = cleanedHtml.substring(0, lastOpenBracket).trim();
+    }
+
+    const tagStack = [];
+    const tagRegex = /<(\/?)([a-z0-9]+)(?:\s+[^>]*)*>/gi;
+    let match;
+    
+    while ((match = tagRegex.exec(cleanedHtml)) !== null) {
+        const isClosing = match[1] === "/";
+        const tagName = match[2].toLowerCase();
+        const voidElements = ["img", "br", "hr", "input", "meta", "link", "source", "embed", "col", "area"];
+        
+        if (voidElements.includes(tagName)) {
+            continue;
+        }
+        
+        if (isClosing) {
+            const index = tagStack.lastIndexOf(tagName);
+            if (index !== -1) {
+                tagStack.splice(index, 1);
+            }
+        } else {
+            tagStack.push(tagName);
+        }
+    }
+    
+    for (let i = tagStack.length - 1; i >= 0; i--) {
+        cleanedHtml += `</${tagStack[i]}>`;
+    }
+    
+    return cleanedHtml;
+}
+
+export function stripFooter(html, isDocumentUpload = false) {
+    if (!html) return "";
+    if (isDocumentUpload) {
+        return closeUnclosedTags(html);
+    }
+
+    let stripped = html;
 
     // 1. Try to find the exact outer wrapper we know about
     const divIndex = html.search(/<div[^>]*style=["'][^"']*margin-top:\s*3rem/i);
     if (divIndex !== -1) {
         let clean = html.substring(0, divIndex).trim();
         if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
-        return clean;
-    }
+        stripped = clean;
+    } else {
+        // 2. Try to find the h4 tag
+        const h4Index = html.search(/<h4[^>]*>[\s]*Media Contact[\s]*<\/h4>/i);
+        if (h4Index !== -1) {
+            // Find if it is wrapped in an immediate <div
+            const lastDiv = html.lastIndexOf("<div", h4Index);
+            let cutIndex = h4Index;
+            if (lastDiv !== -1 && (h4Index - lastDiv) < 100) {
+                cutIndex = lastDiv;
+            }
+            let clean = html.substring(0, cutIndex).trim();
+            if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
+            stripped = clean;
+        } else {
+            // 3. Fallback to just the text "Media Contact" but ensure we cut before the tag
+            const textIndex = html.indexOf("Media Contact");
+            if (textIndex !== -1) {
+                const lastH4 = html.lastIndexOf("<h4", textIndex);
+                const lastP = html.lastIndexOf("<p", textIndex);
+                let cutIndex = textIndex;
 
-    // 2. Try to find the h4 tag
-    const h4Index = html.search(/<h4[^>]*>[\s]*Media Contact[\s]*<\/h4>/i);
-    if (h4Index !== -1) {
-        // Find if it is wrapped in an immediate <div
-        const lastDiv = html.lastIndexOf("<div", h4Index);
-        let cutIndex = h4Index;
-        if (lastDiv !== -1 && (h4Index - lastDiv) < 100) {
-            cutIndex = lastDiv;
+                if (lastH4 !== -1 && (textIndex - lastH4) < 150) cutIndex = lastH4;
+                else if (lastP !== -1 && (textIndex - lastP) < 150) cutIndex = lastP;
+
+                const lastDiv = html.lastIndexOf("<div", cutIndex);
+                if (lastDiv !== -1 && (cutIndex - lastDiv) < 100) cutIndex = lastDiv;
+
+                let clean = html.substring(0, cutIndex).trim();
+                if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
+                stripped = clean;
+            }
         }
-        let clean = html.substring(0, cutIndex).trim();
-        if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
-        return clean;
     }
 
-    // 3. Fallback to just the text "Media Contact" but ensure we cut before the tag
-    const textIndex = html.indexOf("Media Contact");
-    if (textIndex !== -1) {
-        const lastH4 = html.lastIndexOf("<h4", textIndex);
-        const lastP = html.lastIndexOf("<p", textIndex);
-        let cutIndex = textIndex;
-
-        if (lastH4 !== -1 && (textIndex - lastH4) < 150) cutIndex = lastH4;
-        else if (lastP !== -1 && (textIndex - lastP) < 150) cutIndex = lastP;
-
-        const lastDiv = html.lastIndexOf("<div", cutIndex);
-        if (lastDiv !== -1 && (cutIndex - lastDiv) < 100) cutIndex = lastDiv;
-
-        let clean = html.substring(0, cutIndex).trim();
-        if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
-        return clean;
-    }
-
-    return html;
+    return closeUnclosedTags(stripped);
 }
 
 export default function FullArticlePreview({ isOpen, onClose, campaign, article, productCard }) {
@@ -84,6 +138,9 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
     const handleDownload = async (format) => {
         setShowDownloadDropdown(false);
 
+        const isDocUpload = campaign?.videoSource === "document_upload" || displayData.videoSource === "document_upload";
+        const footerToUse = isDocUpload ? ABOUT_DROPPR_BLOCK : STANDARD_FOOTER;
+
         if (format === 'pdf') {
             setIsDownloading(true);
 
@@ -91,8 +148,8 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                 await printArticleAsPdf({
                     displayData,
                     displayProduct,
-                    standardFooter: STANDARD_FOOTER,
-                    stripFooter
+                    standardFooter: footerToUse,
+                    stripFooter: (html) => stripFooter(html, isDocUpload)
                 });
                 toast.success("PDF generated and downloaded successfully!");
             } catch (error) {
@@ -273,7 +330,7 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                         <style dangerouslySetInnerHTML={{ __html: BLOCKQUOTE_STYLES }} />
                         <div
                             className="text-sm md:text-lg text-gray-700 leading-relaxed md:leading-loose space-y-4 md:space-y-6 html-content-preview article-html"
-                            dangerouslySetInnerHTML={{ __html: `<div>${stripFooter(displayData.body || "")}${STANDARD_FOOTER}</div>` }}
+                            dangerouslySetInnerHTML={{ __html: `<div>${stripFooter(displayData.body || "", campaign?.videoSource === "document_upload" || displayData.videoSource === "document_upload")}${campaign?.videoSource === "document_upload" || displayData.videoSource === "document_upload" ? ABOUT_DROPPR_BLOCK : STANDARD_FOOTER}</div>` }}
                         />
 
                         {/* Creator Quote Section */}

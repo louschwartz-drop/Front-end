@@ -29,15 +29,67 @@ const STANDARD_FOOTER = `
 </div>
 `;
 
-function stripFooter(html) {
+const ABOUT_DROPPR_BLOCK = `
+<div style='margin-top:2.5rem;padding:1.5rem;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;'>
+  <h4 style='margin-top:0;color:#111827;text-transform:none;'>About DropPR</h4>
+  <p style='margin-bottom:1rem;color:#374151;line-height:1.7;text-transform:none;'><a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>DropPR</a> transforms creator videos, podcasts, product reviews, and brand announcements into professionally written editorial-style articles distributed across a broad network of digital publishers. The platform helps brands, creators, agencies, and e-commerce companies expand search visibility, strengthen AI discoverability, generate backlinks, and extend the lifespan of short-form content beyond social media feeds.</p>
+  <h4 style='margin-top:1.5rem;color:#111827;text-transform:none;'>Call to Action</h4>
+  <p style='margin-bottom:0;color:#374151;line-height:1.7;text-transform:none;'>Brands, creators, podcasters, and agencies interested in turning content into distributed editorial coverage can learn more at <a href='https://droppr.ai' target='_blank' style='color:#0A5CFF;font-weight:600;text-decoration:underline;'>DropPR</a>.</p>
+</div>
+`;
+
+function closeUnclosedTags(html) {
   if (!html) return "";
+  
+  let cleanedHtml = html;
+  const lastOpenBracket = cleanedHtml.lastIndexOf("<");
+  const lastCloseBracket = cleanedHtml.lastIndexOf(">");
+  if (lastOpenBracket > lastCloseBracket) {
+    cleanedHtml = cleanedHtml.substring(0, lastOpenBracket).trim();
+  }
+
+  const tagStack = [];
+  const tagRegex = /<(\/?)([a-z0-9]+)(?:\s+[^>]*)*>/gi;
+  let match;
+  
+  while ((match = tagRegex.exec(cleanedHtml)) !== null) {
+    const isClosing = match[1] === "/";
+    const tagName = match[2].toLowerCase();
+    const voidElements = ["img", "br", "hr", "input", "meta", "link", "source", "embed", "col", "area"];
+    
+    if (voidElements.includes(tagName)) {
+      continue;
+    }
+    
+    if (isClosing) {
+      const index = tagStack.lastIndexOf(tagName);
+      if (index !== -1) {
+        tagStack.splice(index, 1);
+      }
+    } else {
+      tagStack.push(tagName);
+    }
+  }
+  
+  for (let i = tagStack.length - 1; i >= 0; i--) {
+    cleanedHtml += `</${tagStack[i]}>`;
+  }
+  
+  return cleanedHtml;
+}
+
+function stripFooter(html, isDocumentUpload = false) {
+  if (!html) return "";
+  if (isDocumentUpload) {
+    return closeUnclosedTags(html);
+  }
 
   // 1. Try to find the exact outer wrapper we know about
   const divIndex = html.search(/<div[^>]*style=["'][^"']*margin-top:\s*3rem/i);
   if (divIndex !== -1) {
     let clean = html.substring(0, divIndex).trim();
     if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
-    return clean;
+    return closeUnclosedTags(clean);
   }
 
   // 2. Try to find the h4 tag
@@ -51,7 +103,7 @@ function stripFooter(html) {
     }
     let clean = html.substring(0, cutIndex).trim();
     if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
-    return clean;
+    return closeUnclosedTags(clean);
   }
 
   // 3. Fallback to just the text "Media Contact" but ensure we cut before the tag
@@ -69,10 +121,10 @@ function stripFooter(html) {
 
     let clean = html.substring(0, cutIndex).trim();
     if (clean.endsWith("<div>")) clean = clean.slice(0, -5).trim();
-    return clean;
+    return closeUnclosedTags(clean);
   }
 
-  return html;
+  return closeUnclosedTags(html);
 }
 
 const SPEECH_SEQUENCE = [
@@ -615,13 +667,14 @@ export default function EditPage() {
 
       // Use the unified WYSIWYG body content directly
       let htmlContent = "";
+      const isDocUpload = videoSource === "document_upload";
       if (editData.body) {
         const containsHTML = /<[a-z][\s\S]*>/i.test(editData.body);
         if (containsHTML) {
-          htmlContent = stripFooter(editData.body.trim());
+          htmlContent = stripFooter(editData.body.trim(), isDocUpload);
         } else {
           // Fallback plain text formatting
-          htmlContent = stripFooter(`<p>${editData.body.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`);
+          htmlContent = stripFooter(`<p>${editData.body.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`, isDocUpload);
         }
       }
 
@@ -662,7 +715,7 @@ export default function EditPage() {
           <div style="margin-top: 24px; padding-top: 16px;">
             <p style="font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 8px 0;">Original Source:</p>
             <a href="${productCard.sourceVideoLink}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; font-weight: 500; text-decoration: underline; font-size: 1rem;">
-              Watch Original Creator Video
+               Watch Original Creator Video
             </a>
           </div>
         `;
@@ -675,7 +728,7 @@ export default function EditPage() {
           ${creatorQuoteHtml}
           ${purchaseInfoHtml}
           ${originalSourceHtml}
-          ${STANDARD_FOOTER}
+          ${isDocUpload ? ABOUT_DROPPR_BLOCK : STANDARD_FOOTER}
         </div>
       `;
 

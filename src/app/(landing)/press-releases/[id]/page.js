@@ -24,6 +24,7 @@ async function getArticle(id) {
                 creatorQuote: c.article?.creatorQuote || "",
                 introduction: c.article?.introduction || "",
                 category: c.article?.productSummary?.category || "",
+                categories: c.article?.categories || "",
                 useCase: c.article?.productSummary?.useCase || "",
                 positioning: c.article?.productSummary?.positioning || "",
                 image: c.productCard?.thumbnail || "",

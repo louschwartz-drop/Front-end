@@ -9,14 +9,61 @@ import LoginModal from "@/components/landingPage/LoginModal";
 import userAuthStore from "@/store/userAuthStore";
 import { BLOCKQUOTE_STYLES } from "@/components/editor/blockquoteStyles";
 
-function stripFooter(html) {
+function closeUnclosedTags(html) {
     if (!html) return "";
+    
+    let cleanedHtml = html;
+    const lastOpenBracket = cleanedHtml.lastIndexOf("<");
+    const lastCloseBracket = cleanedHtml.lastIndexOf(">");
+    if (lastOpenBracket > lastCloseBracket) {
+        cleanedHtml = cleanedHtml.substring(0, lastOpenBracket).trim();
+    }
+
+    const tagStack = [];
+    const tagRegex = /<(\/?)([a-z0-9]+)(?:\s+[^>]*)*>/gi;
+    let match;
+    
+    while ((match = tagRegex.exec(cleanedHtml)) !== null) {
+        const isClosing = match[1] === "/";
+        const tagName = match[2].toLowerCase();
+        const voidElements = ["img", "br", "hr", "input", "meta", "link", "source", "embed", "col", "area"];
+        
+        if (voidElements.includes(tagName)) {
+            continue;
+        }
+        
+        if (isClosing) {
+            const index = tagStack.lastIndexOf(tagName);
+            if (index !== -1) {
+                tagStack.splice(index, 1);
+            }
+        } else {
+            tagStack.push(tagName);
+        }
+    }
+    
+    for (let i = tagStack.length - 1; i >= 0; i--) {
+        cleanedHtml += `</${tagStack[i]}>`;
+    }
+    
+    return cleanedHtml;
+}
+
+function stripFooter(html, isDocumentUpload = false) {
+    if (!html) return "";
+    if (isDocumentUpload) {
+        return closeUnclosedTags(html);
+    }
     const markers = ["Media Contact", "<h4>Media Contact</h4>", "<div style='margin-top:3rem;"];
+    let stripped = html;
     for (const m of markers) {
         const idx = html.indexOf(m);
-        if (idx !== -1) return html.substring(0, idx).trim();
+        if (idx !== -1) {
+            stripped = html.substring(0, idx).trim();
+            break;
+        }
     }
-    return html;
+    return closeUnclosedTags(stripped);
 }
 
 function initials(name = "DropPR") {
@@ -68,10 +115,10 @@ function CtaSection({ onGetStarted }) {
 
 export default function PressReleaseDetailClient({ article, related }) {
     const router = useRouter();
-    const { isAuthenticated } = userAuthStore();
     const [showLogin, setShowLogin] = useState(false);
 
     function handleGetStarted() {
+        const { isAuthenticated } = userAuthStore.getState();
         if (isAuthenticated) {
             router.push("/user/dashboard/create");
         } else {
@@ -173,11 +220,13 @@ export default function PressReleaseDetailClient({ article, related }) {
                                 )}
                                 <div className="space-y-1">
                                     <h4 className="text-lg font-bold text-gray-900">{article.productName}</h4>
-                                    {article.category && (
-                                        <span className="px-2 py-0.5 bg-blue-50 text-primary text-[10px] font-bold rounded-full border border-blue-100 inline-block">
-                                            {article.category}
-                                        </span>
-                                    )}
+                                    <div className="flex flex-wrap gap-2">
+                                        {(article.categories || article.category)?.split(",").map(c => c.trim()).filter(Boolean).map((cat, idx) => (
+                                            <span key={idx} className="px-2 py-0.5 bg-blue-50 text-primary text-[10px] font-bold rounded-full border border-blue-100">
+                                                {cat}
+                                            </span>
+                                        ))}
+                                    </div>
                                     <div className="text-xs text-gray-600 space-y-1 mt-1">
                                         {article.useCase && <div><span className="font-bold opacity-60">Use case:</span> {article.useCase}</div>}
                                         {article.positioning && <div><span className="font-bold opacity-60">Positioning:</span> {article.positioning}</div>}
@@ -191,9 +240,9 @@ export default function PressReleaseDetailClient({ article, related }) {
                     <div className="blog-content space-y-6 text-gray-800">
                         {article.body && /<[a-z][\s\S]*>/i.test(article.body) ? (
                             <div className="html-content-preview article-html"
-                                dangerouslySetInnerHTML={{ __html: `<div>${stripFooter(article.body)}</div>` }} />
+                                dangerouslySetInnerHTML={{ __html: `<div>${stripFooter(article.body, article.videoSource === "document_upload")}</div>` }} />
                         ) : (
-                            <div className="whitespace-pre-wrap leading-relaxed">{stripFooter(article.body)}</div>
+                            <div className="whitespace-pre-wrap leading-relaxed">{stripFooter(article.body, article.videoSource === "document_upload")}</div>
                         )}
                         {article.conclusion && (
                             <div className="mt-8 font-medium italic text-gray-700">{article.conclusion}</div>
