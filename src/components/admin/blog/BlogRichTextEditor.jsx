@@ -217,7 +217,7 @@ const ToolbarButton = ({
         disabled={disabled}
         title={title}
         className={`flex items-center justify-center h-8 w-8 rounded-md transition-all ${isActive
-                ? "bg-primary/10 text-primary ring-1 ring-primary/20"
+                ? "bg-blue-100 text-blue-700 ring-2 ring-blue-500 shadow-sm font-bold"
                 : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
             } disabled:opacity-30 disabled:cursor-not-allowed ${className}`}
     >

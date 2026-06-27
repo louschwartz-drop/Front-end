@@ -50,20 +50,11 @@ apiAdmin.interceptors.response.use(
         }
       }
 
-      return Promise.reject({
-        success: false,
-        message: error.response.data?.message || "Admin API Error",
-      });
+      return Promise.reject(new Error(error.response.data?.message || "Admin API Error"));
     } else if (error.request) {
-      return Promise.reject({
-        success: false,
-        message: "No response from admin server.",
-      });
+      return Promise.reject(new Error("No response from admin server."));
     } else {
-      return Promise.reject({
-        success: false,
-        message: error.message || "Unexpected error occurred.",
-      });
+      return Promise.reject(new Error(error.message || "Unexpected error occurred."));
     }
   },
 );

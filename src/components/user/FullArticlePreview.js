@@ -327,7 +327,14 @@ export default function FullArticlePreview({ isOpen, onClose, campaign, article,
                         </div>
 
                         {/* Styled HTML Body Rendering */}
-                        <style dangerouslySetInnerHTML={{ __html: BLOCKQUOTE_STYLES }} />
+                        <style dangerouslySetInnerHTML={{ __html: `${BLOCKQUOTE_STYLES}
+                            .article-html ul { list-style-type: disc !important; padding-left: 1.5rem !important; margin-bottom: 1rem; }
+                            .article-html ol { list-style-type: decimal !important; padding-left: 1.5rem !important; margin-bottom: 1rem; }
+                            .article-html li { margin-bottom: 0.25rem; }
+                            .article-html table { border-collapse: collapse; table-layout: fixed; width: 100%; margin: 1rem 0; overflow: hidden; }
+                            .article-html table td, .article-html table th { min-width: 1em; border: 1px solid #d1d5db; padding: 8px; vertical-align: top; box-sizing: border-box; }
+                            .article-html table th { font-weight: bold; text-align: left; background-color: #f3f4f6; }
+                        ` }} />
                         <div
                             className="text-sm md:text-lg text-gray-700 leading-relaxed md:leading-loose space-y-4 md:space-y-6 html-content-preview article-html"
                             dangerouslySetInnerHTML={{ __html: `<div>${stripFooter(displayData.body || "", campaign?.videoSource === "document_upload" || displayData.videoSource === "document_upload")}${campaign?.videoSource === "document_upload" || displayData.videoSource === "document_upload" ? ABOUT_DROPPR_BLOCK : STANDARD_FOOTER}</div>` }}

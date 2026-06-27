@@ -25,6 +25,8 @@ import {
   List,
   Mail,
   Target,
+  Activity,
+  BookOpen,
 } from "lucide-react";
 
 export const ADMIN_MENU_ITEMS = [
@@ -89,9 +91,23 @@ export const ADMIN_MENU_ITEMS = [
     ]
   },
   {
+    href: "/admin/case-studies",
+    label: "Case Studies",
+    icon: BookOpen,
+    subItems: [
+      { href: "/admin/case-studies", label: "All Case Studies", icon: List },
+      { href: "/admin/case-studies/create", label: "Create Case Study", icon: PlusCircle },
+    ]
+  },
+  {
     href: "/admin/emails",
     label: "Email Campaigns",
     icon: Mail,
+  },
+  {
+    href: "/admin/system-logs",
+    label: "System Logs",
+    icon: Activity,
   },
   {
     href: "/admin/profile",

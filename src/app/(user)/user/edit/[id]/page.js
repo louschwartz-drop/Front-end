@@ -7,6 +7,7 @@ import { X, Download, FileText, Video, Volume2, VolumeX } from "lucide-react";
 import { toast } from "react-toastify";
 import debounce from "lodash/debounce";
 import PreviewPublishModal from "@/components/user/PreviewPublishModal";
+import ShareModal from "@/components/user/ShareModal";
 import FullArticlePreview from "@/components/user/FullArticlePreview";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import userAuthStore from "@/store/userAuthStore";
@@ -280,7 +281,11 @@ export default function EditPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [versions, setVersions] = useState([]);
+  const [isSharingValidation, setIsSharingValidation] = useState(false);
+  const [isGeneratingShareLink, setIsGeneratingShareLink] = useState(false);
+  const [shareUrl, setShareUrl] = useState(null);
 
   const { user } = userAuthStore();
 
@@ -812,8 +817,147 @@ export default function EditPage() {
     }
   };
 
+  const handleShareClick = async () => {
+    setIsSharingValidation(true);
+    setValidationErrors([]);
+    try {
+      await userAuthStore.getState().refreshUser();
+      const currentUser = userAuthStore.getState().user;
+      const storyId = campaignId || Date.now().toString();
+      const headline = editData.headline || "Untitled Article";
 
+      let htmlContent = "";
+      if (editData.body) {
+        const containsHTML = /<[a-z][\s\S]*>/i.test(editData.body);
+        if (containsHTML) {
+          htmlContent = editData.body.trim();
+        } else {
+          htmlContent = `<p>${editData.body.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`;
+        }
+      }
 
+      let creatorQuoteHtml = "";
+      if (editData.creatorQuote) {
+        creatorQuoteHtml = `
+          <div style="padding: 24px 0; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; margin: 30px 0; text-align: center;">
+            <p style="font-style: italic; font-size: 1.25rem; color: #1f2937; line-height: 1.6; margin: 0 0 8px 0;">"${editData.creatorQuote}"</p>
+            ${productCard.authorName ? `<p style="font-size: 0.875rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">From ${productCard.authorName}</p>` : ""}
+          </div>
+        `;
+      }
+
+      let purchaseInfoHtml = "";
+      if (videoSource !== "document_upload") {
+        purchaseInfoHtml = `
+          <div style="margin-top: 30px; padding-top: 20px;">
+            <h4 style="font-size: 1.25rem; font-weight: 700; color: #111827; margin: 0 0 10px 0;">Product Sourcing & Availability</h4>
+            <p style="font-size: 0.95rem; line-height: 1.6; color: #4b5563; margin: 0 0 12px 0;">
+              Retail pricing, specifications, and regional availability for ${productCard.productName || "this product"} are cataloged on the official retail platform.
+            </p>
+            <div style="margin-top: 10px;">
+              <p style="font-size: 0.8rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 6px 0;">Reference Listing:</p>
+              <a href="${productCard.affiliateLink || '#'}" target="_blank" rel="noopener noreferrer" style="color: #0A5CFF; font-weight: 600; text-decoration: underline; font-size: 0.95rem;">
+                Official Product Page
+              </a>
+            </div>
+          </div>
+        `;
+      }
+
+      let originalSourceHtml = "";
+      if (videoSource !== "document_upload" && productCard.sourceVideoLink) {
+        originalSourceHtml = `
+          <div style="margin-top: 24px; padding-top: 16px;">
+            <p style="font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 8px 0;">Original Source:</p>
+            <a href="${productCard.sourceVideoLink}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; font-weight: 500; text-decoration: underline; font-size: 1rem;">
+               Watch Original Creator Video
+            </a>
+          </div>
+        `;
+      }
+
+      const wrappedContent = `
+        <div>
+          ${htmlContent}
+          ${creatorQuoteHtml}
+          ${purchaseInfoHtml}
+          ${originalSourceHtml}
+          ${ABOUT_DROPPR_BLOCK}
+        </div>
+      `;
+
+      const summary = editData.summary || "Press Release Summary";
+      const image = productCard.thumbnail || "";
+      const author = productCard.authorName || currentUser?.name || currentUser?.firstName || "Press Services";
+      const categoriesArray = editData.categories
+        ? editData.categories.split(",").map(c => c.trim()).filter(c => c)
+        : [];
+
+      const xprStoryPayload = {
+        title: headline,
+        summary: summary,
+        content: wrappedContent || "<div>No Content</div>",
+        link: `https://droppr.ai/article/${storyId}`,
+        imageUrl: image,
+        author: author,
+        publishedAt: new Date().toISOString(),
+        guid: storyId,
+      };
+
+      if (categoriesArray.length > 0) {
+        xprStoryPayload.categories = categoriesArray;
+      }
+
+      setXprStoryPayload(xprStoryPayload);
+
+      const xprArticleRelease = (await import("@/lib/api/user/xprArticleRelease")).default;
+      const response = await xprArticleRelease.precheck(xprStoryPayload, campaignId);
+      
+      const aiAnalysisData = response?.data?.aiAnalysis;
+      setAiAnalysis(aiAnalysisData);
+
+      const isSuccess = response?.data?.success !== false;
+      const isGoodScore = aiAnalysisData && aiAnalysisData.score >= 60;
+
+      if (isSuccess && isGoodScore) {
+        // Proceed to generate share link
+        await generateNewShareLink(false);
+        setShowShareModal(true);
+      } else {
+        setShowAiScoreSheet(true);
+        if (aiAnalysisData && aiAnalysisData.score < 60) {
+          toast.error(`SEO score is ${aiAnalysisData.score}. Improve it to at least 60 to share this article.`);
+        } else if (!isSuccess) {
+          toast.error("Validation failed. Please review improvement suggestions.");
+        }
+      }
+    } catch (error) {
+      console.error("Validation for share failed:", error);
+      toast.error("Failed to validate article for sharing.");
+    } finally {
+      setIsSharingValidation(false);
+    }
+  };
+
+  const generateNewShareLink = async (forceNew = false) => {
+    setIsGeneratingShareLink(true);
+    try {
+      const { campaignService } = await import("@/lib/api/user/campaigns");
+      const response = await campaignService.generateShareLink(campaignId, forceNew);
+      
+      if (response.success && response.data?.shareToken) {
+        const link = `${window.location.origin}/shared/${campaignId}?token=${response.data.shareToken}`;
+        setShareUrl(link);
+      } else {
+        toast.error(response.message || "Failed to generate share link");
+      }
+    } catch (error) {
+      console.error("Generate share link error:", error);
+      toast.error("An error occurred while generating the share link");
+    } finally {
+      setIsGeneratingShareLink(false);
+    }
+  };
 
   const handleConfirmPublish = async (planId = null) => {
     try {
@@ -1213,6 +1357,56 @@ export default function EditPage() {
                 />
 
                 <div className="pt-4 mt-4 border-t border-gray-100 flex flex-col gap-3">
+                  
+                  {/* Share Link Box */}
+                  {shareUrl && (
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between">
+                      <div className="text-xs text-blue-800 font-medium truncate pr-2 flex-1">
+                        {shareUrl}
+                      </div>
+                      <button 
+                        onClick={() => { navigator.clipboard.writeText(shareUrl); toast.success("Copied!"); }}
+                        className="shrink-0 bg-white border border-blue-200 text-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-50 transition-colors"
+                      >
+                        Copy Link
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowPreview(true)}
+                      className="flex-1 py-3 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl font-bold text-sm transition-all shadow-sm flex items-center justify-center gap-2"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Preview
+                    </button>
+
+                    {/* Share Link Button */}
+                    <div className="flex-1">
+                      <Tooltip text="Validate and generate a public shareable link" position="top">
+                        <button
+                          disabled={isSharingValidation || isGeneratingShareLink}
+                          onClick={handleShareClick}
+                          className={`w-full py-3 border rounded-xl font-bold text-sm transition-all shadow-sm flex justify-center items-center gap-2 ${
+                            (isSharingValidation || isGeneratingShareLink)
+                              ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
+                              : "bg-white border-blue-200 text-blue-600 hover:bg-blue-50"
+                          }`}
+                        >
+                          {isSharingValidation || isGeneratingShareLink ? (
+                            <div className="w-4 h-4 rounded-full border-2 border-blue-400 border-t-transparent animate-spin" />
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                            </svg>
+                          )}
+                          Share
+                        </button>
+                      </Tooltip>
+                    </div>
+                  </div>
+
                   <div className="bg-blue-50 rounded-lg p-3 flex items-start gap-3">
                     <div className="h-5 w-5 text-blue-500 mt-0.5">ℹ️</div>
                     <p className="text-[10px] text-blue-700 leading-normal">
@@ -1503,6 +1697,15 @@ export default function EditPage() {
         campaign={{ _id: campaignId, videoSource }}
         article={editData}
         productCard={productCard}
+      />
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        shareUrl={shareUrl}
+        isGenerating={isGeneratingShareLink}
+        onGenerateNewLink={() => generateNewShareLink(true)}
       />
 
       {/* Versions Modal */}

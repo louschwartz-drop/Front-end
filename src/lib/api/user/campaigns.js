@@ -161,4 +161,22 @@ export const campaignService = {
         });
         return response.data;
     },
+
+    // Share Campaign
+    generateShareLink: async (campaignId, forceNew = false) => {
+        const response = await api.post(`/user/campaigns/${campaignId}/share`, { forceNew });
+        return response.data;
+    },
+
+    // Claim Shared Campaign
+    claimCampaign: async (campaignId, token) => {
+        const response = await api.post(`/user/campaigns/${campaignId}/claim`, { token });
+        return response.data;
+    },
+
+    // Check Claim Status
+    checkClaimStatus: async (campaignId, token) => {
+        const response = await api.get(`/user/campaigns/${campaignId}/claim-status?token=${token}`);
+        return response.data;
+    },
 };

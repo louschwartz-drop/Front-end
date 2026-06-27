@@ -26,6 +26,7 @@ export default function ImageUploadModal({
     onUploadSuccess,
     title = "Adjust Image",
     aspectRatio = 1,
+    disableCrop = false,
 }) {
     const [isUploading, setIsUploading] = useState(false);
     const [imagePreview, setImagePreview] = useState("");
@@ -37,6 +38,7 @@ export default function ImageUploadModal({
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [cropMode, setCropMode] = useState("crop"); // 'crop', 'fit', 'stretch'
 
     const imgRef = useRef(null);
     const containerRef = useRef(null);
@@ -48,6 +50,7 @@ export default function ImageUploadModal({
             setImageFile(null);
             setZoom(1);
             setPosition({ x: 0, y: 0 });
+            setCropMode("crop");
         }
     }, [isOpen]);
 
@@ -181,30 +184,47 @@ export default function ImageUploadModal({
             }
             const targetHeight = Math.round(targetWidth / aspectRatio);
 
-            const canvas = document.createElement("canvas");
-            canvas.width = targetWidth;
-            canvas.height = targetHeight;
-            const ctx = canvas.getContext("2d");
-            if (!ctx) throw new Error("Canvas context not available");
+            let blob;
+            if (disableCrop) {
+                // If disableCrop is true, just use the original file
+                blob = imageFile;
+            } else {
+                const canvas = document.createElement("canvas");
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+                const ctx = canvas.getContext("2d");
+                if (!ctx) throw new Error("Canvas context not available");
 
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.drawImage(
-                img, 
-                x_orig, 
-                y_orig, 
-                w_orig, 
-                h_orig, 
-                0, 
-                0, 
-                canvas.width, 
-                canvas.height
-            );
+                if (cropMode === "crop") {
+                    ctx.drawImage(
+                        img, 
+                        x_orig, 
+                        y_orig, 
+                        w_orig, 
+                        h_orig, 
+                        0, 
+                        0, 
+                        canvas.width, 
+                        canvas.height
+                    );
+                } else if (cropMode === "fit") {
+                    const scale = Math.min(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
+                    const w = img.naturalWidth * scale;
+                    const h = img.naturalHeight * scale;
+                    const x = (canvas.width - w) / 2;
+                    const y = (canvas.height - h) / 2;
+                    ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, x, y, w, h);
+                } else if (cropMode === "stretch") {
+                    ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, canvas.width, canvas.height);
+                }
 
-            const blob = await new Promise((resolve) =>
-                canvas.toBlob(resolve, "image/jpeg", 0.95)
-            );
+                blob = await new Promise((resolve) =>
+                    canvas.toBlob(resolve, "image/jpeg", 0.95)
+                );
+            }
             if (!blob) throw new Error("Failed to create image blob");
 
             const formData = new FormData();
@@ -278,14 +298,16 @@ export default function ImageUploadModal({
                                         position: "absolute",
                                         left: "50%",
                                         top: "50%",
-                                        transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px) scale(${zoom})`,
-                                        cursor: isDragging ? "grabbing" : "grab",
+                                        transform: (disableCrop || cropMode !== "crop") ? "translate(-50%, -50%)" : `translate(-50%, -50%) translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+                                        cursor: (disableCrop || cropMode !== "crop") ? "default" : (isDragging ? "grabbing" : "grab"),
                                         transition: isDragging
                                             ? "none"
                                             : "transform 0.15s cubic-bezier(0.2, 0, 0.2, 1)",
                                         display: "flex",
                                         alignItems: "center",
                                         justifyContent: "center",
+                                        width: (disableCrop || cropMode !== "crop") ? "100%" : "auto",
+                                        height: (disableCrop || cropMode !== "crop") ? "100%" : "auto",
                                     }}
                                 >
                                     <img
@@ -295,66 +317,102 @@ export default function ImageUploadModal({
                                         onLoad={onImageLoad}
                                         className="max-w-none pointer-events-none select-none"
                                         style={{
-                                            width: "auto",
-                                            height: "auto",
+                                            width: (disableCrop || cropMode !== "crop") ? "100%" : "auto",
+                                            height: (disableCrop || cropMode !== "crop") ? "100%" : "auto",
+                                            objectFit: disableCrop ? "contain" : (cropMode === "fit" ? "contain" : (cropMode === "stretch" ? "fill" : "initial")),
                                         }}
                                     />
                                 </div>
 
-                                <div className="absolute inset-0 pointer-events-none bg-black/5">
-                                    <div className="absolute inset-[10px] border-2 border-white/80 border-dashed rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.4)] backdrop-blur-[0.5px]" />
-                                </div>
+                            {!disableCrop && cropMode === "crop" && (
+                                <>
+                                    <div className="absolute inset-0 pointer-events-none bg-black/5">
+                                        <div className="absolute inset-[10px] border-2 border-white/80 border-dashed rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.4)] backdrop-blur-[0.5px]" />
+                                    </div>
 
-                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-white text-[11px] font-bold tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                                    <Move size={12} /> Drag to position image
-                                </div>
+                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-white text-[11px] font-bold tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                                        <Move size={12} /> Drag to position image
+                                    </div>
+                                </>
+                            )}
                             </div>
 
                             <div className="flex flex-col gap-4">
-                                <div className="flex flex-wrap items-center gap-2 sm:gap-6 px-3 sm:px-4 py-2 bg-gray-50/50 rounded-xl border border-gray-100/50">
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        className="rounded-full w-10 h-10 p-0 hover:bg-white hover:shadow-sm"
-                                        onClick={() => setZoom(z => Math.max(z / 1.1, baseScale * 0.2))}
-                                    >
-                                        <ZoomOut size={18} className="text-gray-500" />
-                                    </Button>
+                                {!disableCrop && (
+                                    <div className="flex gap-2">
+                                        <Button
+                                            type="button"
+                                            variant={cropMode === "crop" ? "default" : "outline"}
+                                            onClick={() => setCropMode("crop")}
+                                            className={`flex-1 h-9 text-xs font-bold rounded-lg border border-gray-200 transition-all ${cropMode === "crop" ? 'bg-primary text-white border-primary shadow-sm hover:bg-primary/90' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                                        >
+                                            Crop / Zoom
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant={cropMode === "fit" ? "default" : "outline"}
+                                            onClick={() => setCropMode("fit")}
+                                            className={`flex-1 h-9 text-xs font-bold rounded-lg border border-gray-200 transition-all ${cropMode === "fit" ? 'bg-primary text-white border-primary shadow-sm hover:bg-primary/90' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                                        >
+                                            Fit to Box
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant={cropMode === "stretch" ? "default" : "outline"}
+                                            onClick={() => setCropMode("stretch")}
+                                            className={`flex-1 h-9 text-xs font-bold rounded-lg border border-gray-200 transition-all ${cropMode === "stretch" ? 'bg-primary text-white border-primary shadow-sm hover:bg-primary/90' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                                        >
+                                            Stretch
+                                        </Button>
+                                    </div>
+                                )}
 
-                                    <input 
-                                        type="range"
-                                        className="flex-1 accent-primary h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                        min={baseScale * 0.2}
-                                        max={baseScale * 5}
-                                        step={baseScale * 0.01}
-                                        value={zoom}
-                                        onChange={(e) => setZoom(parseFloat(e.target.value))}
-                                    />
-
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        className="rounded-full w-10 h-10 p-0 hover:bg-white hover:shadow-sm"
-                                        onClick={() => setZoom(z => Math.min(z * 1.1, baseScale * 5))}
-                                    >
-                                        <ZoomIn size={18} className="text-gray-500" />
-                                    </Button>
-
-                                    <div className="flex items-center gap-4 pl-4 border-l border-gray-200">
+                                {!disableCrop && cropMode === "crop" && (
+                                    <div className="flex flex-wrap items-center gap-2 sm:gap-6 px-3 sm:px-4 py-2 bg-gray-50/50 rounded-xl border border-gray-100/50">
                                         <Button
                                             type="button"
                                             variant="ghost"
                                             className="rounded-full w-10 h-10 p-0 hover:bg-white hover:shadow-sm"
-                                            onClick={handleReset}
-                                            title="Reset"
+                                            onClick={() => setZoom(z => Math.max(z / 1.1, baseScale * 0.2))}
                                         >
-                                            <RotateCcw size={16} className="text-gray-500" />
+                                            <ZoomOut size={18} className="text-gray-500" />
                                         </Button>
-                                        <span className="text-gray-900 font-bold text-xs min-w-[35px]">
-                                            {Math.round((zoom / baseScale) * 100)}%
-                                        </span>
+
+                                        <input 
+                                            type="range"
+                                            className="flex-1 accent-primary h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            min={baseScale * 0.2}
+                                            max={baseScale * 5}
+                                            step={baseScale * 0.01}
+                                            value={zoom}
+                                            onChange={(e) => setZoom(parseFloat(e.target.value))}
+                                        />
+
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            className="rounded-full w-10 h-10 p-0 hover:bg-white hover:shadow-sm"
+                                            onClick={() => setZoom(z => Math.min(z * 1.1, baseScale * 5))}
+                                        >
+                                            <ZoomIn size={18} className="text-gray-500" />
+                                        </Button>
+
+                                        <div className="flex items-center gap-4 pl-4 border-l border-gray-200">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                className="rounded-full w-10 h-10 p-0 hover:bg-white hover:shadow-sm"
+                                                onClick={handleReset}
+                                                title="Reset"
+                                            >
+                                                <RotateCcw size={16} className="text-gray-500" />
+                                            </Button>
+                                            <span className="text-gray-900 font-bold text-xs min-w-[35px]">
+                                                {Math.round((zoom / baseScale) * 100)}%
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 <div className="flex items-center justify-between">
                                     <Button
@@ -365,9 +423,11 @@ export default function ImageUploadModal({
                                     >
                                         Change selected image
                                     </Button>
-                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                                        {aspectRatio === 1 ? "Square Ratio" : "Landscape Ratio"}
-                                    </span>
+                                    {!disableCrop && (
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                            {aspectRatio === 1 ? "Square Ratio" : "Landscape Ratio"}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>

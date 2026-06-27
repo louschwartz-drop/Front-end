@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Button from "@/components/ui/Button";
 import userAuthStore from "@/store/userAuthStore";
@@ -17,7 +17,7 @@ import {
   EyeOff
 } from "lucide-react";
 
-export default function UserAuthPage() {
+function UserAuthContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [authMode, setAuthMode] = useState("login"); // "login", "signup", or "otp"
   const [email, setEmail] = useState("");
@@ -34,6 +34,8 @@ export default function UserAuthPage() {
 
   const { error: storeError, clearError } = userAuthStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo") || "/user/dashboard/create";
 
   useEffect(() => {
     if (localError || storeError) {
@@ -58,8 +60,8 @@ export default function UserAuthPage() {
       clearError();
       setLocalError(null);
 
-      // trigger next-auth signin and redirect to dashboard create page on success
-      await signIn(provider, { callbackUrl: "/user/dashboard/create" });
+      // trigger next-auth signin and redirect to the correct page
+      await signIn(provider, { callbackUrl: returnTo });
     } catch (err) {
       console.error(`${provider} Sign-In error:`, err);
       setLocalError(`Failed to connect with ${provider}`);
@@ -100,7 +102,7 @@ export default function UserAuthPage() {
           setLocalError(result.error);
         } else {
           // Hard redirect to sync auth state immediately
-          window.location.href = "/user/dashboard/create";
+          window.location.href = returnTo;
         }
       } else {
         // Handle Signup via our backend
@@ -121,7 +123,7 @@ export default function UserAuthPage() {
             if (result?.error) {
               setLocalError(result.error);
             } else {
-              window.location.href = "/user/dashboard/create";
+              window.location.href = returnTo;
             }
           } else {
             // Store the temp token and move to OTP step
@@ -174,7 +176,7 @@ export default function UserAuthPage() {
         if (result?.error) {
           setLocalError(result.error);
         } else {
-          window.location.href = "/user/dashboard/create";
+          window.location.href = returnTo;
         }
       } else {
         setLocalError(data.message || "Invalid or expired OTP.");
@@ -533,5 +535,13 @@ function SocialButton({ icon, label, onClick, isLoading }) {
       <div className="group-hover:scale-110 transition-transform">{icon}</div>
       <span className="text-xs font-bold text-slate-700">{label}</span>
     </button>
+  );
+}
+
+export default function UserAuthPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+      <UserAuthContent />
+    </Suspense>
   );
 }

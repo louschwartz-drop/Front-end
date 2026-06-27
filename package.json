@@ -3,8 +3,8 @@
   "version": "1.5",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start"
   },
   "dependencies": {
@@ -14,6 +14,9 @@
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-select": "^2.2.6",
     "@react-oauth/google": "^0.12.2",
+    "@serwist/next": "^9.5.11",
+    "@serwist/precaching": "^9.5.11",
+    "@serwist/sw": "^9.5.11",
     "@stripe/react-stripe-js": "^5.6.0",
     "@stripe/stripe-js": "^8.7.0",
     "@tiptap/extension-character-count": "^3.23.5",
@@ -22,6 +25,10 @@
     "@tiptap/extension-image": "^3.11.0",
     "@tiptap/extension-link": "^3.11.0",
     "@tiptap/extension-placeholder": "^3.11.0",
+    "@tiptap/extension-table": "^3.27.1",
+    "@tiptap/extension-table-cell": "^3.27.1",
+    "@tiptap/extension-table-header": "^3.27.1",
+    "@tiptap/extension-table-row": "^3.27.1",
     "@tiptap/extension-text-align": "^3.22.5",
     "@tiptap/extension-text-style": "^3.22.5",
     "@tiptap/extension-underline": "^3.22.5",
@@ -32,6 +39,7 @@
     "date-fns": "^4.1.0",
     "framer-motion": "^12.27.0",
     "html2pdf.js": "^0.14.0",
+    "idb": "^8.0.3",
     "jwt-decode": "^4.0.0",
     "libphonenumber-js": "^1.12.38",
     "lucide-react": "^0.562.0",
@@ -48,6 +56,7 @@
     "react-quill": "^2.0.0",
     "react-toastify": "^11.0.5",
     "recharts": "^3.5.0",
+    "serwist": "^9.5.11",
     "socket.io-client": "^4.8.3",
     "stripe": "^20.3.1",
     "zod": "^4.3.6",
@@ -55,8 +64,11 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/node": "26.0.0",
+    "@types/react": "19.2.17",
     "babel-plugin-react-compiler": "1.0.0",
     "baseline-browser-mapping": "^2.10.21",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4",
+    "typescript": "6.0.3"
   }
 }

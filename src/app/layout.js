@@ -30,7 +30,6 @@ export const metadata = {
     "Build instant exposure with DropPR.ai. Convert your videos into AI-written articles and distribute them to top media outlets.",
   keywords: "AI article generation, press release distribution, media outlets, PR distribution, video to article, content publishing",
   manifest: "/manifest.json",
-  themeColor: "#3b82f6",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -69,9 +68,21 @@ export const metadata = {
   },
 };
 
+export const viewport = {
+  themeColor: "#3b82f6",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
+
 import { SocketProvider } from "@/context/SocketContext";
 import ChatWidgetWrapper from "@/components/chat/ChatWidgetWrapper";
 import NextAuthProvider from "@/context/NextAuthProvider";
+import PWAInstallPrompt from "@/components/pwa/InstallPrompt";
+import NetworkStatusIndicator from "@/components/pwa/NetworkStatusIndicator";
+import ServiceWorkerUpdater from "@/components/pwa/ServiceWorkerUpdater";
 
 export default function RootLayout({ children }) {
   return (
@@ -113,30 +124,11 @@ export default function RootLayout({ children }) {
               pauseOnHover
               theme="light"
             />
+            <PWAInstallPrompt />
+            <NetworkStatusIndicator />
+            <ServiceWorkerUpdater />
           </SocketProvider>
         </NextAuthProvider>
-        <Script id="unregister-sw" strategy="afterInteractive">
-          {`
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                if (registrations.length > 0) {
-                  for (let registration of registrations) {
-                    registration.unregister();
-                  }
-                  if ('caches' in window) {
-                    caches.keys().then(function(names) {
-                      Promise.all(names.map(name => caches.delete(name))).then(function() {
-                        window.location.reload();
-                      });
-                    });
-                  } else {
-                    window.location.reload();
-                  }
-                }
-              });
-            }
-          `}
-        </Script>
       </body>
     </html>
   );
