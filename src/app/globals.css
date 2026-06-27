@@ -780,5 +780,74 @@ input[type="button"]:disabled {
   z-index: 50 !important;
 }
 
+/* ============================================
+   TIPTAP TABLE FRONTEND STYLES (inside .prose)
+   ============================================ */
 
-
+/* Standard Table Styling */
+.prose table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 2.5rem 0 !important;
+  overflow: hidden;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e5e7eb !important;
+  background: #ffffff;
+}
+.prose table th,
+.prose table td {
+  min-width: 1em;
+  border: 1px solid #e5e7eb !important;
+  padding: 1.25rem !important;
+  vertical-align: top;
+  box-sizing: border-box;
+}
+.prose table th {
+  font-weight: 800 !important;
+  background-color: #f9fafb !important;
+  color: #111827 !important;
+}
+
+/* Special "Stats Grid" Styling for 1-Row Tables */
+.prose table:has(tbody tr:only-child):not(:has(thead)) {
+  border: 1px solid #f3f4f6 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01) !important;
+  border-radius: 16px !important;
+}
+.prose table:has(tbody tr:only-child):not(:has(thead)) tbody tr {
+  border-bottom: none !important;
+}
+.prose table:has(tbody tr:only-child):not(:has(thead)) td {
+  border: none !important;
+  border-right: 1px solid #f3f4f6 !important;
+  padding: 2.5rem 1.5rem !important;
+}
+.prose table:has(tbody tr:only-child):not(:has(thead)) td:last-child {
+  border-right: none !important;
+}
+.prose table:has(tbody tr:only-child):not(:has(thead)) p,
+.prose table:has(tbody tr:only-child):not(:has(thead)) h1,
+.prose table:has(tbody tr:only-child):not(:has(thead)) h2,
+.prose table:has(tbody tr:only-child):not(:has(thead)) h3 {
+  text-align: center !important;
+  margin-left: auto;
+  margin-right: auto;
+}
+.prose table:has(tbody tr:only-child):not(:has(thead)) p:first-child {
+  font-size: 3rem !important;
+  font-weight: 900 !important;
+  color: #111827 !important;
+  line-height: 1 !important;
+  margin-bottom: 0.5rem !important;
+  margin-top: 0 !important;
+}
+.prose table:has(tbody tr:only-child):not(:has(thead)) p:last-child {
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  color: #0A5CFF !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  margin-bottom: 0 !important;
+}

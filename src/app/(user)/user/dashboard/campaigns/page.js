@@ -20,6 +20,11 @@ import { FileText, Link as LinkIcon, Mic, Video, UploadCloud } from "lucide-reac
 
 const VideoModal = dynamic(() => import("@/components/ui/VideoModal"), { ssr: false });
 
+const stripHtml = (html) => {
+    if (!html) return "";
+    return html.replace(/<[^>]*>?/gm, '');
+};
+
 function CampaignsPageContent() {
     const router = useRouter();
     const socket = useSocket();
@@ -220,6 +225,7 @@ function CampaignsPageContent() {
             show: true,
             text: campaign.rawTranscript || "No transcript available yet.",
             title: campaign.article?.headline || "Campaign Transcript",
+            isHtml: campaign.videoSource === "document_upload"
         });
     };
 
@@ -553,7 +559,7 @@ function CampaignsPageContent() {
                                         {campaign.rawTranscript ? (
                                             <div>
                                                 <p className="text-sm text-gray-600 line-clamp-5 mb-1 whitespace-pre-wrap">
-                                                    {campaign.rawTranscript}
+                                                    {campaign.videoSource === "document_upload" ? stripHtml(campaign.rawTranscript) : campaign.rawTranscript}
                                                 </p>
                                                 <Tooltip text="View full content">
                                                     <button
@@ -626,7 +632,7 @@ function CampaignsPageContent() {
                                                 </Tooltip>
                                                 <Tooltip text="Check live status" position="top">
                                                     <button
-                                                        onClick={() => setStatusModal({ show: true, campaignId: campaign._id, title: campaign.article?.headline })}
+                                                        onClick={() => setStatusModal({ show: true, campaignId: campaign._id, title: campaign.article?.headline, packageName: campaign.planName })}
                                                         className="flex-1 px-3 py-2 bg-indigo-50 text-indigo-700 text-sm font-medium rounded border border-indigo-200 hover:bg-indigo-100 transition-colors flex justify-center items-center gap-1.5"
                                                     >
                                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -734,9 +740,16 @@ function CampaignsPageContent() {
                                             Transcript: {transcriptModal.title}
                                         </h3>
                                         <div className="mt-2 max-h-[60vh] overflow-y-auto bg-gray-50 p-4 rounded-md">
-                                            <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                                                {transcriptModal.text}
-                                            </p>
+                                            {transcriptModal.isHtml ? (
+                                                <div 
+                                                    className="text-sm text-gray-800 prose prose-sm max-w-none"
+                                                    dangerouslySetInnerHTML={{ __html: transcriptModal.text }}
+                                                />
+                                            ) : (
+                                                <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                                                    {transcriptModal.text}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -945,9 +958,10 @@ function CampaignsPageContent() {
             {/* Live Distribution Status Modal */}
             <DistributionStatusModal
                 isOpen={statusModal.show}
-                onClose={() => setStatusModal({ show: false, campaignId: null, title: "" })}
+                onClose={() => setStatusModal({ show: false, campaignId: null, title: "", packageName: "" })}
                 campaignId={statusModal.campaignId}
                 title={statusModal.title}
+                packageName={statusModal.packageName}
                 onStatusUpdate={(newStatus) => {
                     setCampaigns(prev => prev.map(c =>
                         c._id === statusModal.campaignId

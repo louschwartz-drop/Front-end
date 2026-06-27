@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Activity, CheckCircle, Clock, AlertCircle, RefreshCw, ExternalLink, Search } from "lucide-react";
+import { X, Activity, CheckCircle, Clock, AlertCircle, RefreshCw, ExternalLink, Search, Download } from "lucide-react";
 import { toast } from "react-toastify";
 import xprArticleRelease from "@/lib/api/user/xprArticleRelease";
 import apiAdmin from "@/lib/api/admin/apiAdmin";
 import { distributionTargetService as userTargetService } from "@/lib/api/user/distributionTargets";
 import { distributionTargetService as adminTargetService } from "@/lib/api/admin/distributionTargets";
-
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 export default function DistributionStatusModal({ isOpen, onClose, campaignId, title, packageName, onStatusUpdate, isAdmin = false }) {
     const [statusData, setStatusData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [activeTab, setActiveTab] = useState("liveAt");
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -169,6 +171,134 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, campaignId]);
+
+    const handleDownloadPDF = async () => {
+        setIsGeneratingPDF(true);
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        try {
+            const doc = new jsPDF();
+            
+            // Modern Header Strip
+            doc.setFillColor(10, 92, 255); // Primary Blue
+            doc.rect(0, 0, doc.internal.pageSize.width, 10, "F"); 
+            
+            doc.setFontSize(26);
+            doc.setTextColor(10, 92, 255);
+            doc.setFont("helvetica", "bold");
+            doc.text("Droppr.ai", 14, 30);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100, 116, 139);
+            doc.setFont("helvetica", "bold");
+            doc.text("DISTRIBUTION NETWORK REPORT", 14, 37);
+            
+            // Date right aligned
+            const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            doc.setFont("helvetica", "normal");
+            doc.text(dateStr, doc.internal.pageSize.width - 14, 30, { align: 'right' });
+            
+            // Proper Grid Layout for Metadata Boxes
+            const startY = 48;
+            const marginX = 14;
+            const gap = 5;
+            const boxWidth = (doc.internal.pageSize.width - (marginX * 2) - (gap * 2)) / 3;
+            const boxHeight = 16;
+            
+            const boxes = [
+                { label: "DISTRIBUTION PLAN", value: packageName || "Custom" },
+                { label: "GUARANTEED PLACEMENTS", value: statusData.total ? `${statusData.total}+` : 'N/A' },
+                { label: "CURRENTLY LIVE", value: String(statusData.rawLiveAt?.length || 0) }
+            ];
+
+            doc.setDrawColor(226, 232, 240); // Border color
+            doc.setLineWidth(0.5);
+
+            boxes.forEach((box, i) => {
+                const x = marginX + (boxWidth + gap) * i;
+                // Draw rounded box
+                doc.setFillColor(248, 250, 252);
+                doc.roundedRect(x, startY, boxWidth, boxHeight, 2, 2, "FD");
+                
+                // Label
+                doc.setFontSize(7);
+                doc.setTextColor(100, 116, 139);
+                doc.setFont("helvetica", "bold");
+                doc.text(box.label, x + (boxWidth / 2), startY + 6, { align: 'center' });
+                
+                // Value
+                doc.setFontSize(12);
+                doc.setTextColor(15, 23, 42);
+                doc.text(box.value, x + (boxWidth / 2), startY + 12.5, { align: 'center' });
+            });
+            
+            // Main Table
+            const liveSites = statusData.rawLiveAt || [];
+            const tableData = liveSites.map(site => [
+                `${site.name || site.domain || "Unknown Source"}${site.network ? `\nNetwork: ${site.network}` : ''}`,
+                site.source || site.url ? "View Live Article →" : "Processing Link"
+            ]);
+            
+            autoTable(doc, {
+                startY: startY + boxHeight + 12,
+                head: [['PUBLICATION / NETWORK', 'LIVE ARTICLE LINK']],
+                body: tableData,
+                theme: 'striped',
+                headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: 'bold', fontSize: 9, cellPadding: 6 },
+                bodyStyles: { textColor: [51, 65, 85], fontSize: 9, cellPadding: 6, valign: 'middle' },
+                alternateRowStyles: { fillColor: [241, 245, 249] },
+                columnStyles: {
+                    0: { cellWidth: 120 }, // Give more space to the domain name
+                    1: { cellWidth: 60 }   // Fixed width for the link to avoid stretching
+                },
+                didParseCell: function(data) {
+                    if (data.section === 'body' && data.column.index === 1 && data.cell.raw === "View Live Article →") {
+                        data.cell.styles.textColor = [10, 92, 255];
+                        data.cell.styles.fontStyle = 'normal'; // Normalized font weight
+                    } else if (data.section === 'body' && data.column.index === 1 && data.cell.raw === "Processing Link") {
+                        data.cell.styles.textColor = [5, 150, 105];
+                        data.cell.styles.fontStyle = 'italic'; // Italicize processing state
+                    }
+                },
+                didDrawCell: function(data) {
+                    if (data.section === 'body' && data.column.index === 1 && data.cell.raw === "View Live Article →") {
+                        const rowSite = liveSites[data.row.index];
+                        const url = rowSite?.source || rowSite?.url;
+                        if (url) {
+                            // Create clickable link area over the cell
+                            doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url: url });
+                        }
+                    }
+                }
+            });
+            
+            // Footer
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setDrawColor(226, 232, 240);
+                doc.setLineWidth(0.5);
+                doc.line(14, doc.internal.pageSize.height - 12, doc.internal.pageSize.width - 14, doc.internal.pageSize.height - 12);
+                
+                doc.setFontSize(8);
+                doc.setTextColor(148, 163, 184);
+                doc.setFont("helvetica", "normal");
+                doc.text(
+                    `Generated by Droppr.ai  •  Page ${i} of ${pageCount}`, 
+                    doc.internal.pageSize.width / 2, 
+                    doc.internal.pageSize.height - 6,
+                    { align: 'center' }
+                );
+            }
+            
+            doc.save(`Droppr-Distribution-${packageName || 'Report'}.pdf`);
+        } catch (error) {
+            console.error("PDF generation failed", error);
+            toast.error("Failed to generate PDF report");
+        } finally {
+            setIsGeneratingPDF(false);
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -329,15 +459,25 @@ export default function DistributionStatusModal({ isOpen, onClose, campaignId, t
                                                 Live Websites
                                             </h4>
                                             {statusData.rawLiveAt?.length > 0 && (
-                                                <div className="relative">
-                                                    <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="Search websites..."
-                                                        value={searchQuery}
-                                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                                        className="pl-8 pr-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none w-48"
-                                                    />
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={handleDownloadPDF}
+                                                        disabled={isGeneratingPDF}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        <Download className={`w-3.5 h-3.5 ${isGeneratingPDF ? 'animate-bounce' : ''}`} />
+                                                        {isGeneratingPDF ? 'Preparing PDF...' : 'Download Report'}
+                                                    </button>
+                                                    <div className="relative">
+                                                        <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                                                        <input 
+                                                            type="text" 
+                                                            placeholder="Search websites..."
+                                                            value={searchQuery}
+                                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                                            className="pl-8 pr-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none w-48"
+                                                        />
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>

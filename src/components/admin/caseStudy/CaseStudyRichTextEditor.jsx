@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import ImageUploadModal from "../blog/ImageUploadModal";
+import { TableFloatingMenu } from "../../editor/TableFloatingMenu";
 
 // --- Custom Extensions ---
 
@@ -190,9 +191,24 @@ const editorCss = `
     .case-study-editor .ProseMirror hr { border: none; border-top: 1px solid #d8d4c8; margin: 3rem 0; }
     .case-study-editor .ProseMirror img { max-width: 100%; height: auto; border-radius: 8px; margin: 2rem 0; cursor: pointer; transition: all 0.2s; display: block; }
     .case-study-editor .ProseMirror img.ProseMirror-selectednode { outline: 3px solid var(--color-primary, #0A5CFF); outline-offset: 4px; }
-    .case-study-editor .ProseMirror table { border-collapse: collapse; table-layout: fixed; width: 100%; margin: 1.5rem 0; overflow: hidden; }
-    .case-study-editor .ProseMirror table td, .case-study-editor .ProseMirror table th { min-width: 1em; border: 1px solid #d1d5db; padding: 8px 12px; vertical-align: top; box-sizing: border-box; position: relative; }
-    .case-study-editor .ProseMirror table th { font-weight: bold; text-align: left; background-color: #f3f4f6; }
+    .case-study-editor .ProseMirror table { border-collapse: collapse; margin: 1.5rem 0; overflow: hidden; width: 100%; position: relative; }
+    .case-study-editor .ProseMirror table th {
+        background-color: #e0e7ff !important;
+        padding: 12px 16px !important;
+        font-weight: 600 !important;
+        color: #312e81 !important;
+        text-align: left !important;
+        border: 1px solid #c7d2fe !important;
+        text-transform: uppercase !important;
+        font-size: 0.85rem !important;
+        letter-spacing: 0.02em !important;
+    }
+    .case-study-editor .ProseMirror table td {
+        padding: 12px 16px !important;
+        border: 1px solid #e2e8f0 !important;
+        color: #475569 !important;
+        vertical-align: top;
+    }
     .case-study-editor .ProseMirror .selectedCell:after { z-index: 2; position: absolute; content: ""; left: 0; right: 0; top: 0; bottom: 0; background: rgba(200, 200, 255, 0.4); pointer-events: none; }
     .case-study-editor .ProseMirror .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: -2px; width: 4px; background-color: #adf; pointer-events: none; }
 `;
@@ -352,21 +368,26 @@ const MenuBar = ({ editor, showHtml, toggleHtml }) => {
 
                 {/* Table Controls */}
                 <div className="flex items-center gap-0.5 pr-1.5 mr-1 border-r border-gray-100">
-                    <button type="button" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-                        disabled={showHtml || editor.isActive('table')}
-                        className={`flex items-center gap-1 px-2 h-8 rounded-md text-xs font-bold text-gray-500 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 transition-all disabled:opacity-30 ${editor.isActive('table') ? 'hidden' : ''}`}
-                        title="Insert Table">
-                        <span className="text-[11px]">+ Table</span>
-                    </button>
-                    {editor.isActive('table') && !showHtml && (
-                        <div className="flex items-center gap-0.5 bg-blue-50/50 p-0.5 rounded-lg border border-blue-100">
-                            <button type="button" onClick={() => editor.chain().focus().addRowAfter().run()} className="px-1.5 py-1 rounded text-blue-600 hover:bg-blue-100 transition-all text-[10px] font-bold">+ Row</button>
-                            <button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()} className="px-1.5 py-1 rounded text-blue-600 hover:bg-blue-100 transition-all text-[10px] font-bold">+ Col</button>
-                            <button type="button" onClick={() => editor.chain().focus().deleteRow().run()} className="px-1.5 py-1 rounded text-red-500 hover:bg-red-100 transition-all text-[10px] font-bold">- Row</button>
-                            <button type="button" onClick={() => editor.chain().focus().deleteColumn().run()} className="px-1.5 py-1 rounded text-red-500 hover:bg-red-100 transition-all text-[10px] font-bold">- Col</button>
-                            <button type="button" onClick={() => editor.chain().focus().deleteTable().run()} className="p-1 rounded text-red-600 hover:bg-red-100 transition-all"><Trash2 size={12} /></button>
+                    <div className="relative group">
+                        <button type="button"
+                            disabled={showHtml || editor.isActive('table')}
+                            className={`flex items-center gap-1 px-2 h-8 rounded-md text-xs font-bold text-gray-500 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 transition-all disabled:opacity-30 ${editor.isActive('table') ? 'hidden' : ''}`}
+                            title="Insert Table">
+                            <span className="text-[11px]">+ Table</span>
+                        </button>
+                        <div className={`absolute left-0 top-full mt-1 bg-white border border-gray-200 shadow-xl rounded-lg p-2 flex flex-col gap-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all ${editor.isActive('table') ? 'hidden' : ''}`}>
+                            <button 
+                                type="button" 
+                                onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+                                className="text-xs text-left px-3 py-1.5 hover:bg-gray-100 rounded-md whitespace-nowrap text-gray-700"
+                            >Standard Table (3x3)</button>
+                            <button 
+                                type="button" 
+                                onClick={() => editor.chain().focus().insertTable({ rows: 1, cols: 3, withHeaderRow: false }).run()}
+                                className="text-xs text-left px-3 py-1.5 hover:bg-gray-100 rounded-md whitespace-nowrap font-bold text-primary"
+                            >Stats Grid (1x3)</button>
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 {/* HTML Source Toggle */}
@@ -459,16 +480,16 @@ export default function CaseStudyRichTextEditor({ value, onChange, placeholder }
             <div className="max-h-[600px] overflow-y-auto no-scrollbar scroll-smooth">
                 {showHtml ? (
                     <textarea
-                        value={value}
-                        onChange={(e) => {
-                            onChange(e.target.value);
-                            if (editor) { editor.commands.setContent(e.target.value); }
-                        }}
-                        className="w-full h-[400px] p-6 font-mono text-sm bg-gray-900 text-gray-100 focus:outline-none resize-none no-scrollbar leading-relaxed"
-                        placeholder="Paste or write your HTML here..."
+                        value={value || ''}
+                        onChange={(e) => onChange(e.target.value)}
+                        className="w-full h-[500px] p-6 font-mono text-sm text-gray-800 focus:outline-none resize-none border-none bg-gray-50/50"
+                        placeholder="Edit HTML directly..."
                     />
                 ) : (
-                    <EditorContent editor={editor} />
+                    <div className="relative">
+                        {editor && <TableFloatingMenu editor={editor} />}
+                        <EditorContent editor={editor} />
+                    </div>
                 )}
             </div>
         </div>

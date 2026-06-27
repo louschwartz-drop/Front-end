@@ -12,8 +12,10 @@ import { Table } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { BLOCKQUOTE_STYLES } from './blockquoteStyles';
+
+import { TableFloatingMenu } from './TableFloatingMenu';
 
 /**
  * Extended Blockquote that preserves inline `style` attributes so that
@@ -144,26 +146,29 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start w
       {/* Shared blockquote styles — same across editor, preview modal, and public page */}
       <style dangerouslySetInnerHTML={{ __html: BLOCKQUOTE_STYLES }} />
       <style dangerouslySetInnerHTML={{ __html: `
+        .ProseMirror p.is-editor-empty:first-child::before {
+          content: attr(data-placeholder);
+          float: left;
+          color: #adb5bd;
+          pointer-events: none;
+          height: 0;
+        }
         .ProseMirror table {
           border-collapse: collapse;
-          table-layout: fixed;
-          width: 100%;
           margin: 0;
           overflow: hidden;
-        }
-        .ProseMirror table td,
-        .ProseMirror table th {
-          min-width: 1em;
-          border: 1px solid #d1d5db;
-          padding: 8px;
-          vertical-align: top;
-          box-sizing: border-box;
           position: relative;
         }
         .ProseMirror table th {
-          font-weight: bold;
-          text-align: left;
-          background-color: #f3f4f6;
+          background-color: #e0e7ff !important;
+          padding: 12px 16px !important;
+          font-weight: 600 !important;
+          color: #312e81 !important;
+          text-align: left !important;
+          border: 1px solid #c7d2fe !important;
+          text-transform: uppercase !important;
+          font-size: 0.85rem !important;
+          letter-spacing: 0.02em !important;
         }
         .ProseMirror .selectedCell:after {
           z-index: 2;
@@ -200,7 +205,7 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start w
       ` }} />
 
       {/* Toolbar */}
-      <div className="border-b border-gray-200 bg-gray-50/50 p-2 flex flex-wrap gap-1 items-center justify-between">
+      <div className="border-b border-gray-200 bg-gray-50/50 p-2 flex flex-wrap gap-1 items-center justify-between sticky top-0 z-10 shadow-sm">
         <div className="flex flex-wrap gap-1 items-center">
           {/* Bold */}
           <button
@@ -313,77 +318,47 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start w
           <div className="w-px h-5 bg-gray-200 mx-1" />
 
           {/* Table Controls */}
-          <button
-            type="button"
-            onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-            disabled={isHtmlMode || editor.isActive('table')}
-            className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all text-gray-600 border border-transparent disabled:opacity-40 disabled:cursor-not-allowed ${editor.isActive('table') ? 'hidden' : ''}`}
-            title="Insert Table"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-          </button>
-
-          {editor.isActive('table') && !isHtmlMode && (
-            <div className="flex items-center gap-1 bg-blue-50/50 p-1 rounded-lg border border-blue-100">
-              <button
-                type="button"
-                onClick={() => editor.chain().focus().addRowAfter().run()}
-                className="p-1.5 rounded text-blue-600 hover:bg-blue-100 transition-all"
-                title="Add Row Below"
-              >
-                <span className="text-[10px] font-bold px-1 whitespace-nowrap">+ Row</span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => editor.chain().focus().addColumnAfter().run()}
-                className="p-1.5 rounded text-blue-600 hover:bg-blue-100 transition-all"
-                title="Add Column Right"
-              >
-                <span className="text-[10px] font-bold px-1 whitespace-nowrap">+ Col</span>
-              </button>
-
-              <div className="w-px h-4 bg-blue-200 mx-1" />
-
-              <button
-                type="button"
-                onClick={() => editor.chain().focus().deleteRow().run()}
-                className="p-1.5 rounded text-red-500 hover:bg-red-100 transition-all"
-                title="Delete Row"
-              >
-                <span className="text-[10px] font-bold px-1 whitespace-nowrap">- Row</span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => editor.chain().focus().deleteColumn().run()}
-                className="p-1.5 rounded text-red-500 hover:bg-red-100 transition-all"
-                title="Delete Column"
-              >
-                <span className="text-[10px] font-bold px-1 whitespace-nowrap">- Col</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => editor.chain().focus().deleteTable().run()}
-                className="p-1.5 rounded text-red-600 hover:bg-red-100 transition-all ml-1"
-                title="Delete Entire Table"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
+          <div className="relative group">
+            <button
+              type="button"
+              disabled={isHtmlMode || editor.isActive('table')}
+              className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all text-gray-600 border border-transparent disabled:opacity-40 disabled:cursor-not-allowed ${editor.isActive('table') ? 'hidden' : ''}`}
+              title="Insert Table"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </button>
+            <div className={`absolute left-0 top-full mt-1 bg-white border border-gray-200 shadow-xl rounded-lg p-2 flex flex-col gap-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all ${editor.isActive('table') ? 'hidden' : ''}`}>
+               <button 
+                 type="button" 
+                 onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+                 className="text-xs text-left px-3 py-1.5 hover:bg-gray-100 rounded-md whitespace-nowrap"
+               >Standard Table (3x3)</button>
+               <button 
+                 type="button" 
+                 onClick={() => editor.chain().focus().insertTable({ rows: 1, cols: 3, withHeaderRow: false }).run()}
+                 className="text-xs text-left px-3 py-1.5 hover:bg-gray-100 rounded-md whitespace-nowrap font-bold text-primary"
+               >Stats Grid (1x3)</button>
             </div>
-          )}
+          </div>
+
+
 
           <div className="w-px h-5 bg-gray-200 mx-1" />
 
           {/* Formal Quote */}
           <button
             type="button"
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            onClick={() => {
+              if (editor.isActive('blockquote')) {
+                editor.chain().focus().toggleBlockquote().run();
+              } else {
+                editor.chain().focus().toggleBlockquote().updateAttributes('blockquote', {
+                  style: "border-left:4px solid #2563eb;padding:1.25rem 1.5rem;margin:1.75rem 0;color:#1e3a8a;font-style:italic;background-color:#f0f7ff;border-radius:0 10px 10px 0;box-shadow:0 1px 4px 0 rgba(37,99,235,0.07);"
+                }).run();
+              }
+            }}
             disabled={isHtmlMode}
             className={`p-2 rounded-lg hover:bg-gray-200/70 transition-all ${editor.isActive('blockquote') && !isHtmlMode ? 'bg-blue-50 text-primary border border-blue-100' : 'text-gray-600 border border-transparent'} disabled:opacity-40 disabled:cursor-not-allowed`}
             title="Formal Quote Block"
@@ -454,7 +429,8 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start w
       </div>
 
       {/* Editor Content */}
-      <div className="flex-1 overflow-auto flex flex-col">
+      <div className="flex-1 overflow-auto flex flex-col relative">
+        {editor && !isHtmlMode && <TableFloatingMenu editor={editor} />}
         {isHtmlMode ? (
           <textarea
             value={value || ''}
