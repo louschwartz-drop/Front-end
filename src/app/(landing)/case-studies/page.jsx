@@ -7,6 +7,8 @@ export const metadata = {
   description: "Discover how DropPR press releases can help you achieve business success.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function CaseStudiesPage() {
   let caseStudies = [];
   try {

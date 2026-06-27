@@ -30,6 +30,8 @@ export async function generateMetadata({ params }) {
   }
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function CaseStudyDetail({ params }) {
   const { slug } = await params;
   let study = null;
